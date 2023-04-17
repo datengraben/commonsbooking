@@ -101,13 +101,18 @@ class iCalendar {
             $bookingLocation_latitude = $bookingLocation->getMeta( 'geo_latitude' );
             $bookingLocation_longitude = $bookingLocation->getMeta( 'geo_longitude' );
 
+			$tz = wp_timezone();
+
+			$booking->getStartDateDateTime()->setTimezone( $tz );
+			$booking->getEndDateDateTime()->setTimezone( $tz );
+
             //create immutable DateTime objects from Mutable (recommended by iCal library developer)
             $booking_startDateDateTime = DateTimeImmutable::createFromMutable( $booking->getStartDateDateTime() );
             $booking_endDateDateTime = DateTimeImmutable::createFromMutable( $booking->getEndDateDateTime() );
 
             // Create timezone entity
             $timezone = \Eluceo\iCal\Domain\Entity\TimeZone::createFromPhpDateTimeZone(
-                wp_timezone(),
+				$tz,
                 $booking_startDateDateTime,
                 $booking_endDateDateTime
             );
