@@ -10,33 +10,46 @@
 	},
 	"devDependencies": {
 		"@babel/preset-env": "^7.16.11",
-    "@wordpress/env": "^5.0.0",
+		"@wordpress/env": "^5.0.0",
 		"commons-api": "git+https://github.com/wielebenwir/commons-api.git",
 		"compass": "^0.1.1",
 		"cypress": "^12.17.4",
 		"editorconfig": "^0.15.3",
+		"eslint": "^8.48.0",
+		"eslint-config-prettier": "9.0.0",
+		"eslint-plugin-cypress": "^2.14.0",
 		"grunt": "^1.4.1",
 		"grunt-babel": "^8.0.0",
 		"grunt-cli": "^1.4.3",
-		"grunt-contrib-compass": "^0.8.0",
+		"grunt-contrib-compass": "^1.1.1",
 		"grunt-contrib-concat": "^2.0.0",
 		"grunt-contrib-jshint": "^3.1.1",
 		"grunt-contrib-nodeunit": "^4.0.0",
 		"grunt-contrib-uglify": "^5.0.1",
 		"grunt-contrib-watch": "^1.1.0",
-		"matchdep": "^2.0.0"
+		"matchdep": "^2.0.0",
+		"prettier": "3.0.3"
 	},
 	"scripts": {
-    "env": "wp-env",
-    "env:install-tests-cli": "./bin/install-wp-cli.sh tests-wordpress",
-    "env:start": "wp-env start && npm run env:install-tests-cli",
-    "env:stop": "wp-env stop"
-  },
+		"env": "wp-env",
+		"env:install-tests-cli": "./bin/install-wp-cli.sh tests-wordpress",
+		"env:start": "wp-env start && npm run env:install-tests-cli",
+		"env:stop": "wp-env stop",
+		"lint": "npm run lint-eslint && npm run lint-prettier && npm run lint-spelling && npm run lint-types",
+		"lint-eslint": "eslint --color --ext .js,.cjs,.ts,.vue --ignore-path .eslintignore src/ vite.config.ts",
+		"lint-prettier": "prettier --check --ignore-path .prettierignore .",
+		"lint-types": "vue-tsc --noEmit",
+		"lint-spelling": "cspell --locale en-us,de-de ."
+	},
 	"dependencies": {
+		"@cspell/dict-de-de": "^3.1.0",
+		"@typescript-eslint/eslint-plugin": "^6.6.0",
+		"cspell": "^7.3.2",
 		"leaflet": "^1.7.1",
 		"leaflet-easybutton": "^2.4.0",
 		"leaflet-spin": "^1.1.2",
 		"leaflet.markercluster": "^1.5.0",
+		"lint-staged": "^14.0.1",
 		"shufflejs": "^5.3.0"
 	}
 }
