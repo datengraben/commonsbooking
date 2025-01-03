@@ -188,10 +188,10 @@ class Plugin {
 	/**
 	 * @return CustomPostType[] instantiated objects
 	 */
-	private static function getCustomPostTypeObjects() {
+	public static function getCustomPostTypeObjects() {
 		return array_map(
 			function ( $type ) {
-				return new ($type)();
+				return new $type();
 			},
 			self::getCustomPostTypeClasses()
 		);
@@ -200,7 +200,7 @@ class Plugin {
 	private static function getCBManagerCustomPostTypesObjects() {
 		return array_map(
 			function ( $type ) {
-				return new ($type)();
+				return new $type();
 			},
 			self::getCBManagerCustomPostTypeClasses()
 		);
@@ -433,7 +433,7 @@ class Plugin {
 	 * Registers custom post types.
 	 */
 	public static function registerCustomPostTypes() {
-		foreach ( self::getCustomPostTypes() as $customPostType ) {
+		foreach ( self::getCustomPostTypeObjects() as $customPostType ) {
 			$cptArgs = $customPostType->getArgs();
 			//make export possible when using WP_DEBUG, this allows us to use the export feature for creating new E2E tests
 			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -948,7 +948,7 @@ class Plugin {
 		// Set 'cb-dashboard' as parent for cb post types
 		if ( in_array( $current_screen->base, array( 'post', 'edit' ) ) ) {
 			foreach ( self::getCustomPostTypes() as $customPostType ) {
-				if ( $customPostType::getPostType() === $current_screen->post_type ) {
+				if ( $customPostType === $current_screen->post_type ) {
 					return 'cb-dashboard';
 				}
 			}
@@ -983,7 +983,7 @@ class Plugin {
 		// Check if we're inside the main loop in a single post page.
 		if ( is_single() && in_the_loop() && is_main_query() ) {
 			global $post;
-			foreach ( self::getCustomPostTypes() as $customPostType ) {
+			foreach ( self::getCustomPostTypeClasses() as $customPostType ) {
 				if ( $customPostType::getPostType() === $post->post_type ) {
 					return $content . $customPostType::getView()::content( $post );
 				}
