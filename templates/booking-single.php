@@ -12,7 +12,6 @@ use CommonsBooking\Settings\Settings;
 global $post;
 $booking = new Booking( $post->ID );
 
-/** @var Timeframe $timeframe */
 $timeframe                    = $booking->getBookableTimeFrame();
 $location                     = $booking->getLocation();
 $item                         = $booking->getItem();

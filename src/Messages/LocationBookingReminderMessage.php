@@ -24,7 +24,7 @@ class LocationBookingReminderMessage extends Message {
 	 * Sends reminder message.
 	 */
 	public function sendMessage() {
-		/** @var \CommonsBooking\Model\Booking $booking */
+		/** @var \CommonsBooking\Model\Booking|null $booking */
 		$booking      = Booking::getPostById( $this->getPostId() );
 		$booking_user = get_userdata( $this->getPost()->post_author );
 

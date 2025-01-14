@@ -324,7 +324,7 @@ class Booking extends View {
 				null,
 				true
 			);
-			/** @var \CommonsBooking\Model\Timeframe $timeframe */
+			/** @var \CommonsBooking\Model\Timeframe $timeframe|false */
 			$timeframe = reset($timeframe);
 		}
 		catch (Exception $e) {
