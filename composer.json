@@ -58,6 +58,18 @@
     "myclabs/deep-copy": "^1.12.0",
     "phpstan/phpstan": "^2.1",
     "szepeviktor/phpstan-wordpress": "^2.0",
-    "phpstan/extension-installer": "^1.4"
+    "phpstan/extension-installer": "^1.4",
+    "brainmaestro/composer-git-hooks": "^2.8"
+  },
+  "extra": {
+    "hooks": {
+      "config": {
+        "stop-on-failure": ["pre-push"]
+      },
+      "pre-commit": [
+        "echo committing as $(git config user.name)",
+        "phpcbf -q --parallel=1 src templates includes"
+      ]
+    }
   }
 }
