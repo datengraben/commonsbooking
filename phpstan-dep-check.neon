@@ -1,0 +1,33 @@
+includes:
+  - phpstan-baseline.neon
+  - custom-rules.neon
+parameters:
+  phpVersion: 70400
+  scanFiles:
+    - commonsbooking.php
+  scanDirectories:
+    - vendor/cmb2/cmb2/includes
+  paths:
+    - commonsbooking.php
+    - src/
+    - includes/
+  # Skip only the import/type-hint rules:
+  level: 3
+  ignoreErrors:
+    - '#Constant (COMMONSBOOKING.*|WP_DEBUG_LOG) not found.#'
+#    - '#Instantiated class (CommonsBooking.*CB_Data) not found.#'
+    - '#Function cb_object_to_array not found.#'
+services:
+  -
+    factory: Nish\PHPStan\NsDepends\DependencyChecker([
+      'CommonsBooking\Model': ['CommonsBooking\Repository', 'CommonsBooking\Wordpress\CustomPostType',
+'CommonsBooking\View', 'CommonsBooking\Service'],
+      'CommonsBooking\Repository': [
+'CommonsBooking\Service',
+'CommonsBooking\View',
+'CommonsBooking\Wordpress\CustomPostType',
+'CommonsBooking\API',
+],
+    ], [
+    ])
+

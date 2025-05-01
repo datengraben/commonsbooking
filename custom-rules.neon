@@ -1,0 +1,8 @@
+# Removed ClassDefinition and MethodDefinition rules from original nish rules-set
+rules:
+  - Nish\PHPStan\NsDepends\Rules\PropertyRule
+  - Nish\PHPStan\NsDepends\Rules\StaticCallRule
+  - Nish\PHPStan\NsDepends\Rules\NewInstanceRule
+  - Nish\PHPStan\NsDepends\Rules\ClassConstFetchRule
+  - Nish\PHPStan\NsDepends\Rules\StaticPropertyFetchRule
+  - Nish\PHPStan\NsDepends\Rules\AssignRule
