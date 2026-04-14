@@ -35,7 +35,7 @@ if ( ! array_key_exists( 'location', $templateData ) && empty( $templateData['lo
 }
 
 if ( ! is_user_logged_in() ) {
-	$current_url = $_SERVER['REQUEST_URI'];
+	$current_url = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- REQUEST_URI is always set in a web request context.
 	?>
 		<div class="cb-notice">
 	<?php

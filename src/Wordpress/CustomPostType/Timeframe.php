@@ -321,8 +321,10 @@ class Timeframe extends CustomPostType {
 		$startDateInputName = 'admin_filter_startdate';
 		$endDateInputName   = 'admin_filter_enddate';
 
-		$from = ( isset( $_GET[ $startDateInputName ] ) && $_GET[ $startDateInputName ] ) ? sanitize_text_field( $_GET[ $startDateInputName ] ) : '';
-		$to   = ( isset( $_GET[ $endDateInputName ] ) && $_GET[ $endDateInputName ] ) ? sanitize_text_field( $_GET[ $endDateInputName ] ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
+		$from = isset( $_GET[ $startDateInputName ] ) ? sanitize_text_field( wp_unslash( $_GET[ $startDateInputName ] ) ) : '';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- see above.
+		$to = isset( $_GET[ $endDateInputName ] ) ? sanitize_text_field( wp_unslash( $_GET[ $endDateInputName ] ) ) : '';
 
 		Filter::renderDateFilter(
 			static::$postType,
@@ -345,7 +347,7 @@ class Timeframe extends CustomPostType {
 
 		if (
 			is_admin() && $query->is_main_query() &&
-			isset( $_GET['post_type'] ) && static::$postType == sanitize_text_field( $_GET['post_type'] ) &&
+			isset( $_GET['post_type'] ) && static::$postType == sanitize_text_field( wp_unslash( $_GET['post_type'] ) ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 			$pagenow == 'edit.php'
 		) {
 			// Meta value filtering
@@ -359,12 +361,12 @@ class Timeframe extends CustomPostType {
 			];
 			foreach ( $meta_filters as $key => $filter ) {
 				if (
-					isset( $_GET[ $filter ] ) &&
-					$_GET[ $filter ] != ''
+					isset( $_GET[ $filter ] ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
+					$_GET[ $filter ] != ''  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 				) {
 					$query->query_vars['meta_query'][] = array(
 						'key'   => $key,
-						'value' => sanitize_text_field( $_GET[ $filter ] ),
+						'value' => sanitize_text_field( wp_unslash( $_GET[ $filter ] ) ),  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 					);
 				}
 			}
@@ -376,34 +378,34 @@ class Timeframe extends CustomPostType {
 			];
 			foreach ( $post_filters as $key => $filter ) {
 				if (
-					isset( $_GET[ $filter ] ) &&
-					$_GET[ $filter ] != ''
+					isset( $_GET[ $filter ] ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
+					$_GET[ $filter ] != ''  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 				) {
-					$query->query_vars[ $key ] = sanitize_text_field( $_GET[ $filter ] );
+					$query->query_vars[ $key ] = sanitize_text_field( wp_unslash( $_GET[ $filter ] ) );  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 				}
 			}
 
 			// Timerange filtering
 			// Start date
 			if (
-				isset( $_GET['admin_filter_startdate'] ) &&
-				$_GET['admin_filter_startdate'] != ''
+				isset( $_GET['admin_filter_startdate'] ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
+				$_GET['admin_filter_startdate'] != ''  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 			) {
 				$query->query_vars['meta_query'][] = array(
 					'key'     => \CommonsBooking\Model\Timeframe::REPETITION_START,
-					'value'   => strtotime( sanitize_text_field( $_GET['admin_filter_startdate'] ) ),
+					'value'   => strtotime( sanitize_text_field( wp_unslash( $_GET['admin_filter_startdate'] ) ) ),  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 					'compare' => '>=',
 				);
 			}
 
 			// End date
 			if (
-				isset( $_GET['admin_filter_enddate'] ) &&
-				$_GET['admin_filter_enddate'] != ''
+				isset( $_GET['admin_filter_enddate'] ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
+				$_GET['admin_filter_enddate'] != ''  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 			) {
 				$query->query_vars['meta_query'][] = array(
 					'key'     => \CommonsBooking\Model\Timeframe::REPETITION_END,
-					'value'   => strtotime( sanitize_text_field( $_GET['admin_filter_enddate'] ) ),
+					'value'   => strtotime( sanitize_text_field( wp_unslash( $_GET['admin_filter_enddate'] ) ) ),  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 					'compare' => '<=',
 				);
 			}
@@ -855,9 +857,10 @@ class Timeframe extends CustomPostType {
 		}
 
 		// Keep meta attributes after trashing
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress validates the nonce before firing the save_post hook.
 		if (
-			array_key_exists( 'action', $_REQUEST ) &&
-			( $_REQUEST['action'] == 'trash' || $_REQUEST['action'] == 'untrash' )
+			array_key_exists( 'action', $_REQUEST ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
+			( sanitize_text_field( wp_unslash( $_REQUEST['action'] ) ) === 'trash' || sanitize_text_field( wp_unslash( $_REQUEST['action'] ) ) === 'untrash' )  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 		) {
 			return;
 		}
@@ -1234,7 +1237,7 @@ class Timeframe extends CustomPostType {
 		if ( $column == 'timeframe-author' ) {
 			$post           = get_post( $post_id );
 			$timeframe_user = get_user_by( 'id', $post->post_author );
-			echo '<a href="' . get_edit_user_link( $timeframe_user->ID ) . '">' . commonsbooking_sanitizeHTML( $timeframe_user->user_login ) . '</a>';
+			echo '<a href="' . esc_url( get_edit_user_link( $timeframe_user->ID ) ) . '">' . commonsbooking_sanitizeHTML( $timeframe_user->user_login ) . '</a>';
 		}
 
 		if ( $value = get_post_meta( $post_id, $column, true ) ) {
@@ -1267,7 +1270,7 @@ class Timeframe extends CustomPostType {
 					break;
 				case \CommonsBooking\Model\Timeframe::REPETITION_START:
 				case \CommonsBooking\Model\Timeframe::REPETITION_END:
-					echo date( 'd.m.Y', $value );
+					echo esc_html( date( 'd.m.Y', $value ) );
 					break;
 				default:
 					echo commonsbooking_sanitizeHTML( $value );

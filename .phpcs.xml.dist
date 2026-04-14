@@ -7,6 +7,7 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https:
 	<file>.</file>
     <exclude-pattern>assets/</exclude-pattern>
 	<exclude-pattern>vendor/</exclude-pattern>
+	<exclude-pattern>vendor-prefixed/</exclude-pattern>
 	<exclude-pattern>node_modules/</exclude-pattern>
 
 	<!-- How to scan -->
@@ -44,7 +45,9 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https:
     <!-- Checks if text_domain used -->
 	<rule ref="WordPress.WP.I18n">
 		<properties>
-			<property name="text_domain" type="array" value="commonsbooking"/>
+			<property name="text_domain" type="array">
+				<element value="commonsbooking"/>
+			</property>
 		</properties>
 	</rule>
 

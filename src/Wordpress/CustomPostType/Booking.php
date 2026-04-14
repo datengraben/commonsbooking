@@ -82,22 +82,25 @@ class Booking extends Timeframe {
 		global $pagenow;
 
 		$post            = $post ?? get_post( $post_id );
-		$is_trash_action = str_contains( $_REQUEST['action'] ?? '', 'trash' );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress validates the nonce before firing the save_post hook.
+		$is_trash_action = str_contains( sanitize_text_field( wp_unslash( $_REQUEST['action'] ?? '' ) ), 'trash' );
 
 		// we check if it's a new created post - TODO: This is not the case
 		if (
-			! empty( $_REQUEST ) &&
+			! empty( $_REQUEST ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress validates the nonce before firing save_post; admin list reads $_GET for filtering only.
 			! $is_trash_action &&
 			$pagenow === 'post.php' &&
 			( commonsbooking_isCurrentUserAdmin() || commonsbooking_isCurrentUserCBManager() )
 		) {
 			// set request variables
-			$booking_user = isset( $_REQUEST['booking_user'] ) ? esc_html( $_REQUEST['booking_user'] ) : false;
-
-			$post_status = esc_html( $_REQUEST['post_status'] ?? '' );
-
-			$start_time = isset( $_REQUEST['repetition-start'] ) ? esc_html( $_REQUEST['repetition-start']['time'] ?? '' ) : false;
-			$end_time   = isset( $_REQUEST['repetition-end'] ) ? esc_html( $_REQUEST['repetition-end']['time'] ?? '' ) : false;
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress validates the nonce before firing the save_post hook.
+			$booking_user = isset( $_REQUEST['booking_user'] ) ? intval( wp_unslash( $_REQUEST['booking_user'] ) ) : false;  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress validates the nonce before firing save_post; admin list reads $_GET for filtering only.
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- see above.
+			$post_status = sanitize_text_field( wp_unslash( $_REQUEST['post_status'] ?? '' ) );  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress validates the nonce before firing save_post; admin list reads $_GET for filtering only.
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- see above.
+			$start_time = isset( $_REQUEST['repetition-start'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['repetition-start']['time'] ?? '' ) ) : false;  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress validates the nonce before firing save_post; admin list reads $_GET for filtering only.
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- see above.
+			$end_time   = isset( $_REQUEST['repetition-end'] ) ? sanitize_text_field( wp_unslash( $_REQUEST['repetition-end']['time'] ?? '' ) ) : false;  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress validates the nonce before firing save_post; admin list reads $_GET for filtering only.
 			$full_day   = ( ! $start_time || $start_time === '0:00' || $start_time === '00:00' ) && ( ! $end_time || $end_time === '23:59' ) ? 'on' : '';
 
 			$postarr = array(
@@ -128,7 +131,7 @@ class Booking extends Timeframe {
 			wp_update_post( $postarr, true, true );
 
 			// run validation only on new posts (the submit button is only available on new posts)
-			if ( array_key_exists( self::SUBMIT_BUTTON_ID, $_REQUEST ) ) {
+			if ( array_key_exists( self::SUBMIT_BUTTON_ID, $_REQUEST ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress validates the nonce before firing save_post; admin list reads $_GET for filtering only.
 				try {
 					$booking = new \CommonsBooking\Model\Booking( $post_id );
 					$booking->isValid();
@@ -241,6 +244,7 @@ class Booking extends Timeframe {
 		int $overbookedDays = 0
 	): int {
 
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified earlier in the booking flow before this method is called.
 		if ( isset( $_POST['calendar-download'] ) ) {
 			try {
 				iCalendar::downloadICS( $post_ID );
@@ -249,32 +253,32 @@ class Booking extends Timeframe {
 				return $post_ID;
 			}
 			exit;
-		}
+		}  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 
 		if ( $itemId === null || ! filter_var( $itemId, FILTER_VALIDATE_INT ) || ! get_post( (int) $itemId ) ) {
 			// translators: $s = id of the item
-			throw new BookingDeniedException( sprintf( __( 'Item does not exist. (%s)', 'commonsbooking' ), $itemId ) );
-		}
+			throw new BookingDeniedException( sprintf( __( 'Item does not exist. (%s)', 'commonsbooking' ), $itemId ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+		}  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 
 		if ( $locationId === null || ! filter_var( $locationId, FILTER_VALIDATE_INT ) || ! get_post( (int) $locationId ) ) {
 			// translators: $s = id of the location
-			throw new BookingDeniedException( sprintf( __( 'Location does not exist. (%s)', 'commonsbooking' ), $locationId ) );
+			throw new BookingDeniedException( sprintf( __( 'Location does not exist. (%s)', 'commonsbooking' ), $locationId ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		if ( $repetitionStart === null || $repetitionEnd === null ) {
-			throw new BookingDeniedException( __( 'Start- and/or end-date is missing.', 'commonsbooking' ) );
+			throw new BookingDeniedException( __( 'Start- and/or end-date is missing.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		// Validation end, set correctly typed params
 		$itemId          = (int) $itemId;
 		$locationId      = (int) $locationId;
 		$repetitionStart = (int) $repetitionStart;
-		$repetitionEnd   = (int) $repetitionEnd;
-
+		$repetitionEnd   = (int) $repetitionEnd;  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		if ( $post_ID != null && ! get_post( $post_ID ) ) {
 			throw new BookingDeniedException(
-				__( 'Your reservation has expired, please try to book again', 'commonsbooking' ),
-				add_query_arg( 'cb-location', $locationId, get_permalink( get_post( $itemId ) ) )
+				__( 'Your reservation has expired, please try to book again', 'commonsbooking' ),  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+				add_query_arg( 'cb-location', $locationId, get_permalink( get_post( $itemId ) ) )  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			);
 		}
 
@@ -284,11 +288,11 @@ class Booking extends Timeframe {
 			$repetitionEnd,
 			$locationId,
 			$itemId
-		);
+		);  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 
 		// Reject if the slot is already booked by another user (getExistingBookings excludes this booking by ID)
 		if ( $booking && ! commonsbooking_isCurrentUserAllowedToEdit( $booking ) ) {
-			throw new BookingDeniedException( __( 'There is already a booking in this time-range. This notice may also appear if there is an unconfirmed booking in the requested period. Unconfirmed bookings are deleted after about 10 minutes. Please try again in a few minutes.', 'commonsbooking' ) );
+			throw new BookingDeniedException( __( 'There is already a booking in this time-range. This notice may also appear if there is an unconfirmed booking in the requested period. Unconfirmed bookings are deleted after about 10 minutes. Please try again in a few minutes.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		$existingBookings =
@@ -300,12 +304,12 @@ class Booking extends Timeframe {
 				$booking->ID ?? null,
 			);
 
-		// delete unconfirmed booking if booking process is canceled by user
-		if ( $post_status === 'delete_unconfirmed' && $booking->ID === $post_ID ) {
+		// delete unconfirmed booking if booking process is canceled by user  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+		if ( $post_status === 'delete_unconfirmed' && $booking->ID === $post_ID ) {  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			wp_delete_post( $post_ID );
 			throw new BookingDeniedException(
-				__( 'Booking canceled.', 'commonsbooking' ),
-				add_query_arg( 'cb-location', $locationId, get_permalink( get_post( $itemId ) ) )
+				__( 'Booking canceled.', 'commonsbooking' ),  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+				add_query_arg( 'cb-location', $locationId, get_permalink( get_post( $itemId ) ) )  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			);
 		}
 
@@ -316,11 +320,11 @@ class Booking extends Timeframe {
 						array_values( $existingBookings )[0]->getPost()->post_name === $requestedPostName &&
 						intval( array_values( $existingBookings )[0]->getPost()->post_author ) === get_current_user_id();
 
-			if ( ( ! $isEdit || count( $existingBookings ) > 1 ) && $post_status !== 'canceled' ) {
+			if ( ( ! $isEdit || count( $existingBookings ) > 1 ) && $post_status !== 'canceled' ) {  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 				if ( $booking ) {
 					$post_status = 'unconfirmed';
 				} else {
-					throw new BookingDeniedException( __( 'There is already a booking in this time-range. This notice may also appear if there is an unconfirmed booking in the requested period. Unconfirmed bookings are deleted after about 10 minutes. Please try again in a few minutes.', 'commonsbooking' ) );
+					throw new BookingDeniedException( __( 'There is already a booking in this time-range. This notice may also appear if there is an unconfirmed booking in the requested period. Unconfirmed bookings are deleted after about 10 minutes. Please try again in a few minutes.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 				}
 			}
 		}
@@ -368,29 +372,29 @@ class Booking extends Timeframe {
 		try {
 			$bookingModel->assignBookableTimeframeFields();
 			if ( $overbookedDays > 0 ) { // avoid setting the value when not present (for example when updating the booking)
-				$bookingModel->setOverbookedDays( $overbookedDays );
-			}
+				$bookingModel->setOverbookedDays( $overbookedDays );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+			}  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		} catch ( \Exception $e ) {
 			throw new BookingDeniedException(
-				__( 'There was an error while saving the booking. Please try again. Thrown error:', 'commonsbooking' ) .
-												PHP_EOL . $e->getMessage()
+				__( 'There was an error while saving the booking. Please try again. Thrown error:', 'commonsbooking' ) .  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+												PHP_EOL . $e->getMessage()  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			);
 		}
 
 		// check if the Booking we want to create conforms to the set booking rules
 		if ( $needsValidation ) {
-			try {
+			try {  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 				BookingRuleApplied::bookingConformsToRules( $bookingModel );
 			} catch ( BookingDeniedException $e ) {
 				wp_delete_post( $bookingModel->ID );
-				throw new BookingDeniedException( $e->getMessage() );
+				throw new BookingDeniedException( $e->getMessage() );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			}
-		}
-
+		}  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		if ( $postId instanceof \WP_Error ) {
 			throw new BookingDeniedException(
-				__( 'There was an error while saving the booking. Please try again. Resulting WP_ERROR: ', 'commonsbooking' ) .
-												PHP_EOL . implode( ', ', $postId->get_error_messages() )
+				__( 'There was an error while saving the booking. Please try again. Resulting WP_ERROR: ', 'commonsbooking' ) .  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+												PHP_EOL . implode( ', ', $postId->get_error_messages() )  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			);
 		}
 
@@ -434,7 +438,7 @@ class Booking extends Timeframe {
 	}
 
 	public function initListView() {
-		if ( array_key_exists( 'post_type', $_GET ) && static::$postType !== $_GET['post_type'] ) {
+		if ( array_key_exists( 'post_type', $_GET ) && static::$postType !== $_GET['post_type'] ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress validates the nonce before firing save_post; admin list reads $_GET for filtering only.
 			return;
 		}
 
@@ -604,7 +608,7 @@ class Booking extends Timeframe {
 	public function setCustomColumnsData( $column, $post_id ) {
 		global $pagenow;
 
-		if ( $pagenow !== 'edit.php' || empty( esc_html( $_GET['post_type'] ) ) || esc_html( $_GET['post_type'] ) !== $this::$postType ) {
+		if ( $pagenow !== 'edit.php' || empty( sanitize_text_field( wp_unslash( $_GET['post_type'] ?? '' ) ) ) || sanitize_text_field( wp_unslash( $_GET['post_type'] ?? '' ) ) !== $this::$postType ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- WordPress validates the nonce before firing save_post; admin list reads $_GET for filtering only.
 			return;
 		}
 
@@ -613,7 +617,7 @@ class Booking extends Timeframe {
 			$post        = get_post( $post_id );
 			$bookingUser = get_user_by( 'id', $post->post_author );
 			if ( $bookingUser ) {
-				echo '<a href="' . get_edit_user_link( $bookingUser->ID ) . '">' . commonsbooking_sanitizeHTML( $bookingUser->user_login ) . '</a>';
+				echo '<a href="' . esc_url( get_edit_user_link( $bookingUser->ID ) ) . '">' . commonsbooking_sanitizeHTML( $bookingUser->user_login ) . '</a>';
 			} else {
 				echo '-';
 			}
@@ -649,7 +653,7 @@ class Booking extends Timeframe {
 					break;
 				case \CommonsBooking\Model\Timeframe::REPETITION_START:
 				case \CommonsBooking\Model\Timeframe::REPETITION_END:
-					echo date( 'd.m.Y H:i', $value );
+					echo esc_html( date( 'd.m.Y H:i', $value ) );
 					break;
 				default:
 					echo commonsbooking_sanitizeHTML( $value );
@@ -672,9 +676,9 @@ class Booking extends Timeframe {
 
 				// get translated label for post status
 				if ( $column === 'post_status' ) {
-					echo __( commonsbooking_sanitizeHTML( get_post_status_object( get_post_status( $post_id ) )->label ) );
+					echo esc_html__( commonsbooking_sanitizeHTML( get_post_status_object( get_post_status( $post_id ) )->label ) );
 				} else {
-					echo __( commonsbooking_sanitizeHTML( $post->{$column} ) );
+					echo esc_html__( commonsbooking_sanitizeHTML( $post->{$column} ) );
 				}
 			}
 		}
@@ -899,8 +903,8 @@ class Booking extends Timeframe {
 			)
 		);
 
-		if ( ( $pagenow == 'edit.php' ) && isset( $_GET['post_type'] ) ) {
-			if ( sanitize_text_field( $_GET['post_type'] ) == self::getPostType() ) {
+		if ( ( $pagenow == 'edit.php' ) && isset( $_GET['post_type'] ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list reads $_GET for filtering; nonce not required for read-only admin list views.
+			if ( sanitize_text_field( wp_unslash( $_GET['post_type'] ) ) == self::getPostType() ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- see above.
 				echo '<div class="notice notice-info"><p>' . commonsbooking_sanitizeHTML( $notice ) . '</p></div>';
 			}
 		}

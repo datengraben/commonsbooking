@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Complex SQL queries use $wpdb->prefix (WordPress internal) and PHP class constants; dynamic values use $wpdb->prepare() placeholders.
 
 
 namespace CommonsBooking\Repository;

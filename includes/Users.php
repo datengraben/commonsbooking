@@ -56,8 +56,9 @@ function commonsbooking_isUserAllowedToEdit( $post, WP_User $user ): bool {
  */
 function commonsbooking_validate_user_on_edit( $current_screen ) {
 	if ( $current_screen->base == 'post' && in_array( $current_screen->id, Plugin::getCustomPostTypesLabels() ) ) {
-		if ( array_key_exists( 'action', $_GET ) && $_GET['action'] == 'edit' ) {
-			$post = get_post( intval( $_GET['post'] ) );
+		if ( array_key_exists( 'action', $_GET ) && $_GET['action'] == 'edit' ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin screen reads $_GET params; WordPress validates capability before display.
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- $_GET['post'] is a post ID used only for capability check; array_key_exists not needed since intval() handles missing values safely.
+			$post = get_post( intval( wp_unslash( $_GET['post'] ?? 0 ) ) );
 			if ( ! commonsbooking_isCurrentUserAllowedToEdit( $post ) ) {
 				die( 'Access denied' );
 			}
@@ -110,7 +111,7 @@ add_filter(
 			}
 
 			// Save posts to global variable for later use -> fix of counts in admin lists
-			if ( array_key_exists( 'post_type', $_GET ) ) {
+			if ( array_key_exists( 'post_type', $_GET ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin user management reads $_GET params; WordPress validates capability before display.
 				global ${'posts' . $query->query['post_type']};
 				${'posts' . $query->query['post_type']} = $posts;
 			}

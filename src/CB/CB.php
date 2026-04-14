@@ -88,8 +88,8 @@ class CB {
 		$initialPost = $post;
 
 		// we check if we are dealing with a timeframe then get the time timeframe-object as post
-		if ( isset( $_GET['cb_timeframe'] ) ) {
-			$initialPost = get_page_by_path( sanitize_text_field( $_GET['cb_timeframe'] ), OBJECT, 'cb_timeframe' );
+		if ( isset( $_GET['cb_timeframe'] ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reads $_GET to look up post by slug; nonce not needed for this read-only lookup.
+			$initialPost = get_page_by_path( sanitize_text_field( wp_unslash( $_GET['cb_timeframe'] ) ), OBJECT, 'cb_timeframe' );  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Reads $_GET to look up post by slug; nonce not needed for this read-only lookup.
 		}
 
 		if ( ! is_null( $initialPost ) ) {

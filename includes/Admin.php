@@ -222,7 +222,7 @@ function commonsbooking_sanitizeHTML( $string ): string {
  */
 function commonsbooking_filter_from_cmb2( $field_args ) {
 	// Only return default value if we don't have a post ID (in the 'post' query variable)
-	if ( isset( $_GET['post'] ) ) {
+	if ( isset( $_GET['post'] ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin filter callback reads $_GET params; nonce not required for read-only filtering in admin context.
 		// No default value.
 		return '';
 	} else {
@@ -250,7 +250,7 @@ function commonsbooking_filter_from_cmb2( $field_args ) {
  * @return mixed          Returns true or '', the blank default
  */
 function cmb2_set_checkbox_default_for_new_post() {
-	return isset( $_GET['post'] )
+	return isset( $_GET['post'] )  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin filter callback reads $_GET params; nonce not required for read-only filtering in admin context.
 		// No default value.
 		? ''
 		// Default to true.

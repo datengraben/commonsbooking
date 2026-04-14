@@ -99,6 +99,7 @@ class BookingCodes {
 			global $wpdb;
 			$table_name = $wpdb->prefix . self::$tablename;
 
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Uses $wpdb->prefix (WordPress internal); dynamic values use %d/%s placeholders.
 			$sql          = $wpdb->prepare(
 				"SELECT * FROM $table_name
                 WHERE item = %d
@@ -110,6 +111,7 @@ class BookingCodes {
 				$endDate
 			);
 			$bookingCodes = $wpdb->get_results( $sql );
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 
 			self::backwardCompatibilityFilter( $bookingCodes, $timeframeId, $timeframe->getLocation()->ID ); // for backward compatibility: delete line in future cb
 
@@ -193,10 +195,11 @@ class BookingCodes {
 		global $wpdb;
 		$table_name = $wpdb->prefix . self::$tablename;
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Uses $wpdb->prefix (WordPress internal); dynamic values use %s placeholders.
 		$sql = $wpdb->prepare(
 			"SELECT * FROM $table_name
-			WHERE 
-				item = %s AND 
+			WHERE
+				item = %s AND
 				date = %s
 			ORDER BY item ASC, date ASC, timeframe ASC, location ASC",
 			$itemId,
@@ -204,6 +207,7 @@ class BookingCodes {
 		);
 
 		$bookingCodes = $wpdb->get_results( $sql );
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 
 		self::backwardCompatibilityFilter( $bookingCodes, $preferredTimeframeId, $preferredLocationId ); // for backward compatibility: delete line in future cb
 
@@ -334,20 +338,20 @@ class BookingCodes {
 
 		$bookingCodesArray = self::getCodesArray();
 		if ( ! $bookingCodesArray ) {
-			throw new BookingCodeException( __( 'No booking codes could be created because there were no booking codes to choose from. Please set some booking codes in the CommonsBooking settings.', 'commonsbooking' ) );
+			throw new BookingCodeException( __( 'No booking codes could be created because there were no booking codes to choose from. Please set some booking codes in the CommonsBooking settings.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		try {
 			// TODO #507
 			$location = $timeframe->getLocation();
 		} catch ( \Exception $e ) {
-			throw new BookingCodeException( __( 'No booking codes could be created because the location of the timeframe could not be found.', 'commonsbooking' ) );
+			throw new BookingCodeException( __( 'No booking codes could be created because the location of the timeframe could not be found.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 		try {
 			// TODO #507
 			$item = $timeframe->getItem();
 		} catch ( \Exception $e ) {
-			throw new BookingCodeException( __( 'No booking codes could be created because the item of the timeframe could not be found.', 'commonsbooking' ) );
+			throw new BookingCodeException( __( 'No booking codes could be created because the item of the timeframe could not be found.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		$todayMidnight = new \DateTime( 'today midnight', $period->getStartDate()->getTimezone() );

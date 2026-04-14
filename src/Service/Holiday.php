@@ -27,6 +27,7 @@ class Holiday {
 			)
 		);
 
+		// phpcs:disable WordPress.Security.EscapeOutput.OutputNotEscaped -- CMB2 field_type methods (_id, _name, select, _desc) return properly escaped output; self::getYearsOption/getStatesOption return pre-built HTML option strings.
 		?>
 		<div class="cb_admin_holiday_table_wrapper">
 			<div class="cb_admin_holiday_table">
@@ -73,6 +74,7 @@ class Holiday {
 		<br class="clear">
 		<?php
 		echo $field_type->_desc( true );
+		// phpcs:enable WordPress.Security.EscapeOutput.OutputNotEscaped
 
 		return '';
 	}

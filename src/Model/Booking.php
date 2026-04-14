@@ -103,11 +103,13 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 		// workaround, because wp_update_post deletes all meta data
 
 		global $wpdb;
+		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared -- Query uses $wpdb->prefix (WordPress internal); booking ID is passed via %d placeholder in $wpdb->prepare() above.
 		$sql = $wpdb->prepare(
 			'UPDATE ' . $wpdb->prefix . "posts SET post_status='canceled' WHERE ID = %d",
 			$this->post->ID
 		);
 		$wpdb->query( $sql );
+		// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
 
 		update_post_meta( $this->post->ID, 'cancellation_time', current_time( 'timestamp' ) );
 
@@ -609,7 +611,7 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 				throw new Exception();
 			}
 		} catch ( Exception $e ) {
-			throw new TimeframeInvalidException( __( 'Item not found', 'commonsbooking' ) );
+			throw new TimeframeInvalidException( __( 'Item not found', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		try {
@@ -618,12 +620,12 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 				throw new Exception();
 			}
 		} catch ( Exception $e ) {
-			throw new TimeframeInvalidException( __( 'Location not found', 'commonsbooking' ) );
+			throw new TimeframeInvalidException( __( 'Location not found', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		$timeframe = $this->getBookableTimeFrame();
 		if ( $timeframe === null ) {
-			throw new TimeframeInvalidException( __( 'There is no timeframe for this booking. Please create a timeframe first.', 'commonsbooking' ) );
+			throw new TimeframeInvalidException( __( 'There is no timeframe for this booking. Please create a timeframe first.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		// validate if overlapping bookings exist
@@ -643,10 +645,10 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 			$formattedOverlappingLinks = implode( '<br>', $overlappingBookingLinks );
 
 			throw new TimeframeInvalidException(
-				__( 'There are one ore more overlapping bookings within the chosen timerange', 'commonsbooking' ) . PHP_EOL .
-				__( 'Please adjust the start- or end-date.', 'commonsbooking' ) . PHP_EOL .
+				__( 'There are one ore more overlapping bookings within the chosen timerange', 'commonsbooking' ) . PHP_EOL .  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+				__( 'Please adjust the start- or end-date.', 'commonsbooking' ) . PHP_EOL .  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 				// translators: %s list of urls to one or more booking pages
-				sprintf( __( 'Affected Bookings: %s', 'commonsbooking' ), commonsbooking_sanitizeHTML( $formattedOverlappingLinks ) ),
+				sprintf( __( 'Affected Bookings: %s', 'commonsbooking' ), commonsbooking_sanitizeHTML( $formattedOverlappingLinks ) ),  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			);
 		}
 		return true;

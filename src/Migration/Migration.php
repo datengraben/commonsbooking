@@ -36,11 +36,14 @@ class Migration {
 	 * @return void
 	 */
 	public static function migrateAll() {
+		check_ajax_referer( 'cb_start_migration', 'nonce' );
+
 		// sanitize
-		if ( $_POST['data'] == 'false' ) {
+		if ( isset( $_POST['data'] ) && 'false' === $_POST['data'] ) {
 			$post_data = 'false';
 		} else {
-			$post_data = isset( $_POST['data'] ) ? (array) $_POST['data'] : array();
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Array is sanitized by commonsbooking_sanitizeArrayorString() on the next line.
+			$post_data = isset( $_POST['data'] ) ? (array) wp_unslash( $_POST['data'] ) : array();
 			$post_data = commonsbooking_sanitizeArrayorString( $post_data );
 		}
 
@@ -365,7 +368,8 @@ class Migration {
 	 */
 	protected static function savePostData( $existingPost, array $postData, array $postMeta ): bool {
 
-		$includeGeoData = array_key_exists( 'geodata', $_POST ) && sanitize_text_field( $_POST['geodata'] ) == 'true';
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nonce verified in the calling migrateAll() AJAX handler.
+		$includeGeoData = array_key_exists( 'geodata', $_POST ) && 'true' === sanitize_text_field( wp_unslash( $_POST['geodata'] ) );
 
 		if ( $existingPost instanceof WP_Post ) {
 			$updatedPost = array_merge( $existingPost->to_array(), $postData );
@@ -411,6 +415,7 @@ class Migration {
 		global $wpdb;
 		$table_postmeta = $wpdb->prefix . 'postmeta';
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.LikeWildcardsInQuery -- Uses $wpdb->prefix (WordPress internal); $cb1_id is passed via %d; this is an admin-only migration function.
 		$sql       = $wpdb->prepare(
 			"SELECT meta_key, meta_value FROM $table_postmeta WHERE meta_key LIKE '%%_elementor%%' AND post_id = %d",
 			$cb1_id
@@ -429,6 +434,7 @@ class Migration {
 			$duplicate_insert_query .= implode( ', ', $value_cells ) . ';';
 			$wpdb->query( $duplicate_insert_query );
 		}
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared, WordPress.DB.PreparedSQLPlaceholders.LikeWildcardsInQuery
 	}
 
 	/**

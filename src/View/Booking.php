@@ -46,28 +46,29 @@ class Booking extends View {
 			$user = wp_get_current_user();
 		}
 
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nopriv AJAX endpoint (cb_bookings_data); nonce not applicable for public booking list display.
 		if ( array_key_exists( 'posts_per_page', $_POST ) ) {
-			$postsPerPage = sanitize_text_field( $_POST['posts_per_page'] );
+			$postsPerPage = intval( wp_unslash( $_POST['posts_per_page'] ) );
 		}
 
 		$page = 1;
 		if ( array_key_exists( 'page', $_POST ) ) {
-			$page = sanitize_text_field( $_POST['page'] );
+			$page = intval( wp_unslash( $_POST['page'] ) );
 		}
 
 		$search = false;
 		if ( array_key_exists( 'search', $_POST ) ) {
-			$search = sanitize_text_field( $_POST['search'] );
+			$search = sanitize_text_field( wp_unslash( $_POST['search'] ) );
 		}
 
 		$sort = 'startDate';
 		if ( array_key_exists( 'sort', $_POST ) ) {
-			$sort = sanitize_text_field( $_POST['sort'] );
+			$sort = sanitize_text_field( wp_unslash( $_POST['sort'] ) );
 		}
 
 		$order = 'asc';
 		if ( array_key_exists( 'order', $_POST ) ) {
-			$order = sanitize_text_field( $_POST['order'] );
+			$order = sanitize_text_field( wp_unslash( $_POST['order'] ) );
 		}
 
 		// Upon initial load, start date is not configured
@@ -87,16 +88,16 @@ class Booking extends View {
 
 		foreach ( $filters as $key => $value ) {
 			if ( array_key_exists( $key, $_POST ) ) {
-				$filters[ $key ] = sanitize_text_field( $_POST[ $key ] );
+				$filters[ $key ] = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
 			}
 		}
-
 		$customId = md5(
 			__CLASS__ . __FUNCTION__ .
-			serialize( $_POST ) .
+			serialize( $_POST ) . // phpcs:ignore WordPress.Security.NonceVerification.Missing -- Nopriv AJAX endpoint; nonce not applicable.
 			serialize( is_user_logged_in() ) .
 			serialize( $user->ID )
 		);
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		$cacheItem = Plugin::getCacheItem( $customId );
 		if ( $cacheItem ) {
@@ -186,7 +187,7 @@ class Booking extends View {
 					'locationAddr'       => $location ? $location->formattedAddressOneLine() : '',
 					'locationLat'        => $location ? $location->getMeta( 'geo_latitude' ) : 0,
 					'locationLong'       => $location ? $location->getMeta( 'geo_longitude' ) : 0,
-					'bookingDate'        => date( 'd.m.Y H:i', strtotime( $booking->post_date ) ),
+					'bookingDate'        => date( 'd.m.Y H:i', strtotime( $booking->post_date ) ), // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Value is JSON-encoded via wp_json_encode(); not directly output as HTML.
 					'user'               => $userInfo->user_login,
 					'status'             => $booking->post_status,
 					'fullDay'            => $booking->getMeta( 'full-day' ),
@@ -338,7 +339,8 @@ class Booking extends View {
 		// verify nonce
 		check_ajax_referer( 'cb_get_bookable_location', 'nonce' );
 
-		$postData = isset( $_POST['data'] ) ? (array) $_POST['data'] : array();
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Array is sanitized by commonsbooking_sanitizeArrayorString() on the next line.
+		$postData = isset( $_POST['data'] ) ? (array) wp_unslash( $_POST['data'] ) : array();
 		$postData = commonsbooking_sanitizeArrayorString( $postData );
 		$itemID   = intval( $postData['itemID'] );
 
@@ -392,7 +394,8 @@ class Booking extends View {
 		// verify nonce
 		check_ajax_referer( 'cb_get_booking_code', 'nonce' );
 
-		$postData   = isset( $_POST['data'] ) ? (array) $_POST['data'] : array();
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Array is sanitized by commonsbooking_sanitizeArrayorString() on the next line.
+		$postData   = isset( $_POST['data'] ) ? (array) wp_unslash( $_POST['data'] ) : array();
 		$postData   = commonsbooking_sanitizeArrayorString( $postData );
 		$itemID     = intval( $postData['itemID'] );
 		$locationID = intval( $postData['locationID'] );

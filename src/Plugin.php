@@ -238,7 +238,7 @@ class Plugin {
 		$version_file_content = file_get_contents( $version_file_path );
 		$versions             = json_decode( $version_file_content, true );
 		if ( JSON_ERROR_NONE !== json_last_error() ) {
-			trigger_error( "Unable to parse commonsbooking asset version file in $version_file_path." );
+			trigger_error( "Unable to parse commonsbooking asset version file in $version_file_path." ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- trigger_error is a PHP error, not HTML output; $version_file_path is a server-side file path from plugin constants.
 		}
 		return $versions;
 	}

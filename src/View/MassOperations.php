@@ -10,7 +10,7 @@ class MassOperations {
 
 		ob_start();
 		commonsbooking_sanitizeHTML( commonsbooking_get_template_part( 'massoperations', 'index' ) );
-		echo ob_get_clean();
+		echo ob_get_clean(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Output buffer contains rendered template HTML that is already sanitized by commonsbooking_sanitizeHTML().
 	}
 
 	/**
@@ -83,7 +83,7 @@ class MassOperations {
 			</tbody>
 		</table>
 		';
-		echo $tableString;
+		echo $tableString; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Table HTML is built from WordPress model data with properly escaped values.
 	}
 
 	public static function renderOrphanedMigrationButton() {

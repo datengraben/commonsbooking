@@ -7,10 +7,11 @@ class MassOperations {
 	public static function ajaxMigrateOrphaned() {
 		check_ajax_referer( 'cb_orphaned_booking_migration', 'nonce' );
 
-		if ( $_POST['data'] == 'false' ) {
+		if ( isset( $_POST['data'] ) && 'false' === $_POST['data'] ) {
 			$post_data = 'false';
 		} else {
-			$post_data = isset( $_POST['data'] ) ? (array) $_POST['data'] : array();
+			// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Array is sanitized by commonsbooking_sanitizeArrayorString() on the next line.
+			$post_data = isset( $_POST['data'] ) ? (array) wp_unslash( $_POST['data'] ) : array();
 			$post_data = commonsbooking_sanitizeArrayorString( $post_data );
 			$post_data = array_map( 'intval', $post_data );
 		}
@@ -49,7 +50,7 @@ class MassOperations {
 	 */
 	public static function migrateOrphaned( array $bookingIds ): bool {
 		if ( empty( $bookingIds ) ) {
-			throw new \Exception( __( 'No bookings to move selected.', 'commonsbooking' ) );
+			throw new \Exception( __( 'No bookings to move selected.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		$orphanedBookings = \CommonsBooking\Repository\Booking::getOrphaned();
@@ -66,11 +67,11 @@ class MassOperations {
 				}
 			} catch ( \Exception $e ) {
 				// translators: %s numeric post id
-				throw new \Exception( sprintf( __( 'New location not found for booking with ID %s', 'commonsbooking' ), $booking->ID ) );
+				throw new \Exception( sprintf( __( 'New location not found for booking with ID %s', 'commonsbooking' ), $booking->ID ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			}
 			if ( \CommonsBooking\Repository\Booking::getExistingBookings( $booking->getItemID(), $moveLocation->ID, $booking->getStartDate(), $booking->getEndDate() ) ) {
 				// translators: %s numeric post id
-				throw new \Exception( sprintf( __( 'There is already a booking on the new location during the timeframe of booking with ID %s.', 'commonsbooking' ), $booking->ID ) );
+				throw new \Exception( sprintf( __( 'There is already a booking on the new location during the timeframe of booking with ID %s.', 'commonsbooking' ), $booking->ID ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			}
 			update_post_meta( $booking->ID, 'location-id', $moveLocation->ID );
 		}

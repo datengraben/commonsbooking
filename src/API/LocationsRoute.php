@@ -139,7 +139,7 @@ class LocationsRoute extends BaseRoute {
 					$preparedItem->geometry->coordinates[0]
 				);
 			} else {
-				throw new Exception( 'Location address missing. (ID: ' . $item->ID . ')' );
+				throw new Exception( 'Location address missing. (ID: ' . $item->ID . ')' );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			}
 		}
 

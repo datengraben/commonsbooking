@@ -208,7 +208,8 @@ class Upgrade {
 	public static function runAJAXUpgradeTasks(): void {
 		// verify nonce
 		check_ajax_referer( 'cb_run_upgrade', 'nonce' );
-		$data = isset( $_POST['data'] ) ? (array) $_POST['data'] : array();
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Array is sanitized by commonsbooking_sanitizeArrayorString() on the next line.
+		$data = isset( $_POST['data'] ) ? (array) wp_unslash( $_POST['data'] ) : array();
 		$data = commonsbooking_sanitizeArrayorString( $data );
 
 		$taskNo = $data['progress']['task'] ?? 0;

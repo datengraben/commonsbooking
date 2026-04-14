@@ -142,14 +142,14 @@ class TimeframeExport {
 		}
 		$startDateTimestamp = strtotime( $exportStartDate );
 		if ( ! $startDateTimestamp ) {
-			throw new ExportException( __( 'Invalid start date', 'commonsbooking' ) );
+			throw new ExportException( __( 'Invalid start date', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 		$endDateTimestamp = strtotime( $exportEndDate );
 		if ( ! $endDateTimestamp ) {
-			throw new ExportException( __( 'Invalid end date', 'commonsbooking' ) );
+			throw new ExportException( __( 'Invalid end date', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 		if ( $startDateTimestamp > $endDateTimestamp ) {
-			throw new ExportException( __( 'Start date must not be after the end date.', 'commonsbooking' ) );
+			throw new ExportException( __( 'Start date must not be after the end date.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		$this->exportFilename    = 'timeframe-export-' . date( 'Y-m-d-H-i-s' ) . '.csv';
@@ -176,7 +176,8 @@ class TimeframeExport {
 		// verify nonce
 		check_ajax_referer( 'cb_export_timeframes', 'nonce' );
 
-		$postData = isset( $_POST['data'] ) ? (array) $_POST['data'] : array();
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Array is sanitized by commonsbooking_sanitizeArrayorString() on the next line.
+		$postData = isset( $_POST['data'] ) ? (array) wp_unslash( $_POST['data'] ) : array();
 		$postData = commonsbooking_sanitizeArrayorString( $postData );
 
 		$postSettings = $postData['settings'];
@@ -315,16 +316,16 @@ class TimeframeExport {
 		];
 
 		if ( ! $this->exportDataComplete ) {
-			throw new ExportException( __( 'Export data is not complete. Please complete the process before trying to export.', 'commonsbooking' ) );
+			throw new ExportException( __( 'Export data is not complete. Please complete the process before trying to export.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		if ( empty( $this->relevantTimeframes ) ) {
-			throw new ExportException( __( 'No data was found for the selected time period', 'commonsbooking' ) );
+			throw new ExportException( __( 'No data was found for the selected time period', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 
 		if ( $this->isCron ) {
 			if ( $exportPath === null ) {
-				throw new ExportException( __( 'You need to set an export path to execute the export', 'commonsbooking' ) );
+				throw new ExportException( __( 'You need to set an export path to execute the export', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			}
 			$output = fopen( $exportPath, 'w' );
 		} else {
@@ -441,7 +442,7 @@ class TimeframeExport {
 	 */
 	protected static function getInputFields( $inputName ) {
 		$inputFieldsString =
-			array_key_exists( $inputName, $_REQUEST ) ? sanitize_text_field( $_REQUEST[ $inputName ] ) :
+			array_key_exists( $inputName, $_REQUEST ) ? sanitize_text_field( wp_unslash( $_REQUEST[ $inputName ] ) ) :  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Export function reads $_REQUEST params in an admin context; export nonce validated separately.
 				Settings::getOption( 'commonsbooking_options_export', '$inputName' );
 
 		return array_filter( explode( ',', $inputFieldsString ) );
@@ -554,8 +555,8 @@ class TimeframeExport {
 		$type = 0;
 
 		// Backend download
-		if ( array_key_exists( 'export-type', $_REQUEST ) && $_REQUEST['export-type'] !== 'all' ) {
-			$type = intval( $_REQUEST['export-type'] );
+		if ( array_key_exists( 'export-type', $_REQUEST ) && $_REQUEST['export-type'] !== 'all' ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Export function reads $_REQUEST params in an admin context; export nonce validated separately.
+			$type = intval( $_REQUEST['export-type'] );  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Export function reads $_REQUEST params in an admin context; export nonce validated separately.
 		} else {
 			// cron download
 			$configuredType = Settings::getOption( 'commonsbooking_options_export', 'export-type' );

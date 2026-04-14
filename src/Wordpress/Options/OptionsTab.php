@@ -135,10 +135,11 @@ class OptionsTab {
 		// (CMB2-Hook 'cmb2_save_options-page_field') is too late for rendering of the admin page.
 		// So if you want to refactor this, savePostOptions needs to be hooked into an action which fires earlier.
 
-		if ( array_key_exists( 'action', $_REQUEST ) && $_REQUEST['action'] == 'commonsbooking_options_export' ) {
+		if ( array_key_exists( 'action', $_REQUEST ) && $_REQUEST['action'] == 'commonsbooking_options_export' ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin settings page; options form validated by WordPress capability check.
 			// Check for export action
-			if ( array_key_exists( 'export-filepath', $_REQUEST ) && $_REQUEST['export-filepath'] !== '' ) {
-				if ( ! is_dir( $_REQUEST['export-filepath'] ) ) {
+			if ( array_key_exists( 'export-filepath', $_REQUEST ) && $_REQUEST['export-filepath'] !== '' ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin settings page; options form validated by WordPress capability check.
+				$export_filepath = sanitize_text_field( wp_unslash( $_REQUEST['export-filepath'] ) );  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin settings page; options form validated by WordPress capability check.
+				if ( ! is_dir( $export_filepath ) ) {
 					set_transient(
 						self::ERROR_TYPE,
 						commonsbooking_sanitizeHTML( __( 'The export path does not exist or is not readable.', 'commonsbooking' ) ),
@@ -146,7 +147,7 @@ class OptionsTab {
 					);
 				}
 
-				if ( ! is_writable( $_REQUEST['export-filepath'] ) ) {
+				if ( ! is_writable( $export_filepath ) ) {
 					set_transient(
 						self::ERROR_TYPE,
 						commonsbooking_sanitizeHTML( __( 'The export path is not writeable.', 'commonsbooking' ) ),
@@ -154,9 +155,9 @@ class OptionsTab {
 					);
 				}
 			}
-		} elseif ( array_key_exists( 'action', $_REQUEST ) && $_REQUEST['action'] == 'commonsbooking_options_advanced-options' ) {
+		} elseif ( array_key_exists( 'action', $_REQUEST ) && $_REQUEST['action'] == 'commonsbooking_options_advanced-options' ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin settings page; options form validated by WordPress capability check.
 			// Check for request to clear cache
-			if ( array_key_exists( 'submit-cmb', $_REQUEST ) && $_REQUEST['submit-cmb'] == 'clear-cache' ) {
+			if ( array_key_exists( 'submit-cmb', $_REQUEST ) && $_REQUEST['submit-cmb'] == 'clear-cache' ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin settings page; options form validated by WordPress capability check.
 				try {
 					Plugin::clearCache();
 					set_transient(
