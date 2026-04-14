@@ -66,38 +66,38 @@ class CB1UserFields {
 		$this->extra_profile_fields = array(
 			'first_name'     => array(
 				'field_name'   => 'first_name',
-				'title'        => commonsbooking_sanitizeHTML( __( 'First Name', 'commonsbooking' ) ),
+				'title'        => __( 'First Name', 'commonsbooking' ),
 				'type'         => 'input',
 				'description'  => '',
-				'errormessage' => commonsbooking_sanitizeHTML( __( 'Please enter your first name', 'commonsbooking' ) ),
+				'errormessage' => __( 'Please enter your first name', 'commonsbooking' ),
 			),
 			'last_name'      => array(
 				'field_name'   => 'last_name',
-				'title'        => commonsbooking_sanitizeHTML( __( 'Last Name', 'commonsbooking' ) ),
+				'title'        => __( 'Last Name', 'commonsbooking' ),
 				'type'         => 'input',
 				'description'  => '',
-				'errormessage' => commonsbooking_sanitizeHTML( __( 'Please enter your last name', 'commonsbooking' ) ),
+				'errormessage' => __( 'Please enter your last name', 'commonsbooking' ),
 			),
 			'phone'          => array(
 				'field_name'   => 'phone',
-				'title'        => commonsbooking_sanitizeHTML( __( 'Phone Number', 'commonsbooking' ) ),
+				'title'        => __( 'Phone Number', 'commonsbooking' ),
 				'type'         => 'input',
 				'description'  => '',
-				'errormessage' => commonsbooking_sanitizeHTML( __( 'Please enter your phone number', 'commonsbooking' ) ),
+				'errormessage' => __( 'Please enter your phone number', 'commonsbooking' ),
 			),
 			'address'        => array(
 				'field_name'   => 'address',
-				'title'        => commonsbooking_sanitizeHTML( __( 'Address', 'commonsbooking' ) ),
+				'title'        => __( 'Address', 'commonsbooking' ),
 				'type'         => 'input',
 				'description'  => '',
-				'errormessage' => commonsbooking_sanitizeHTML( __( 'Please enter your address', 'commonsbooking' ) ),
+				'errormessage' => __( 'Please enter your address', 'commonsbooking' ),
 			),
 			'terms_accepted' => array(
-				'title'        => commonsbooking_sanitizeHTML( __( 'Terms and Conditions', 'commonsbooking' ) ),
+				'title'        => __( 'Terms and Conditions', 'commonsbooking' ),
 				'field_name'   => 'terms_accepted',
 				'type'         => 'checkbox',
-				'description'  => commonsbooking_sanitizeHTML( __( 'I accept the terms & conditions', 'commonsbooking' ) ),
-				'errormessage' => commonsbooking_sanitizeHTML( __( 'Please accept the terms & conditions', 'commonsbooking' ) ),
+				'description'  => __( 'I accept the terms & conditions', 'commonsbooking' ),
+				'errormessage' => __( 'Please accept the terms & conditions', 'commonsbooking' ),
 			),
 		);
 
@@ -183,11 +183,9 @@ class CB1UserFields {
 	 */
 	public function get_termsservices_string(): string {
 		if ( ! empty( $this->termsservices_url ) ) {
-			// translators: %s = terms and service url
-			$string = sprintf(
-				commonsbooking_sanitizeHTML( __( '<a href="%s" target=_blank">Read the terms and services</a>', 'commonsbooking' ) ),
-				commonsbooking_sanitizeHTML( $this->termsservices_url )
-			);
+			$string = '<a href="' . esc_url( $this->termsservices_url ) . '" target="_blank">'
+				. esc_html__( 'Read the terms and services', 'commonsbooking' )
+				. '</a>';
 		} else {
 			$string = '';
 		}

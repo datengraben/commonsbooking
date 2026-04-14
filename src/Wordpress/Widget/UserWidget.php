@@ -79,23 +79,18 @@ class UserWidget extends WP_Widget {
 				$loginname = $current_user->user_email;
 			}
 
-			// translators: $s = user first name or email
-			$content .= sprintf( __( 'Welcome %s', 'commonsbooking' ), $loginname );
-			$content .= ' <ul>';
-			// translators: $s = bookings page url
-			$content .= sprintf( __( '<li><a href="%s">My Bookings</a></li>', 'commonsbooking' ), $bookings_page_url );
-			// translators: $s = user profile url
-			$content .= sprintf( __( '<li><a href="%s">My Profile</a></li>', 'commonsbooking' ), get_edit_profile_url() );
-			// translators: $s =  wp logout url
-			$content .= sprintf( __( '<li><a href="%s">Log out</a></li>', 'commonsbooking' ), wp_logout_url() );
+			// translators: %s = user first name or email
+			$content .= sprintf( __( 'Welcome %s', 'commonsbooking' ), esc_html( $loginname ) );
+			$content .= '<ul>';
+			$content .= '<li><a href="' . esc_url( $bookings_page_url ) . '">' . esc_html__( 'My Bookings', 'commonsbooking' ) . '</a></li>';
+			$content .= '<li><a href="' . esc_url( get_edit_profile_url() ) . '">' . esc_html__( 'My Profile', 'commonsbooking' ) . '</a></li>';
+			$content .= '<li><a href="' . esc_url( wp_logout_url() ) . '">' . esc_html__( 'Log out', 'commonsbooking' ) . '</a></li>';
 			$content .= '</ul>';
 		} else {
-			$content  = __( 'You are not logged in.', 'commonsbooking' );
+			$content  = esc_html__( 'You are not logged in.', 'commonsbooking' );
 			$content .= '<ul>';
-			// translators: $s = wp login url
-			$content .= sprintf( __( '<li><a href="%s">Login</a></li>', 'commonsbooking' ), wp_login_url() );
-			// translators: $s = wp registration url
-			$content .= sprintf( __( '<li><a href="%s">Register</a></li>', 'commonsbooking' ), wp_registration_url() );
+			$content .= '<li><a href="' . esc_url( wp_login_url() ) . '">' . esc_html__( 'Login', 'commonsbooking' ) . '</a></li>';
+			$content .= '<li><a href="' . esc_url( wp_registration_url() ) . '">' . esc_html__( 'Register', 'commonsbooking' ) . '</a></li>';
 			$content .= '</ul>';
 		}
 

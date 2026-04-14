@@ -133,81 +133,94 @@ add_action( 'admin_enqueue_scripts', 'commonsbooking_admin' );
  * @return string
  */
 function commonsbooking_sanitizeHTML( $string ): string {
-	global $allowedposttags;
+	// Cache the merged allowed-tags array for the lifetime of the request.
+	// Without this, $allowed_atts was rebuilt and $allowedposttags mutated on
+	// every single call — hundreds of times per admin page load (issue #2043).
+	static $allowed_tags = null;
 
 	if ( empty( $string ) ) {
 		return '';
 	}
-	$allowed_atts = array(
-		'align'      => array(),
-		'checked'    => array(),
-		'class'      => array(),
-		'type'       => array(),
-		'id'         => array(),
-		'dir'        => array(),
-		'lang'       => array(),
-		'style'      => array(),
-		'xml:lang'   => array(),
-		'src'        => array(),
-		'alt'        => array(),
-		'href'       => array(),
-		'rel'        => array(),
-		'rev'        => array(),
-		'target'     => array(),
-		'novalidate' => array(),
-		'value'      => array(),
-		'name'       => array(),
-		'tabindex'   => array(),
-		'action'     => array(),
-		'method'     => array(),
-		'for'        => array(),
-		'width'      => array(),
-		'height'     => array(),
-		'data'       => array(),
-		'title'      => array(),
-		'cellspacing'      => array(),
-		'cellpadding'      => array(),
-		'border'      => array(),
-	);
 
-	$allowedposttags['form']     = $allowed_atts;
-	$allowedposttags['label']    = $allowed_atts;
-	$allowedposttags['input']    = $allowed_atts;
-	$allowedposttags['textarea'] = $allowed_atts;
-	$allowedposttags['iframe']   = $allowed_atts;
-	$allowedposttags['script']   = $allowed_atts;
-	$allowedposttags['style']    = $allowed_atts;
-	$allowedposttags['strong']   = $allowed_atts;
-	$allowedposttags['small']    = $allowed_atts;
-	$allowedposttags['table']    = $allowed_atts;
-	$allowedposttags['span']     = $allowed_atts;
-	$allowedposttags['abbr']     = $allowed_atts;
-	$allowedposttags['code']     = $allowed_atts;
-	$allowedposttags['pre']      = $allowed_atts;
-	$allowedposttags['div']      = $allowed_atts;
-	$allowedposttags['img']      = $allowed_atts;
-	$allowedposttags['h1']       = $allowed_atts;
-	$allowedposttags['h2']       = $allowed_atts;
-	$allowedposttags['h3']       = $allowed_atts;
-	$allowedposttags['h4']       = $allowed_atts;
-	$allowedposttags['h5']       = $allowed_atts;
-	$allowedposttags['h6']       = $allowed_atts;
-	$allowedposttags['ol']       = $allowed_atts;
-	$allowedposttags['ul']       = $allowed_atts;
-	$allowedposttags['li']       = $allowed_atts;
-	$allowedposttags['em']       = $allowed_atts;
-	$allowedposttags['hr']       = $allowed_atts;
-	$allowedposttags['br']       = $allowed_atts;
-	$allowedposttags['tr']       = $allowed_atts;
-	$allowedposttags['td']       = $allowed_atts;
-	$allowedposttags['p']        = $allowed_atts;
-	$allowedposttags['a']        = $allowed_atts;
-	$allowedposttags['b']        = $allowed_atts;
-	$allowedposttags['i']        = $allowed_atts;
-	$allowedposttags['select']   = $allowed_atts;
-	$allowedposttags['option']   = $allowed_atts;
+	if ( null === $allowed_tags ) {
+		global $allowedposttags;
 
-	return wp_kses( $string, $allowedposttags );
+		$allowed_atts = array(
+			'align'       => array(),
+			'checked'     => array(),
+			'class'       => array(),
+			'type'        => array(),
+			'id'          => array(),
+			'dir'         => array(),
+			'lang'        => array(),
+			'style'       => array(),
+			'xml:lang'    => array(),
+			'src'         => array(),
+			'alt'         => array(),
+			'href'        => array(),
+			'rel'         => array(),
+			'rev'         => array(),
+			'target'      => array(),
+			'novalidate'  => array(),
+			'value'       => array(),
+			'name'        => array(),
+			'tabindex'    => array(),
+			'action'      => array(),
+			'method'      => array(),
+			'for'         => array(),
+			'width'       => array(),
+			'height'      => array(),
+			'data'        => array(),
+			'title'       => array(),
+			'cellspacing' => array(),
+			'cellpadding' => array(),
+			'border'      => array(),
+		);
+
+		$extra_tags = array(
+			'form'     => $allowed_atts,
+			'label'    => $allowed_atts,
+			'input'    => $allowed_atts,
+			'textarea' => $allowed_atts,
+			'iframe'   => $allowed_atts,
+			'script'   => $allowed_atts,
+			'style'    => $allowed_atts,
+			'strong'   => $allowed_atts,
+			'small'    => $allowed_atts,
+			'table'    => $allowed_atts,
+			'span'     => $allowed_atts,
+			'abbr'     => $allowed_atts,
+			'code'     => $allowed_atts,
+			'pre'      => $allowed_atts,
+			'div'      => $allowed_atts,
+			'img'      => $allowed_atts,
+			'h1'       => $allowed_atts,
+			'h2'       => $allowed_atts,
+			'h3'       => $allowed_atts,
+			'h4'       => $allowed_atts,
+			'h5'       => $allowed_atts,
+			'h6'       => $allowed_atts,
+			'ol'       => $allowed_atts,
+			'ul'       => $allowed_atts,
+			'li'       => $allowed_atts,
+			'em'       => $allowed_atts,
+			'hr'       => $allowed_atts,
+			'br'       => $allowed_atts,
+			'tr'       => $allowed_atts,
+			'td'       => $allowed_atts,
+			'p'        => $allowed_atts,
+			'a'        => $allowed_atts,
+			'b'        => $allowed_atts,
+			'i'        => $allowed_atts,
+			'select'   => $allowed_atts,
+			'option'   => $allowed_atts,
+		);
+
+		// Merge with the WordPress core allowed-tags list rather than mutating it.
+		$allowed_tags = array_merge( $allowedposttags, $extra_tags );
+	}
+
+	return wp_kses( $string, $allowed_tags );
 }
 
 /**
