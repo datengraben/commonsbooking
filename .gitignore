@@ -21,3 +21,5 @@ assets/global/js/vendor.min.js
 assets/public/js/public.js
 assets/public/js/public.min.js
 assets/public/css/**
+.cache-phpcs-free.cache
+.phpcs.xml.dist.bak
