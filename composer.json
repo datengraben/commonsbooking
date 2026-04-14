@@ -54,6 +54,36 @@
     "wp-coding-standards/wpcs": "^2.3",
     "phpcompatibility/phpcompatibility-wp": "^2.1.4",
     "slope-it/clock-mock": "^0.4.0",
-    "phpunit/php-code-coverage": "^7.0.15"
+    "phpunit/php-code-coverage": "^7.0.15",
+    "automattic/jetpack-changelogger": "^6.0"
+  },
+  "scripts": {
+    "lint": "phpcs",
+    "lint:fix": "phpcbf",
+    "test": [
+      "@composer dump-autoload -o",
+      "phpunit"
+    ],
+    "changelogger": "changelogger",
+    "changelog:add": "changelogger add",
+    "changelog:validate": "changelogger validate",
+    "changelog:write": "changelogger write"
+  },
+  "extra": {
+    "changelogger": {
+      "changelog": "CHANGELOG.md",
+      "changes-dir": "changelog",
+      "link-template": "https://github.com/datengraben/commonsbooking/compare/v${old}...v${new}",
+      "versioning": "semver",
+      "formatter": "keepachangelog",
+      "types": {
+        "added": "Added",
+        "changed": "Changed",
+        "deprecated": "Deprecated",
+        "removed": "Removed",
+        "fixed": "Fixed",
+        "security": "Security"
+      }
+    }
   }
 }

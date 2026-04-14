@@ -1,0 +1,66 @@
+name: Changelog Check
+
+on:
+  pull_request:
+    branches:
+      - master
+      - 'release/**'
+    paths-ignore:
+      # Changelog files themselves
+      - 'changelog/**'
+      - 'CHANGELOG.md'
+      # Documentation
+      - '**.md'
+      - '**.txt'
+      - 'languages/**'
+      # CI / tooling config (no user impact)
+      - '.github/**'
+      - '.editorconfig'
+      - '.gitignore'
+      - '.phpcs.xml.dist'
+      - '.wp-env.json'
+      - 'phpunit.xml.dist'
+      - 'Gruntfile.js'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
+      # Tests
+      - 'tests/**'
+
+jobs:
+  changelog:
+    name: Validate changelog entry
+    runs-on: ubuntu-20.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --ignore-platform-reqs
+
+      - name: Validate changelog entry exists
+        run: |
+          # Check that at least one changelog entry file was added in this PR
+          git fetch origin ${{ github.base_ref }}
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- changelog/)
+          if [ -z "$CHANGED" ]; then
+            echo "::error::No changelog entry found. Please add a changelog entry in the changelog/ directory using:"
+            echo "::error::  composer changelog:add"
+            exit 1
+          fi
+
+      - name: Validate changelog entries
+        run: composer changelog:validate
