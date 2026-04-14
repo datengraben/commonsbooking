@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- This class queries legacy CB1 tables using $wpdb->prefix and PHP class constants (not user input). Dynamic values use $wpdb->prepare() where applicable.
 
 
 namespace CommonsBooking\Repository;

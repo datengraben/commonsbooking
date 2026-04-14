@@ -162,7 +162,7 @@ trait Cache {
 					if ( ! is_writable( $location ) ) {
 						throw new CacheException(
 							// translators: %s directory path of the operating system
-							sprintf( commonsbooking_sanitizeHTML( __( 'Directory %s could not be written to.', 'commonsbooking' ) ), $config['cacheLocation'] )
+							sprintf( commonsbooking_sanitizeHTML( __( 'Directory %s could not be written to.', 'commonsbooking' ) ), $config['cacheLocation'] )  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 						);
 					}
 					return new FilesystemTagAwareAdapter(
@@ -215,6 +215,7 @@ trait Cache {
 		}
 		$adapters = self::getAdapters();
 		if ( ! array_key_exists( $identifier, $adapters ) ) {
+			// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception message is an internal developer error string, not user input.
 			throw new CacheException( sprintf( 'Adapter %s not found', $identifier ) ); // Not translated bc this is a developer error
 		}
 		try {
@@ -226,7 +227,7 @@ trait Cache {
 				]
 			);
 		} catch ( Exception $e ) { // Symfony adapters do not always throw CacheException, for example the REDIS adapter can throw InvalidArgumentException
-			throw new CacheException( $e->getMessage() . $e->getTraceAsString() );
+			throw new CacheException( $e->getMessage() . $e->getTraceAsString() );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 	}
 
@@ -357,11 +358,13 @@ trait Cache {
 			$table_posts = $wpdb->prefix . 'posts';
 
 			// First get all pages with cb shortcodes
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Uses $wpdb->prefix (WordPress internal); no user input in SQL.
 			$sql   = "SELECT post_content FROM $table_posts WHERE
 			  post_content LIKE '%[cb_%]%' AND
 			  post_type = 'page' AND
 			  post_status = 'publish'";
 			$pages = $wpdb->get_results( $sql );
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared
 
 			$shortcodeNamesToCache = array_keys( self::$cbShortCodeFunctions );
 
@@ -441,22 +444,22 @@ trait Cache {
 		?>
 		<div class="cmb-row cmb-type-text table-layout">
 			<div class="cmb-th">
-				<?php echo __( 'Connection status:', 'commonsbooking' ); ?>
+				<?php echo esc_html__( 'Connection status:', 'commonsbooking' ); ?>
 			</div>
 			<div class="cmb-th">
 				<?php
 				if ( self::isDisabled() ) {
 					echo '<div style="color:orange">';
-					echo __( 'Cache was disabled through external setting. Please see the documentation for more information.', 'commonsbooking' );
+					echo esc_html__( 'Cache was disabled through external setting. Please see the documentation for more information.', 'commonsbooking' );
 				} elseif ( $adapterIdentifier === 'disabled' ) {
 					echo '<div style="color:orange">';
-					echo __( 'Cache is disabled.', 'commonsbooking' );
+					echo esc_html__( 'Cache is disabled.', 'commonsbooking' );
 				} elseif ( $success ) {
 					echo '<div style="color:green">';
-					echo __( 'Cache adapter successfully connected.', 'commonsbooking' );
+					echo esc_html__( 'Cache adapter successfully connected.', 'commonsbooking' );
 				} else {
 					echo '<div style="color:red">';
-					echo $errorMessage;
+					echo esc_html( $errorMessage );
 				}
 				echo '</div>';
 

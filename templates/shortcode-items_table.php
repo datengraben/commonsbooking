@@ -10,7 +10,7 @@
 
 global $templateData;
 
-echo $templateData['data'];
+echo $templateData['data']; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Template data contains pre-rendered HTML from the Calendar model; HTML escaping would corrupt the table output.
 ?>
 
 <div id="cb-table-footnote">

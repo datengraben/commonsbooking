@@ -131,7 +131,7 @@ class iCalendar {
 		$calendar         = $booking->getiCal( $eventTitle, $eventDescription );
 		header( 'Content-Type: text/calendar; charset=utf-8' );
 		header( 'Content-Disposition: attachment; filename="booking.ics"' );
-		echo $calendar;
+		echo $calendar; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ICS (iCalendar) output is plain text, not HTML; HTML escaping would corrupt the format.
 	}
 
 	/**
@@ -304,15 +304,17 @@ class iCalendar {
 	 */
 	public static function getICSDownload() {
 
-		$user_id   = intval( $_GET[ self::QUERY_USER ] );
-		$user_hash = strval( $_GET[ self::QUERY_USERHASH ] );
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce not applicable; authentication uses a URL-based hash verified below.
+		$user_id   = isset( $_GET[ self::QUERY_USER ] ) ? intval( wp_unslash( $_GET[ self::QUERY_USER ] ) ) : 0;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Nonce not applicable; authentication uses a URL-based hash verified below.
+		$user_hash = isset( $_GET[ self::QUERY_USERHASH ] ) ? sanitize_text_field( wp_unslash( $_GET[ self::QUERY_USERHASH ] ) ) : '';
 
 		if ( commonsbooking_isUIDHashComboCorrect( $user_id, $user_hash ) ) {
 			$bookingiCal = \CommonsBooking\View\Booking::getBookingListiCal( $user_id );
 			if ( $bookingiCal ) {
 				header( 'Content-Type: text/calendar; charset=utf-8' );
 				header( 'Content-Disposition: attachment; filename="ical.ics"' );
-				echo $bookingiCal;
+				echo $bookingiCal; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- ICS (iCalendar) output is plain text, not HTML; HTML escaping would corrupt the format.
 				die();
 			} else {
 				die( 'Error in retrieving booking list.' );

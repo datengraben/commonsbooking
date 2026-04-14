@@ -186,7 +186,7 @@ class BookingCodes {
 		}
 
 		if ( $errMsg != null ) {
-			printf( '<div id="cron-email-booking-code">%s</div>', $errMsg );
+			printf( '<div id="cron-email-booking-code">%s</div>', $errMsg ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- $errMsg is already run through commonsbooking_sanitizeHTML() above.
 
 			return;
 		}
@@ -224,6 +224,7 @@ class BookingCodes {
 			$nextCronEventFmt = $field->args['msg_email_not_planned'];
 		}
 
+		// phpcs:disable WordPress.Security.EscapeOutput.HeredocOutputNotEscaped -- CMB2 _id/_name methods return escaped attribute strings; developer-defined args are not user input; $value is from wp_parse_args with plugin defaults.
 		echo <<<HTML
             <input type="checkbox" class="cmb2-option cmb2-list" name="{$field_type->_name( '[cron-booking-codes-enabled]' )}"
                                         id="{$field_type->_id( '[cron-booking-codes-enabled]' )}" value="on" {$checked} >
@@ -258,6 +259,7 @@ class BookingCodes {
         </div>
         <p class="cmb2-metabox-description">{$field->args['msg_next_email']} {$nextCronEventFmt}</p>
 HTML;
+		// phpcs:enable WordPress.Security.EscapeOutput.HeredocOutputNotEscaped
 	}
 
 	/**
@@ -349,7 +351,7 @@ HTML;
                         </a><br>
                         ' . commonsbooking_sanitizeHTML( __( 'The codes <b>of the next month</b> will be sent to all the location email(s), given in bold below.', 'commonsbooking' ) ) .
 						'<br><br>
-                        <div>' . commonsbooking_sanitizeHTML( __( 'Currently configured location email(s): ', 'commonsbooking' ) ) . '<b>' . $location_emails . '</b></div>'
+                        <div>' . commonsbooking_sanitizeHTML( __( 'Currently configured location email(s): ', 'commonsbooking' ) ) . '<b>' . esc_html( $location_emails ) . '</b></div>'
 				. '<br><br>
                  <div>' . commonsbooking_sanitizeHTML( __( '<b>IMPORTANT</b>: You need to save the timeframe before you can send out the booking codes.' ) ) . '</div>'
 			. '</div>';
@@ -358,7 +360,7 @@ HTML;
 			if ( ! empty( $lastBookingEmail ) ) {
 				echo '<p  class="cmb2-metabox-description"><b>'
 						. commonsbooking_sanitizeHTML( __( 'Last booking codes email sent:', 'commonsbooking' ) ) . ' </b>'
-						. wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $lastBookingEmail ) . '</p>';
+						. esc_html( wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $lastBookingEmail ) ) . '</p>';
 			}
 		}
 
@@ -377,7 +379,7 @@ HTML;
 	public static function renderTable( $timeframeId ) {
 		try {
 			$timeframe = new Timeframe( $timeframeId );} catch ( BookingCodeException $e ) {
-			echo $e->getMessage();
+			echo $e->getMessage(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Exception message comes from internal code, not user input.
 			return;
 			}
 
@@ -411,14 +413,14 @@ HTML;
                 </div>
                 <div class="cmb-td">';
 			if ( $timeframe->hasBookingCodes() ) {
-				echo self::renderTableFor( 'timeframe_form', $bookingCodes );
+				echo self::renderTableFor( 'timeframe_form', $bookingCodes ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- renderTableFor() returns sanitized HTML table markup.
 
 				echo '<br>';
 				echo '<p  class="cmb2-metabox-description">';
 					// translators: %s is a positive number
-					printf( __( 'Only showing booking codes for the next %s days.', 'commonsbooking' ), $bcToShow );
+					printf( esc_html__( 'Only showing booking codes for the next %s days.', 'commonsbooking' ), intval( $bcToShow ) );
 					echo '<br>';
-					echo __( 'The amount of booking codes shown in the overview can be changed in the settings.', 'commonsbooking' );
+					echo esc_html__( 'The amount of booking codes shown in the overview can be changed in the settings.', 'commonsbooking' );
 				echo '</p>';
 			} else {
 				echo commonsbooking_sanitizeHTML( __( 'This timeframe has no booking codes. To generate booking codes you need to save the timeframe.', 'commonsbooking' ) );
@@ -467,7 +469,8 @@ HTML;
 	 */
 	public static function renderCSV( $timeframeId = null ) {
 		if ( $timeframeId == null ) {
-			$timeframeId = intval( $_GET['post'] );
+			// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- Admin-only action page; booking codes viewed via admin URL parameters; intval() handles missing value safely.
+			$timeframeId = isset( $_GET['post'] ) ? intval( wp_unslash( $_GET['post'] ) ) : 0;
 		}
 		header( 'Content-Encoding: UTF-8' );
 		header( 'Content-type: text/csv; charset=UTF-8' );
@@ -480,7 +483,7 @@ HTML;
 		try {
 			$bookingCodes = \CommonsBooking\Repository\BookingCodes::getCodes( $timeframeId );
 		} catch ( BookingCodeException $e ) {
-			echo $e->getMessage();
+			echo $e->getMessage(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Exception message comes from internal code, not user input; this is CSV output, not HTML.
 			die;
 		}
 
@@ -502,7 +505,7 @@ HTML;
 	public static function emailCodes( $timeframeId = null, $tsFrom = null, $tsTo = null ) {
 
 		if ( $timeframeId == null ) {
-			$timeframeId = empty( $_GET['post'] ) ? null : sanitize_text_field( $_GET['post'] );
+			$timeframeId = empty( $_GET['post'] ) ? null : intval( wp_unslash( $_GET['post'] ) );  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin-only action page; booking codes viewed via admin URL parameters.
 		}
 
 		if ( empty( $timeframeId ) ) {
@@ -514,22 +517,22 @@ HTML;
 		}
 
 		if ( $tsFrom == null ) {
-			$tsFrom = empty( $_GET['from'] ) ? null : absint( $_GET['from'] );
+			$tsFrom = empty( $_GET['from'] ) ? null : absint( $_GET['from'] );  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin-only action page; booking codes viewed via admin URL parameters.
 		}
 		if ( $tsTo == null ) {
-			$tsTo = empty( $_GET['to'] ) ? null : absint( $_GET['to'] );
+			$tsTo = empty( $_GET['to'] ) ? null : absint( $_GET['to'] );  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin-only action page; booking codes viewed via admin URL parameters.
 		}
 
 		add_action(
 			'commonsbooking_mail_sent',
 			function ( $action, $result ) use ( $timeframeId ) {
-				$redir = empty( $_GET['redir'] ) ? add_query_arg(
+				$redir = empty( $_GET['redir'] ) ? add_query_arg(  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin-only action page; booking codes viewed via admin URL parameters.
 					[
 						'post' => $timeframeId,
 						'action' => 'edit',
 					],
 					admin_url( 'post.php' )
-				) : $_GET['redir'];
+				) : esc_url_raw( wp_unslash( $_GET['redir'] ) );  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin-only action page; booking codes viewed via admin URL parameters.
 
 				if ( is_wp_error( $result ) ) {
 					set_transient( BookingCode::ERROR_TYPE, $result->get_error_message() );

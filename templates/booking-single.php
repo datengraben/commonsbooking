@@ -67,7 +67,7 @@ echo commonsbooking_sanitizeHTML( $booking->bookingNotice() ); ?>
 	<!-- Location -->
 	<div class="cb-wrapper cb-booking-location">
 		<div class="cb-list-header">
-			<h3><?php echo esc_html__( 'Location: ', 'commonsbooking' ); ?><?php echo $location->title(); ?></h3>
+			<h3><?php echo esc_html__( 'Location: ', 'commonsbooking' ); ?><?php echo commonsbooking_sanitizeHTML( $location->title() ); ?></h3>
 		</div>
 		<?php
 		$location_address = $location->formattedAddressOneLine();
@@ -144,7 +144,7 @@ echo commonsbooking_sanitizeHTML( $booking->bookingNotice() ); ?>
 		</div>
 		<div class="cb-list-content cb-user cb-col-30-70">
 			<div><?php echo esc_html__( 'Your data', 'commonsbooking' ); ?></div>
-			<div><a href="<?php echo get_edit_profile_url( $user->ID ); ?>"><?php echo esc_html( $user->first_name ) . ' ' . esc_html( $user->last_name ) . ' (' . esc_html( $user->user_login ) . ')'; ?> </a>
+			<div><a href="<?php echo esc_url( get_edit_profile_url( $user->ID ) ); ?>"><?php echo esc_html( $user->first_name ) . ' ' . esc_html( $user->last_name ) . ' (' . esc_html( $user->user_login ) . ')'; ?> </a>
 				<br>
 				<?php echo commonsbooking_sanitizeHTML( $formatted_user_info ); ?>
 			</div>

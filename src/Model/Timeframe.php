@@ -552,7 +552,7 @@ class Timeframe extends CustomPost {
 				$location = $this->getLocation();
 			} catch ( \Exception $e ) {
 				throw new TimeframeInvalidException(
-					__(
+					__(  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 						'Could not get item or location. Please set a valid item and location.',
 						'commonsbooking'
 					)
@@ -561,7 +561,7 @@ class Timeframe extends CustomPost {
 			if ( ! $item || ! $location ) {
 				// if location or item is missing
 				throw new TimeframeInvalidException(
-					__(
+					__(  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 						'Item or location is missing. Please set item and location.',
 						'commonsbooking'
 					)
@@ -574,7 +574,7 @@ class Timeframe extends CustomPost {
 				$manual_selection_dates = $this->getManualSelectionDates();
 				if ( empty( $manual_selection_dates ) ) {
 					throw new TimeframeInvalidException(
-						__(
+						__(  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 							'No dates selected. Please select at least one date.',
 							'commonsbooking'
 						)
@@ -584,7 +584,7 @@ class Timeframe extends CustomPost {
 				$unique_dates = array_unique( $manual_selection_dates );
 				if ( count( $unique_dates ) != count( $manual_selection_dates ) ) {
 					throw new TimeframeInvalidException(
-						__(
+						__(  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 							'The same date was selected multiple times. Please select each date only once.',
 							'commonsbooking'
 						)
@@ -593,7 +593,7 @@ class Timeframe extends CustomPost {
 			} elseif ( ! $this->getStartDate() ) {
 					// If there is at least one mandatory parameter missing, we cannot save/publish timeframe.
 					throw new TimeframeInvalidException(
-						__(
+						__(  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 							'Startdate is missing. Please enter a start date to publish this timeframe.',
 							'commonsbooking'
 						)
@@ -607,7 +607,7 @@ class Timeframe extends CustomPost {
 
 				if ( $this->getStartTime() && ! $this->getEndTime() && ! $this->isFullDay() ) {
 					throw new TimeframeInvalidException(
-						__(
+						__(  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 							'A pickup time but no return time has been set. Please set the return time.',
 							'commonsbooking'
 						)
@@ -617,7 +617,7 @@ class Timeframe extends CustomPost {
 				// check if end date is before start date
 				if ( $this->getEndDate() && ( $this->getStartDate() > $this->getTimeframeEndDate() ) ) {
 					throw new TimeframeInvalidException(
-						__(
+						__(  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 							'End date is before start date. Please set a valid end date.',
 							'commonsbooking'
 						)
@@ -627,7 +627,7 @@ class Timeframe extends CustomPost {
 				// check if start-time and end-time are the same
 				if ( ( $this->getStartTime() && $this->getEndTime() ) && ( $this->getStartTime() == $this->getEndTime() ) ) {
 					throw new TimeframeInvalidException(
-						__(
+						__(  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 							'The start- and end-time of the timeframe can not be the same. Please check the full-day checkbox if you want users to be able to book the full day.',
 							'commonsbooking'
 						)
@@ -652,12 +652,12 @@ class Timeframe extends CustomPost {
 						throw new TimeframeInvalidException(
 							sprintf(
 								/* translators: %1$s = timeframe-ID, %2$s is timeframe post_title */
-								__(
+								__(  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 									'Item is already bookable at another location within the same date range. See other timeframe ID: %1$s: %2$s',
 									'commonsbooking'
 								),
-								'<a href=" ' . get_edit_post_link( $sameItemTimeframe->ID ) . '">' . $sameItemTimeframe->ID . '</a>',
-								'<a href=" ' . get_edit_post_link( $sameItemTimeframe->ID ) . '">' . $sameItemTimeframe->post_title . '</a>',
+								'<a href=" ' . get_edit_post_link( $sameItemTimeframe->ID ) . '">' . $sameItemTimeframe->ID . '</a>',  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+								'<a href=" ' . get_edit_post_link( $sameItemTimeframe->ID ) . '">' . $sameItemTimeframe->post_title . '</a>',  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 							)
 						);
 					}
@@ -685,12 +685,12 @@ class Timeframe extends CustomPost {
 						$this->overlaps( $otherTimeframe );
 					} catch ( OverlappingException $e ) {
 						throw new TimeframeInvalidException(
-							$e->getMessage() .
+							$e->getMessage() .  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 							sprintf(
 							/* translators: first %s = timeframe-ID, second %s is timeframe post_title */
-								__( 'See overlapping timeframe ID: %1$s %2$s', 'commonsbooking' ),
-								'<a href=" ' . get_edit_post_link( $otherTimeframe->ID ) . '">' . $otherTimeframe->ID . '</a>',
-								'<a href=" ' . get_edit_post_link( $otherTimeframe->ID ) . '">' . $otherTimeframe->post_title . '</a>'
+								__( 'See overlapping timeframe ID: %1$s %2$s', 'commonsbooking' ),  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+								'<a href=" ' . get_edit_post_link( $otherTimeframe->ID ) . '">' . $otherTimeframe->ID . '</a>',  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
+								'<a href=" ' . get_edit_post_link( $otherTimeframe->ID ) . '">' . $otherTimeframe->post_title . '</a>'  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 							)
 						);
 					}
@@ -787,7 +787,7 @@ class Timeframe extends CustomPost {
 			// Compare grid types
 			if ( $otherTimeframe->getGrid() !== $this->getGrid() ) {
 				throw new OverlappingException(
-					__( 'Overlapping bookable timeframes are only allowed to have the same grid.', 'commonsbooking' )
+					__( 'Overlapping bookable timeframes are only allowed to have the same grid.', 'commonsbooking' )  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 				);
 			}
 
@@ -803,7 +803,7 @@ class Timeframe extends CustomPost {
 			// at this stage there is already overlap in the date range and time range, therefore we must check if the repetitions create an overlap
 			if ( $repetition === 'd' || $otherTimeframeRepetition === 'd' ) {
 				throw new OverlappingException(
-					__( 'Daily repeated time periods are not allowed to overlap.', 'commonsbooking' )
+					__( 'Daily repeated time periods are not allowed to overlap.', 'commonsbooking' )  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 				);
 			}
 
@@ -817,7 +817,7 @@ class Timeframe extends CustomPost {
 						);
 						if ( ! empty( $weekDaysOverlap ) ) {
 							throw new OverlappingException(
-								__( 'Overlapping bookable timeframes are not allowed to have the same weekdays.', 'commonsbooking' )
+								__( 'Overlapping bookable timeframes are not allowed to have the same weekdays.', 'commonsbooking' )  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 							);
 						}
 					}
@@ -829,21 +829,21 @@ class Timeframe extends CustomPost {
 					);
 					if ( ! empty( $manualDateOverlap ) ) {
 						throw new OverlappingException(
-							__( 'Overlapping bookable timeframes are not allowed to have the same dates.', 'commonsbooking' )
+							__( 'Overlapping bookable timeframes are not allowed to have the same dates.', 'commonsbooking' )  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 						);
 					}
 					break;
 				case 'w|manual':
 					if ( self::hasWeeklyManualOverlap( $this, $otherTimeframe ) ) {
 						throw new OverlappingException(
-							__( 'The other timeframe is overlapping with your weekly configuration.', 'commonsbooking' )
+							__( 'The other timeframe is overlapping with your weekly configuration.', 'commonsbooking' )  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 						);
 					}
 					break;
 				case 'manual|w':
 					if ( self::hasWeeklyManualOverlap( $otherTimeframe, $this ) ) {
 						throw new OverlappingException(
-							__( 'The other timeframe is overlapping with your weekly configuration.', 'commonsbooking' )
+							__( 'The other timeframe is overlapping with your weekly configuration.', 'commonsbooking' )  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 						);
 					}
 					break;

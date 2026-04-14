@@ -188,7 +188,7 @@ class Restriction extends CustomPostType {
 					break;
 				case \CommonsBooking\Model\Restriction::META_START:
 				case \CommonsBooking\Model\Restriction::META_END:
-					echo date( 'd.m.Y H:i', $value );
+					echo esc_html( date( 'd.m.Y H:i', $value ) );
 					break;
 				default:
 					echo commonsbooking_sanitizeHTML( $value );
@@ -223,7 +223,7 @@ class Restriction extends CustomPostType {
 
 		if (
 			is_admin() && $query->is_main_query() &&
-			isset( $_GET['post_type'] ) && static::$postType == sanitize_text_field( $_GET['post_type'] ) &&
+			isset( $_GET['post_type'] ) && static::$postType == sanitize_text_field( wp_unslash( $_GET['post_type'] ) ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 			$pagenow == 'edit.php'
 		) {
 			// Meta value filtering
@@ -239,12 +239,12 @@ class Restriction extends CustomPostType {
 
 			foreach ( $meta_filters as $key => $filter ) {
 				if (
-					isset( $_GET[ $filter ] ) &&
-					$_GET[ $filter ] != ''
+					isset( $_GET[ $filter ] ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
+					$_GET[ $filter ] != ''  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 				) {
 					$query->query_vars['meta_query'][] = array(
 						'key'   => $key,
-						'value' => sanitize_text_field( $_GET[ $filter ] ),
+						'value' => sanitize_text_field( wp_unslash( $_GET[ $filter ] ) ),  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 					);
 				}
 			}
@@ -255,10 +255,10 @@ class Restriction extends CustomPostType {
 			];
 			foreach ( $post_filters as $key => $filter ) {
 				if (
-					isset( $_GET[ $filter ] ) &&
-					$_GET[ $filter ] != ''
+					isset( $_GET[ $filter ] ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
+					$_GET[ $filter ] != ''  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 				) {
-					$query->query_vars[ $key ] = sanitize_text_field( $_GET[ $filter ] );
+					$query->query_vars[ $key ] = sanitize_text_field( wp_unslash( $_GET[ $filter ] ) );  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 				}
 			}
 
@@ -537,7 +537,7 @@ Select the desired status and then click the "Send" button to send the e-mail.<b
 				return;
 			}
 
-			if ( array_key_exists( self::SEND_BUTTON_ID, $_REQUEST ) ) {
+			if ( array_key_exists( self::SEND_BUTTON_ID, $_REQUEST ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 				update_post_meta( $post_id, \CommonsBooking\Model\Restriction::META_SENT, time() );
 				try {
 					$restriction = new \CommonsBooking\Model\Restriction( $post_id );

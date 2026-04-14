@@ -134,7 +134,8 @@ class CB1UserFields {
 	public function registration_add_fields() {
 
 		foreach ( $this->user_fields as $field ) {
-			$row = ( ! empty( $_POST[ $field['field_name'] ] ) ) ? sanitize_text_field( trim( $_POST[ $field['field_name'] ] ) ) : '';
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Registration form nonce is handled by WordPress core; $field['field_name'] is the dynamic key, value is sanitized below.
+		$row = ( ! empty( $_POST[ $field['field_name'] ] ) ) ? sanitize_text_field( trim( wp_unslash( $_POST[ $field['field_name'] ] ) ) ) : '';
 			?>
 			<p>
 				<?php if ( $field['type'] == 'checkbox' ) { ?>
@@ -199,12 +200,16 @@ class CB1UserFields {
 
 		foreach ( $this->user_fields as $field ) {
 			if ( $field['type'] == 'checkbox' ) {
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Registration form nonce is handled by WordPress core.
 				if ( ! isset( $_POST[ $field['field_name'] ] ) ) {
 					$errors->add( $field['field_name'] . '_error', $field['errormessage'] );
 				}
-			} elseif ( empty( $_POST[ $field['field_name'] ] ) ||
-						! empty( $_POST[ $field['field_name'] ] ) &&
-						sanitize_text_field( $_POST[ $field['field_name'] ] ) === '' ) {
+			} elseif (
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Registration form nonce is handled by WordPress core.
+				empty( $_POST[ $field['field_name'] ] ) ||
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- Registration form nonce is handled by WordPress core.
+				( ! empty( $_POST[ $field['field_name'] ] ) && sanitize_text_field( wp_unslash( $_POST[ $field['field_name'] ] ) ) === '' )
+			) {
 				$errors->add( $field['field_name'] . '_error', $field['errormessage'] );
 			}
 		}
@@ -215,9 +220,11 @@ class CB1UserFields {
 	public function registration_add_meta( $user_id ) {
 
 		foreach ( $this->user_fields as $field ) {
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Registration form nonce is handled by WordPress core's user_register hook.
 			if ( ! empty( $_POST[ $field['field_name'] ] ) ) {
-				$fieldName  = sanitize_text_field( $field['field_name'] );
-				$fieldValue = sanitize_text_field( trim( $_POST[ $field['field_name'] ] ) );
+				$fieldName = sanitize_text_field( $field['field_name'] );
+				// phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.MissingUnslash, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- see above.
+				$fieldValue = sanitize_text_field( trim( wp_unslash( $_POST[ $field['field_name'] ] ) ) );
 				update_user_meta( $user_id, $fieldName, $fieldValue );
 			}
 		}
@@ -264,7 +271,7 @@ class CB1UserFields {
 
 		?>
 
-		<h3><?php _e( 'Extra Fields', 'commonsbooking' ); ?> </h3>
+		<h3><?php esc_html_e( 'Extra Fields', 'commonsbooking' ); ?> </h3>
 
 		<table class="form-table">
 			<tr>
@@ -308,8 +315,10 @@ class CB1UserFields {
 	 */
 	public function save_extra_profile_fields( $user_id ) {
 		if ( current_user_can( 'edit_user', $user_id ) ) {
-			$phone   = sanitize_text_field( $_POST['phone'] );
-			$address = sanitize_text_field( $_POST['address'] );
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- WordPress validates the nonce before firing the edit_user_profile_update / personal_options_update hooks.
+			$phone   = isset( $_POST['phone'] ) ? sanitize_text_field( wp_unslash( $_POST['phone'] ) ) : '';
+			// phpcs:ignore WordPress.Security.NonceVerification.Missing -- see above.
+			$address = isset( $_POST['address'] ) ? sanitize_text_field( wp_unslash( $_POST['address'] ) ) : '';
 
 			update_user_meta( $user_id, 'phone', $phone );
 			update_user_meta( $user_id, 'address', $address );

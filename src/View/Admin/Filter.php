@@ -14,18 +14,18 @@ class Filter {
 	 */
 	public static function renderFilter( $postType, $label, $key, $values ) {
 		// only add filter to post type you want
-		if ( isset( $_GET['post_type'] ) && $postType == $_GET['post_type'] ) {
+		if ( isset( $_GET['post_type'] ) && $postType == $_GET['post_type'] ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 			?>
 			<select name="<?php echo 'admin_' . commonsbooking_sanitizeHTML( $key ); ?>">
 				<option value=""><?php echo commonsbooking_sanitizeHTML( $label ); ?></option>
 				<?php
-				$filterValue = isset( $_GET[ 'admin_' . $key ] ) ? sanitize_text_field( $_GET[ 'admin_' . $key ] ) : '';
+				$filterValue = isset( $_GET[ 'admin_' . $key ] ) ? sanitize_text_field( wp_unslash( $_GET[ 'admin_' . $key ] ) ) : '';  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 				foreach ( $values as $value => $label ) {
 					printf(
 						'<option value="%s"%s>%s</option>',
-						$value,
+						esc_attr( $value ),
 						$value == $filterValue ? ' selected="selected"' : '',
-						$label
+						esc_html( $label )
 					);
 				}
 				?>
@@ -44,7 +44,7 @@ class Filter {
 	 * @param $to
 	 */
 	public static function renderDateFilter( $postType, $startDateInputName, $endDateInputName, $from, $to ) {
-		if ( isset( $_GET['post_type'] ) && $postType == sanitize_text_field( $_GET['post_type'] ) ) {
+		if ( isset( $_GET['post_type'] ) && $postType == sanitize_text_field( wp_unslash( $_GET['post_type'] ) ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 			echo '<style>
                 input[name=' . commonsbooking_sanitizeHTML( $startDateInputName ) . '], 
                 input[name=' . commonsbooking_sanitizeHTML( $endDateInputName ) . ']{

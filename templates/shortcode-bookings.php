@@ -12,7 +12,7 @@
 
 global $templateData;
 if ( ! is_user_logged_in() ) {
-	$current_url = $_SERVER['REQUEST_URI'];
+	$current_url = esc_url_raw( wp_unslash( $_SERVER['REQUEST_URI'] ) ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidated -- REQUEST_URI is always set in a web request context.
 	// translators: %s is the url to the login
 	$noResultText = sprintf( commonsbooking_sanitizeHTML( __( 'Please <a href="%s"> login </a> to see your bookings.', 'commonsbooking' ) ), wp_login_url( $current_url ) );
 } else {

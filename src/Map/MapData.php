@@ -7,8 +7,9 @@ use CommonsBooking\Model\Map;
 
 class MapData {
 	public static function geo_search() {
-		if ( isset( $_POST['query'] ) && $_POST['cb_map_id'] ) {
-			$map = new Map( $_POST['cb_map_id'] );
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Public nopriv AJAX endpoint; nonces not applicable for unauthenticated map searches.
+		if ( isset( $_POST['query'] ) && isset( $_POST['cb_map_id'] ) ) {
+			$map = new Map( intval( wp_unslash( $_POST['cb_map_id'] ) ) );
 
 			$check_capacity = true;
 			$attempts       = 0;
@@ -34,7 +35,7 @@ class MapData {
 			update_option( 'cb_map_last_nominatim_call', $current_timestamp );
 
 			$params = [
-				'q'      => sanitize_text_field( $_POST['query'] ),
+				'q'      => sanitize_text_field( wp_unslash( $_POST['query'] ) ),
 				'format' => 'json',
 				'limit'  => 1,
 			];
@@ -48,7 +49,8 @@ class MapData {
 			$url  = 'https://nominatim.openstreetmap.org/search?' . http_build_query( $params );
 			$args = [
 				'headers' => [
-					'Referer' => 'http' . ( isset( $_SERVER['HTTPS'] ) ? 's' : '' ) . '://' . "{$_SERVER['HTTP_HOST']}",
+					// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotValidatedNotSanitized -- HTTP_HOST used only as Referer header for Nominatim, not stored or output.
+				'Referer' => 'http' . ( isset( $_SERVER['HTTPS'] ) ? 's' : '' ) . '://' . sanitize_text_field( wp_unslash( $_SERVER['HTTP_HOST'] ?? '' ) ),
 				],
 			];
 			$data = wp_safe_remote_get( $url, $args );
@@ -69,6 +71,7 @@ class MapData {
 		} else {
 			wp_send_json_error( [ 'error' => 1 ], 400 );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
 
 	/**

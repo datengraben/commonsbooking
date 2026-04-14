@@ -186,7 +186,8 @@ class BaseRoute extends WP_REST_Controller {
 	public static function hasPermission(): bool {
 		$isApiActive            = Settings::getOption( 'commonsbooking_options_api', 'api-activated' );
 		$anonymousAccessAllowed = Settings::getOption( 'commonsbooking_options_api', 'apikey_not_required' );
-		$apiKey                 = array_key_exists( self::API_KEY_PARAM, $_REQUEST ) ? sanitize_text_field( $_REQUEST[ self::API_KEY_PARAM ] ) : false;
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended, WordPress.Security.ValidatedSanitizedInput.MissingUnslash -- REST API endpoint; nonce-based authentication not applicable for REST API routes; wp_unslash not needed for an API key comparison.
+		$apiKey = array_key_exists( self::API_KEY_PARAM, $_REQUEST ) ? sanitize_text_field( wp_unslash( $_REQUEST[ self::API_KEY_PARAM ] ) ) : false;
 		$apiShare               = ApiShares::getByKey( $apiKey );
 
 		// Only if api is active we return something

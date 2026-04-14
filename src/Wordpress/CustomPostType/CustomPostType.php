@@ -88,7 +88,7 @@ abstract class CustomPostType {
 
 		// If error, yell about it.
 		if ( is_wp_error( $result ) ) {
-			wp_die( $result->get_error_message() );
+			wp_die( esc_html( $result->get_error_message() ) );
 		}
 
 		// hook the term updates to the item post type function. This only runs when a term is updated but that is enough. When a term is added, the post is saved and therefore the other hook is triggered which also runs the same function.
@@ -297,7 +297,7 @@ abstract class CustomPostType {
 	 * Configures list-view
 	 */
 	public function initListView() {
-		if ( array_key_exists( 'post_type', $_GET ) && static::$postType !== $_GET['post_type'] ) {
+		if ( array_key_exists( 'post_type', $_GET ) && static::$postType !== $_GET['post_type'] ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 			return;
 		}
 
@@ -388,7 +388,7 @@ abstract class CustomPostType {
 	 * @return bool
 	 */
 	protected function hasRunBefore( $methodName ): bool {
-		if ( array_key_exists( $methodName, $_REQUEST ) ) {
+		if ( array_key_exists( $methodName, $_REQUEST ) ) {  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 			return true;
 		}
 		$_REQUEST[ $methodName ] = true;
@@ -427,7 +427,7 @@ abstract class CustomPostType {
 			case Map::$postType:
 				return new \CommonsBooking\Model\Map( $post );
 		}
-		throw new PostException( 'No suitable model found for ' . $post->post_type );
+		throw new PostException( 'No suitable model found for ' . $post->post_type );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 	}
 
 	/**

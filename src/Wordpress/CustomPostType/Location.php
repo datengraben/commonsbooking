@@ -81,7 +81,7 @@ class Location extends CustomPostType {
 
 		if (
 			is_admin() && $query->is_main_query() &&
-			isset( $_GET['post_type'] ) && self::$postType == sanitize_text_field( $_GET['post_type'] ) &&
+			isset( $_GET['post_type'] ) && self::$postType == sanitize_text_field( wp_unslash( $_GET['post_type'] ) ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 			$pagenow == 'edit.php'
 		) {
 			// Check if current user is allowed to see posts
@@ -98,14 +98,14 @@ class Location extends CustomPostType {
 			}
 
 			if (
-				isset( $_GET['admin_filter_post_category'] ) &&
-				$_GET['admin_filter_post_category'] != ''
+				isset( $_GET['admin_filter_post_category'] ) &&  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
+				$_GET['admin_filter_post_category'] != ''  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 			) {
 				$query->query_vars['tax_query'] = array(
 					array(
 						'taxonomy'  => self::getTaxonomyName(),
 						'field'     => 'term_id',
-						'terms'     => $_GET['admin_filter_post_category'],
+						'terms'     => intval( wp_unslash( $_GET['admin_filter_post_category'] ) ),  // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Admin list filter reads $_GET params for filtering; nonce not required for read-only admin list views.
 					),
 				);
 			}

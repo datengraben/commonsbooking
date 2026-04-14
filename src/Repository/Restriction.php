@@ -1,4 +1,5 @@
 <?php
+// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Complex SQL queries in this Repository use $wpdb->prefix (WordPress internal) and PHP class constants; no user input is concatenated into SQL.
 
 
 namespace CommonsBooking\Repository;
@@ -90,8 +91,9 @@ class Restriction extends PostRepository {
 			}
 
 			// Complete query
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared, WordPress.DB.PreparedSQL.NotPrepared -- Query uses $wpdb->prefix (WordPress internal) and PHP class constants; no user input in SQL.
 			$query = "
-                SELECT DISTINCT pm1.* from $table_posts pm1                
+                SELECT DISTINCT pm1.* from $table_posts pm1
                 " . $dateQuery . '
                 ' . self::getActiveQuery() . "
                 WHERE
@@ -100,6 +102,7 @@ class Restriction extends PostRepository {
             ";
 
 			$posts = $wpdb->get_results( $query );
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			Plugin::setCacheItem( $posts, Wordpress::getTags( $posts ) );
 
 			return $posts;
@@ -117,17 +120,18 @@ class Restriction extends PostRepository {
 		global $wpdb;
 		$table_postmeta = $wpdb->prefix . 'postmeta';
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Uses $wpdb->prefix (WordPress internal) and PHP class constants; $minTimestamp is handled by %d placeholder.
 		return $wpdb->prepare(
 			"
                 INNER JOIN $table_postmeta pm4 ON
                     pm4.post_id = pm1.id AND (
-                        ( 
+                        (
                             pm4.meta_key = '" . \CommonsBooking\Model\Restriction::META_END . "' AND
                             pm4.meta_value > %d
                         ) OR
                         (
                             pm1.id not in (
-                                SELECT post_id FROM $table_postmeta 
+                                SELECT post_id FROM $table_postmeta
                                 WHERE
                                     meta_key = '" . \CommonsBooking\Model\Restriction::META_END . "'
                             )
@@ -136,6 +140,7 @@ class Restriction extends PostRepository {
             ",
 			$minTimestamp
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**
@@ -149,6 +154,7 @@ class Restriction extends PostRepository {
 		global $wpdb;
 		$table_postmeta = $wpdb->prefix . 'postmeta';
 
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Uses $wpdb->prefix (WordPress internal) and PHP class constants; dates are handled by %d placeholders.
 		return $wpdb->prepare(
 			"INNER JOIN $table_postmeta pm4 ON
                     pm4.post_id = pm1.id AND
@@ -162,16 +168,17 @@ class Restriction extends PostRepository {
                         ) OR
                         (
                             pm1.id not in (
-                                SELECT post_id FROM $table_postmeta 
-                                WHERE 
+                                SELECT post_id FROM $table_postmeta
+                                WHERE
                                     meta_key = '" . \CommonsBooking\Model\Restriction::META_END . "'
                             )
                         )
-                    )                        
+                    )
             ",
 			strtotime( $date . 'T23:59' ),
 			strtotime( $date )
 		);
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 	}
 
 	/**
@@ -183,8 +190,9 @@ class Restriction extends PostRepository {
 		global $wpdb;
 		$table_postmeta = $wpdb->prefix . 'postmeta';
 
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Uses $wpdb->prefix (WordPress internal) and PHP class constants; no user input in SQL.
 		return "INNER JOIN $table_postmeta pm2 ON
-            pm2.post_id = pm1.id AND (                         
+            pm2.post_id = pm1.id AND (
                 pm2.meta_key = '" . \CommonsBooking\Model\Restriction::META_STATE . "' AND
                 pm2.meta_value = '" . \CommonsBooking\Model\Restriction::STATE_ACTIVE . "'
             )";

@@ -39,7 +39,7 @@ class Restriction extends View {
 				<?php } ?>
 				<?php if ( $sent ) { ?>
 					<p class="cmb2-metabox-description">
-						<?php echo esc_html__( 'Sent', 'commonsbooking' ) . ': ' . $sent; ?>
+						<?php echo esc_html__( 'Sent', 'commonsbooking' ) . ': ' . esc_html( $sent ); ?>
 					</p>
 				<?php } ?>
 			</div>

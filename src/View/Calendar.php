@@ -839,30 +839,34 @@ class Calendar {
 	 * @throws Exception
 	 */
 	public static function getCalendarData() {
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Nopriv AJAX endpoint (cb_calendar_data); nonce not applicable for public calendar data.
 		// item by post-param
-		$item = isset( $_POST['item'] ) && $_POST['item'] != '' ? intval( $_POST['item'] ) : false;
+		$item = isset( $_POST['item'] ) && $_POST['item'] != '' ? intval( wp_unslash( $_POST['item'] ) ) : false;
 		if ( $item === false || $item == 0 ) { // 0 = failed intval check
 			throw new Exception( 'missing item id.' );
 		}
 
 		// location by post-param
-		$location = isset( $_POST['location'] ) && $_POST['location'] != '' ? intval( $_POST['location'] ) : false;
+		$location = isset( $_POST['location'] ) && $_POST['location'] != '' ? intval( wp_unslash( $_POST['location'] ) ) : false;
 		if ( $location === false || $location == 0 ) { // 0 = failed intval check
 			throw new Exception( 'missing location id.' );
 		}
 
 		// Ajax-Request param check
-		if ( array_key_exists( 'sd', $_POST ) && Wordpress::isValidDateString( $_POST['sd'] ) ) {
-			$startDateString = sanitize_text_field( $_POST['sd'] );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Value is validated by isValidDateString() and sanitized via sanitize_text_field() on the next line.
+		if ( array_key_exists( 'sd', $_POST ) && Wordpress::isValidDateString( wp_unslash( $_POST['sd'] ) ) ) {
+			$startDateString = sanitize_text_field( wp_unslash( $_POST['sd'] ) );
 		} else {
 			throw new Exception( 'wrong or missing start date.' );
 		}
 
-		if ( array_key_exists( 'ed', $_POST ) && Wordpress::isValidDateString( $_POST['ed'] ) ) {
-			$endDateString = sanitize_text_field( $_POST['ed'] );
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Value is validated by isValidDateString() and sanitized via sanitize_text_field() on the next line.
+		if ( array_key_exists( 'ed', $_POST ) && Wordpress::isValidDateString( wp_unslash( $_POST['ed'] ) ) ) {
+			$endDateString = sanitize_text_field( wp_unslash( $_POST['ed'] ) );
 		} else {
 			throw new Exception( 'wrong or missing end date.' );
 		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
 
 		$jsonResponse = self::getCalendarDataArray( $item, $location, $startDateString, $endDateString );
 

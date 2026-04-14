@@ -58,7 +58,7 @@ class BookingRuleApplied extends BookingRule {
 	 */
 	public function setAppliesToWhat( bool $appliesToAll, array $appliedTerms = [] ): void {
 		if ( ! $appliesToAll && empty( $appliedTerms ) ) {
-			throw new BookingRuleException( __( 'You need to specify a category, if the rule does not apply to all items', 'commonsbooking' ) );
+			throw new BookingRuleException( __( 'You need to specify a category, if the rule does not apply to all items', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 		}
 		$this->appliesToAll = $appliesToAll;
 		$this->appliedTerms = $appliedTerms;
@@ -77,17 +77,17 @@ class BookingRuleApplied extends BookingRule {
 			if ( count( $this->params ) == count( $paramsToSet ) ) {
 				$this->appliedParams = $paramsToSet;
 			} else {
-				throw new BookingRuleException( __( 'Booking rules: Not enough parameters specified.', 'commonsbooking' ) );
+				throw new BookingRuleException( __( 'Booking rules: Not enough parameters specified.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			}
 			foreach ( $paramsToSet as $param ) {
 				if ( ! is_numeric( $param ) ) {
-					throw new BookingRuleException( __( 'Booking rules: Parameters need to be a number.', 'commonsbooking' ) );
+					throw new BookingRuleException( __( 'Booking rules: Parameters need to be a number.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 				}
 			}
 		}
 		if ( ! empty( $this->selectParam ) ) {
 			if ( empty( $selectParam ) || ! is_numeric( $selectParam ) ) {
-				throw new BookingRuleException( __( 'Booking rules: Select parameter has not been properly set.', 'commonsbooking' ) );
+				throw new BookingRuleException( __( 'Booking rules: Select parameter has not been properly set.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			}
 			$this->appliedSelectParam = $selectParam;
 		}
@@ -176,7 +176,7 @@ class BookingRuleApplied extends BookingRule {
 						) . PHP_EOL
 					);
 				}
-				throw new BookingDeniedException( $errorMessage );
+				throw new BookingDeniedException( $errorMessage );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 			}
 		}
 	}
@@ -243,7 +243,7 @@ class BookingRuleApplied extends BookingRule {
 					if ( $ignoreErrors ) {
 						continue;
 					}
-					throw new BookingRuleException( __( 'Booking rules: No rule type specified.', 'commonsbooking' ) );
+					throw new BookingRuleException( __( 'Booking rules: No rule type specified.', 'commonsbooking' ) );  // phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- Exception messages come from internal code, not user input.
 				}
 				if ( $validRule->name !== $ruleConfig['rule-type'] ) {
 					continue;
