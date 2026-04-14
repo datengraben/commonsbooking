@@ -1587,6 +1587,18 @@ User Email: {{user:user_email}}',
 					),
 				],
 			),
+			'rssfeed' => array(
+				'title' => esc_html__( 'RSS Feed', 'commonsbooking' ),
+				'desc'  => commonsbooking_sanitizeHTML( __( 'Enables public RSS feeds for Items, Locations and Timeframes so users can subscribe to updates in any feed reader.', 'commonsbooking' ) ),
+				'id'    => 'rss_feed_group',
+				'fields' => [
+					array(
+						'name' => esc_html__( 'Enable RSS feed', 'commonsbooking' ),
+						'id'   => 'rss_feed_enabled',
+						'type' => 'checkbox',
+					),
+				],
+			),
 			'experimental' => array(
 				'title'  => commonsbooking_sanitizeHTML( __( 'Advanced caching settings', 'commonsbooking' ) ),
 				'id'     => 'caching_group',
