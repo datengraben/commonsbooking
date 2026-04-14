@@ -836,6 +836,15 @@ class Plugin {
 		// RSS feed rewrite
 		RssFeed::initRewrite();
 
+		// Exclude admin-only CPTs from WP core sitemaps (WP 5.5+).
+		// Yoast SEO and RankMath respect this same filter.
+		// cb_item and cb_location are intentionally left in (public content).
+		add_filter( 'wp_sitemaps_post_types', static function ( array $types ): array {
+			unset( $types['cb_restriction'] );
+			unset( $types['cb_map'] );
+			return $types;
+		} );
+
 	}
 
 	/**
