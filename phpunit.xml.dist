@@ -1,13 +1,10 @@
 <?xml version="1.0"?>
 <phpunit
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.6/phpunit.xsd"
+        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/11.0/phpunit.xsd"
 	bootstrap="tests/php/bootstrap.php"
 	backupGlobals="false"
 	colors="true"
-	convertErrorsToExceptions="true"
-	convertNoticesToExceptions="true"
-	convertWarningsToExceptions="true"
 	>
 	<testsuites>
 		<testsuite name="default">
@@ -18,15 +15,14 @@
         <ini name="xdebug.mode" value="coverage" />
     </php>
     <logging>
-        <testdoxXml outputFile="build/logs/xml.log" />
-        <testdoxHtml outputFile="build/logs/html.log" />
-        <text outputFile="build/logs/text.log"/>
+        <junit outputFile="build/logs/junit.xml"/>
     </logging>
-
-    <coverage>
+    <source>
         <include>
             <directory>./src</directory>
         </include>
+    </source>
+    <coverage>
         <report>
             <clover outputFile="build/logs/clover.xml"/>
             <html outputDirectory="build/report" />
