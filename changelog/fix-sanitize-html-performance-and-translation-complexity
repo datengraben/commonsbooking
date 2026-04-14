@@ -1,0 +1,4 @@
+Significance: patch
+Type: fixed
+
+Refactor commonsbooking_sanitizeHTML() to cache its allowed-tags array with a static variable instead of rebuilding it on every call, eliminating redundant work on admin pages that invoke it hundreds of times. Move HTML markup out of translatable strings in UserWidget and CB1UserFields so translators only handle plain text, and fix a malformed HTML attribute (target=_blank" → target="_blank") in the terms-and-services link.
