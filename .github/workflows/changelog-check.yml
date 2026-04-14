@@ -6,10 +6,27 @@ on:
       - master
       - 'release/**'
     paths-ignore:
+      # Changelog files themselves
       - 'changelog/**'
       - 'CHANGELOG.md'
+      # Documentation
       - '**.md'
       - '**.txt'
+      - 'languages/**'
+      # CI / tooling config (no user impact)
+      - '.github/**'
+      - '.editorconfig'
+      - '.gitignore'
+      - '.phpcs.xml.dist'
+      - '.wp-env.json'
+      - 'phpunit.xml.dist'
+      - 'Gruntfile.js'
+      - 'composer.json'
+      - 'composer.lock'
+      - 'package.json'
+      - 'package-lock.json'
+      # Tests
+      - 'tests/**'
 
 jobs:
   changelog:
