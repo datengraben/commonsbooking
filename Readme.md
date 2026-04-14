@@ -59,55 +59,56 @@ CommonsBooking is a plugin for the management and booking of common goods. This 
 
 Either through translating WordPress into your native tongue ([see the already existing WordPress Plugin Translations](https://translate.wordpress.org/projects/wp-plugins/commonsbooking/)) or through developing and testing new versions of the application.
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full developer guide, including local setup, running tests, code standards, and how to submit a pull request.
+
 ## Development
 
 ### Run plugin
 
-First, we have to install the necessary dependencies and packages, we can do this by using the 
+Install all dependencies and build assets:
 ```
 npm run start
 ```
-command. 
 
-The most easy way to start hacking WordPress plugins in general (if you have no other development environment set up) is using [wp-env](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-env/). Install it and it's dependencies (mainly Docker) and run this to start the enviroment:
+The easiest way to start hacking WordPress plugins (if you have no other development environment set up) is using [wp-env](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-env/). Install it and its dependencies (mainly Docker) and run:
 ```
 npm run env:start
 ```
-The provided `.wp-env.json` should be sufficient for normal development, for details see the [documentation of wp-env config](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-env/#wp-env-json). [You can create](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-env/#wp-env-override-json) a `.wp-env.override.json` for a custom configuration you don't want to check in.
 
-For testing, you can activate the [kasimir theme](github.com/flegfleg/kasimir-theme) via [wp cli](https://make.wordpress.org/cli/handbook/) inside the wp-env docker container:
+WordPress will be available at **http://localhost:1000** (credentials: `admin` / `password`).
+
+The provided `.wp-env.json` is sufficient for normal development. See the [wp-env config docs](https://developer.wordpress.org/block-editor/reference-guides/packages/packages-env/#wp-env-json) for details. Create a `.wp-env.override.json` for local overrides you don't want to check in.
+
+To activate the [Kasimir theme](https://github.com/flegfleg/kasimir-theme) via WP-CLI:
 ```
 npm run env run cli wp theme activate kasimir-theme
 ```
 
 ### Test plugin
 
-To test the code you first run the [preparation scripts](https://github.com/wp-cli/scaffold-command#wp-scaffold-plugin-tests) to load the wordpress core and configure database connection via `wp-config.php`. The following line can vary on your system, use the appropriate credentials, databse port and version of wordpress. The appropriate database port is printed out by `npm run env:start`:
+First set up the test database. The database port is printed when you run `npm run env:start`:
 ```
-bash bin/install-wp-tests.sh wordpress root password 127.0.0.1:49153 latest
-```
-
-Testing the plugin code via `phpunit`. At the moment it works only with a manually downloaded phar. We are using PHPUnit 9 and PHP7.4 for the automated tests. The tests might fail if you are using a different version.
-```
-php ~/phpunit.phar --bootstrap tests/php/bootstrap.php
+bash bin/install-wp-tests.sh wordpress root '' 127.0.0.1:<PORT> latest
 ```
 
-E2E (end to end) tests are written in [cypress](https://www.cypress.io/). To run them you need to install cypress and start the wordpress environment:
+Then run the PHP unit tests:
 ```bash
-npm run env:start
-```
-Now, install the test data needed for the tests:
-```bash
-npm run cypress:setup
+composer test
 ```
 
-Then you can run the tests:
+E2E (end to end) tests are written in [Cypress](https://www.cypress.io/). To run them:
 ```bash
-npm run cypress:run
+npm run env:start        # environment must be running
+npm run cypress:setup    # import test fixture data (once per environment)
+npm run cypress:run      # run headlessly
+npm run cypress:open     # open the interactive Cypress UI
 ```
-Or open Cypress using
+
+### Code standards
+
 ```bash
-npm run cypress:open
+composer lint        # check for violations
+composer lint:fix    # auto-fix fixable violations
 ```
 
 ### Update translations
@@ -115,11 +116,11 @@ npm run cypress:open
 Currently, we only manage German and English translations as po files in the repository, so they are available at build time. 
 See the [WordPress plugin translation page](https://translate.wordpress.org/projects/wp-plugins/commonsbooking/) for other languages available at runtime.
 
-Create a new .pot file using the 
+Create a new .pot file using:
 ```
 wp i18n make-pot . languages/commonsbooking.pot
 ```
-command in the plugin directory. Make sure that all of your strings use the `__` function with the domain `commonsbooking`. Then you can use `poedit` to open the `commonsbooking-de_DE.po` and update the strings from the `pot` file. 
+Make sure that all of your strings use the `__` function with the domain `commonsbooking`. Then you can use `poedit` to open `commonsbooking-de_DE.po` and update the strings from the `pot` file.
 
 ### Build plugin zip
 
