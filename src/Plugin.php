@@ -14,6 +14,7 @@ use CommonsBooking\Service\BookingRuleApplied;
 use CommonsBooking\Service\Cache;
 use CommonsBooking\Service\Scheduler;
 use CommonsBooking\Service\iCalendar;
+use CommonsBooking\Service\RssFeed;
 use CommonsBooking\Service\Upgrade;
 use CommonsBooking\Settings\Settings;
 use CommonsBooking\Repository\BookingCodes;
@@ -758,6 +759,9 @@ class Plugin {
 
     	// iCal rewrite
 		iCalendar::initRewrite();
+
+		// RSS feed rewrite
+		RssFeed::initRewrite();
 
 	}
 
