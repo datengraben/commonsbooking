@@ -17,7 +17,87 @@
 					<h3><?php echo esc_html__( 'Support', 'commonsbooking' ); ?></h3>
 					<ul>
 						<li><a href="https://commonsbooking.org/documentation" target="_blank"><?php echo esc_html__( 'Documentation & Tutorials', 'commonsbooking' ); ?></a></li>
-						<li><a href="mailto:mail@commonsbooking.org?body=%0D%0A%0D%0A-----------%0D%0A%0D%0AInstallations-URL: <?php echo home_url(); ?>%0D%0A%0D%0ACB-Version: <?php echo commonsbooking_sanitizeHTML( COMMONSBOOKING_VERSION ); ?>" target="_blank"><?php echo esc_html__( 'Support E-Mail', 'commonsbooking' ); ?></a></li>
+						<?php
+						$support_body  = "\r\n\r\n-----------\r\n\r\n";
+						$support_body .= 'Installations-URL: ' . home_url() . "\r\n\r\n";
+						$support_body .= 'WP-Version: ' . get_bloginfo( 'version' ) . "\r\n";
+						$support_body .= 'PHP-Version: ' . phpversion() . "\r\n";
+						$support_body .= 'CB-Version: ' . COMMONSBOOKING_VERSION . "\r\n";
+						$support_body .= 'Theme: ' . wp_get_theme()->get( 'Name' ) . ' ' . wp_get_theme()->get( 'Version' ) . "\r\n";
+						$support_body .= 'Locale: ' . get_locale() . "\r\n";
+						$support_body .= 'WP_DEBUG: ' . ( defined( 'WP_DEBUG' ) && WP_DEBUG ? 'enabled' : 'disabled' ) . "\r\n";
+						$support_body .= 'PHP-Memory-Limit: ' . ini_get( 'memory_limit' ) . "\r\n";
+						$support_body .= 'Permalink-Structure: ' . ( get_option( 'permalink_structure' ) ?: '(default/plain)' ) . "\r\n";
+
+						if ( is_multisite() ) {
+							$support_body .= 'Multisite: yes' . "\r\n";
+						}
+						if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
+							$support_body .= 'WP-Cron: disabled' . "\r\n";
+						}
+						if ( wp_using_ext_object_cache() ) {
+							$support_body .= 'External-Object-Cache: active' . "\r\n";
+						}
+
+						// Check for known incompatible plugins (see FAQ)
+						if ( ! function_exists( 'is_plugin_active' ) ) {
+							include_once ABSPATH . 'wp-admin/includes/plugin.php';
+						}
+						$known_problematic_plugins = [
+							'wp-maintenance-mode/wp-maintenance-mode.php'         => 'Lightstart (wp-maintenance-mode)',
+							'all-in-one-event-calendar/all-in-one-event-calendar.php' => 'All-in-One Event Calendar',
+							'redis-cache/redis-cache.php'                         => 'Redis Object Cache',
+							'ultimate-member/ultimate-member.php'                 => 'Ultimate Member',
+							'autoptimize/autoptimize.php'                         => 'Autoptimize',
+						];
+						$active_problematic = [];
+						foreach ( $known_problematic_plugins as $plugin_file => $plugin_name ) {
+							if ( is_plugin_active( $plugin_file ) ) {
+								$active_problematic[] = $plugin_name;
+							}
+						}
+						// Also check for the incompatible GridBulletin theme
+						if ( 'gridbulletin' === wp_get_theme()->get_template() ) {
+							$active_problematic[] = 'GridBulletin (active theme)';
+						}
+						if ( $active_problematic ) {
+							$support_body .= "\r\nActive known-problematic plugins/themes:\r\n";
+							foreach ( $active_problematic as $name ) {
+								$support_body .= '  - ' . $name . "\r\n";
+							}
+						}
+
+						$support_body .= 'Max-Upload-Size: ' . size_format( wp_max_upload_size() ) . "\r\n";
+
+						$cb_general  = get_option( 'commonsbooking_options_general', [] );
+						$cb_advanced = get_option( 'commonsbooking_options_advanced-options', [] );
+						$cb_api      = get_option( 'commonsbooking_options_api', [] );
+						$support_body .= "\r\nCB Settings:\r\n";
+						$support_body .= '  Booking-Comments: ' . ( ! empty( $cb_general['booking-comment-active'] ) ? 'enabled' : 'disabled' ) . "\r\n";
+						$support_body .= '  iCal-Feed: ' . ( ! empty( $cb_advanced['feed_enabled'] ) ? 'enabled' : 'disabled' ) . "\r\n";
+						$support_body .= '  API: ' . ( ! empty( $cb_api['api-activated'] ) ? 'enabled' : 'disabled' ) . "\r\n";
+						$support_body .= '  Cache-Adapter: ' . ( $cb_advanced['cache_adapter'] ?? 'filesystem' ) . "\r\n";
+						$bookings_page_id    = $cb_general['bookings_page'] ?? '';
+						$bookings_page_title = $bookings_page_id ? get_the_title( (int) $bookings_page_id ) : '(not set)';
+						$support_body .= '  Bookings-Page: ' . $bookings_page_title . ' (ID: ' . ( $bookings_page_id ?: 'none' ) . ')' . "\r\n";
+
+						$all_plugins    = get_plugins();
+						$active_plugins = get_option( 'active_plugins', [] );
+						if ( $active_plugins ) {
+							$support_body .= "\r\nActive plugins:\r\n";
+							foreach ( $active_plugins as $plugin_file ) {
+								$plugin_data   = $all_plugins[ $plugin_file ] ?? null;
+								$plugin_name   = $plugin_data ? $plugin_data['Name'] : $plugin_file;
+								$plugin_version = $plugin_data ? $plugin_data['Version'] : '?';
+								$support_body .= '  - ' . $plugin_name . ' ' . $plugin_version . "\r\n";
+							}
+						}
+
+						$support_href  = 'mailto:mail@commonsbooking.org'
+							. '?subject=' . rawurlencode( 'Support Request - CommonsBooking' )
+							. '&body=' . rawurlencode( $support_body );
+						?>
+						<li><a href="<?php echo esc_attr( $support_href ); ?>" target="_blank"><?php echo esc_html__( 'Support E-Mail', 'commonsbooking' ); ?></a></li>
 						<li><a href="https://commonsbooking.org/contact/" target="_blank"><?php echo __( 'Contact & Newsletter', 'commonsbooking' ); ?></a></li>
 					</ul>
 				<p>			<?php echo esc_html__( 'CommonsBooking Version', 'commonsbooking' ) . ' ' . commonsbooking_sanitizeHTML( COMMONSBOOKING_VERSION . ' ' . COMMONSBOOKING_VERSION_COMMENT ); ?></p>
