@@ -24,6 +24,7 @@
 						$support_body .= 'PHP-Version: ' . phpversion() . "\r\n";
 						$support_body .= 'CB-Version: ' . COMMONSBOOKING_VERSION . "\r\n";
 						$support_body .= 'Theme: ' . wp_get_theme()->get( 'Name' ) . ' ' . wp_get_theme()->get( 'Version' ) . "\r\n";
+						$support_body .= 'Locale: ' . get_locale() . "\r\n";
 
 						// Check for known incompatible plugins (see FAQ)
 						if ( ! function_exists( 'is_plugin_active' ) ) {
