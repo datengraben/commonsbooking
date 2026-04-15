@@ -27,6 +27,7 @@
 						$support_body .= 'Locale: ' . get_locale() . "\r\n";
 						$support_body .= 'WP_DEBUG: ' . ( defined( 'WP_DEBUG' ) && WP_DEBUG ? 'enabled' : 'disabled' ) . "\r\n";
 						$support_body .= 'PHP-Memory-Limit: ' . ini_get( 'memory_limit' ) . "\r\n";
+						$support_body .= 'Permalink-Structure: ' . ( get_option( 'permalink_structure' ) ?: '(default/plain)' ) . "\r\n";
 
 						// Check for known incompatible plugins (see FAQ)
 						if ( ! function_exists( 'is_plugin_active' ) ) {
