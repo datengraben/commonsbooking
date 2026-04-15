@@ -156,6 +156,13 @@ add_filter('commonsbooking_tag_cb_item_yourFunction', function( $value, $obj) {
 }, 10, 2);
 ```
 
+## Community snippet library
+
+Ready-to-paste examples for all of the hooks and filters above are maintained
+in [`contrib/`](../../../../contrib/README.md) — the community snippet library.
+Copy a snippet into your Code Snippets plugin or `functions.php` to get started
+without writing code from scratch.
+
 ### Filter `commonsbooking_mobile_calendar_month_count`
 
 ::: tip Since version 2.10.5
