@@ -29,6 +29,10 @@
 						$support_body .= 'PHP-Memory-Limit: ' . ini_get( 'memory_limit' ) . "\r\n";
 						$support_body .= 'Permalink-Structure: ' . ( get_option( 'permalink_structure' ) ?: '(default/plain)' ) . "\r\n";
 
+						if ( is_multisite() ) {
+							$support_body .= 'Multisite: yes' . "\r\n";
+						}
+
 						// Check for known incompatible plugins (see FAQ)
 						if ( ! function_exists( 'is_plugin_active' ) ) {
 							include_once ABSPATH . 'wp-admin/includes/plugin.php';
