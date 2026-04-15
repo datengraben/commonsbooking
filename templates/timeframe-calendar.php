@@ -125,7 +125,7 @@ if ( ! array_key_exists( 'backend', $templateData ) || $templateData['backend'] 
 			 * @param string $html         Additional HTML to output inside the form.
 			 * @param array  $templateData The current template data array (contains item, location, calendar_data, etc.).
 			 *
-			 * @since 2.9
+			 * @since 2.10.11
 			 *
 			 * Example usage:
 			 *   add_filter( 'commonsbooking_booking_form_fields', function( $html, $templateData ) {

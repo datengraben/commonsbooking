@@ -57,7 +57,7 @@ if ( isset( $form_post_status ) ) {
 		 * @param string                         $form_post_status The status the form will transition to
 		 *                                                         ('confirmed', 'canceled', 'delete_unconfirmed').
 		 *
-		 * @since 2.9
+		 * @since 2.10.11
 		 *
 		 * Example usage:
 		 *   add_filter( 'commonsbooking_booking_confirmation_fields', function( $html, $booking, $status ) {

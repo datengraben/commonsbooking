@@ -217,7 +217,7 @@ class Booking extends Timeframe {
 			 * @param string $redirectUrl The default URL (booking-single page for the new booking).
 			 * @param int    $postId      The post ID of the newly created / updated booking.
 			 *
-			 * @since 2.9
+			 * @since 2.10.11
 			 *
 			 * Example usage – redirect to a custom "extra info" page first:
 			 *   add_filter( 'commonsbooking_booking_redirect_url', function( $url, $postId ) {
@@ -377,7 +377,7 @@ class Booking extends Timeframe {
 			 * @param int    $repetitionStart Unix timestamp of the booking start.
 			 * @param int    $repetitionEnd   Unix timestamp of the booking end.
 			 *
-			 * @since 2.9
+			 * @since 2.10.11
 			 *
 			 * Example usage:
 			 *   add_filter( 'commonsbooking_booking_meta_input', function( $meta, $itemId, $locationId, $start, $end ) {
@@ -442,7 +442,7 @@ class Booking extends Timeframe {
 		 * @param int    $repetitionStart Unix timestamp of the booking start.
 		 * @param int    $repetitionEnd   Unix timestamp of the booking end.
 		 *
-		 * @since 2.9
+		 * @since 2.10.11
 		 *
 		 * Example usage – require a custom code:
 		 *   add_action( 'commonsbooking_booking_pre_validate', function( $itemId, $locationId, $status, $start, $end ) {
@@ -478,7 +478,7 @@ class Booking extends Timeframe {
 		 * @param int                            $postId  The booking post ID.
 		 * @param \CommonsBooking\Model\Booking  $booking The booking model object.
 		 *
-		 * @since 2.9
+		 * @since 2.10.11
 		 */
 		if ( $post_status === 'unconfirmed' && empty( $booking ) ) {
 			do_action( 'commonsbooking_booking_created', $postId, $bookingModel );
@@ -492,7 +492,7 @@ class Booking extends Timeframe {
 		 * @param int                            $postId  The booking post ID.
 		 * @param \CommonsBooking\Model\Booking  $booking The booking model object.
 		 *
-		 * @since 2.9
+		 * @since 2.10.11
 		 */
 		if ( $post_status === 'confirmed' ) {
 			do_action( 'commonsbooking_booking_confirmed', $postId, $bookingModel );
@@ -508,7 +508,7 @@ class Booking extends Timeframe {
 		 * @param int    $postId      The booking post ID.
 		 * @param string $post_status The booking status after this request ('unconfirmed', 'confirmed', 'canceled', …).
 		 *
-		 * @since 2.9
+		 * @since 2.10.11
 		 *
 		 * Example usage:
 		 *   add_action( 'commonsbooking_save_booking_meta', function( $postId, $status ) {
