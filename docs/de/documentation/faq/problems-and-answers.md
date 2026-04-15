@@ -1,4 +1,26 @@
-#  Probleme und Antworten
+# Probleme und Antworten
+
+## Was sendet der „Support E-Mail"-Link?
+
+Der Link **Support E-Mail** im CommonsBooking-Dashboard (`CommonsBooking → Dashboard`) öffnet dein E-Mail-Programm mit einer vorausgefüllten Nachricht, die eine Diagnosezusammenfassung deiner Installation enthält. So kann das Support-Team dein Problem nachvollziehen und lösen, ohne zunächst Rückfragen stellen zu müssen.
+
+Folgende Informationen werden automatisch eingefügt:
+
+- **Website-URL** — die Adresse deiner WordPress-Installation
+- **WordPress-Version**, **PHP-Version**, **CommonsBooking-Version**
+- **Aktives Theme** (Name und Version)
+- **Locale** (Spracheinstellung)
+- **WP_DEBUG**-Status (aktiviert/deaktiviert)
+- **PHP-Speicherlimit**
+- **Permalink-Struktur**
+- **CB-Einstellungen** — ob Buchungskommentare, der iCal-Feed und die API aktiviert sind, der verwendete Cache-Adapter sowie die konfigurierte Buchungsseite
+- **Maximale Upload-Größe**
+- **Alle aktiven Plugins** mit ihren Versionen
+- Alle derzeit aktiven **bekannten inkompatiblen Plugins oder Themes** (siehe Abschnitte weiter unten)
+
+Falls deine Installation ein **WordPress-Multisite**-Netzwerk ist, **WP Cron deaktiviert** hat oder einen **externen Objekt-Cache** (z. B. Redis oder Memcached) verwendet, wird dies ebenfalls vermerkt — jedoch nur, wenn es zutrifft, damit die E-Mail übersichtlich bleibt.
+
+Passwörter, Nutzerdaten oder Buchungsinhalte werden nicht übermittelt. Du kannst die vorausgefüllte Nachricht vor dem Senden einsehen und bearbeiten.
 
 ###  Anzeige Kalender-Widget im Admin-Bereich
 
