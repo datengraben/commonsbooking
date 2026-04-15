@@ -204,7 +204,29 @@ class Booking extends Timeframe {
 			// get slug as parameter
 			$post_slug = get_post( $postId )->post_name;
 
-			wp_safe_redirect( add_query_arg( self::getPostType(), $post_slug, home_url() ) );
+			$redirectUrl = add_query_arg( self::getPostType(), $post_slug, home_url() );
+
+			/**
+			 * Filter: commonsbooking_booking_redirect_url
+			 *
+			 * Allows overriding the URL the user is sent to after the initial booking form is
+			 * submitted (i.e. after an unconfirmed booking has been created). Use this to insert
+			 * additional intermediate pages into the booking flow before the booking-single
+			 * confirmation page.
+			 *
+			 * @param string $redirectUrl The default URL (booking-single page for the new booking).
+			 * @param int    $postId      The post ID of the newly created / updated booking.
+			 *
+			 * @since 2.9
+			 *
+			 * Example usage – redirect to a custom "extra info" page first:
+			 *   add_filter( 'commonsbooking_booking_redirect_url', function( $url, $postId ) {
+			 *       return add_query_arg( [ 'cb_booking_id' => $postId ], get_permalink( MY_EXTRA_PAGE_ID ) );
+			 *   }, 10, 2 );
+			 */
+			$redirectUrl = apply_filters( 'commonsbooking_booking_redirect_url', $redirectUrl, $postId );
+
+			wp_safe_redirect( $redirectUrl );
 			exit;
 		}
 	}
@@ -333,13 +355,43 @@ class Booking extends Timeframe {
 
 		// New booking
 		if ( empty( $booking ) ) {
-			$postarr['post_name']  = Helper::generateRandomString();
-			$postarr['meta_input'] = array(
+			$postarr['post_name'] = Helper::generateRandomString();
+			$metaInput            = array(
 				\CommonsBooking\Model\Timeframe::META_LOCATION_ID   => $locationId,
 				\CommonsBooking\Model\Timeframe::META_ITEM_ID       => $itemId,
 				\CommonsBooking\Model\Timeframe::REPETITION_START   => $repetitionStart,
 				\CommonsBooking\Model\Timeframe::REPETITION_END     => $repetitionEnd,
 				'type'                                              => Timeframe::BOOKING_ID,
+			);
+
+			/**
+			 * Filter: commonsbooking_booking_meta_input
+			 *
+			 * Allows adding or modifying the post meta saved when a new booking is created.
+			 * Use this together with commonsbooking_booking_form_fields to persist custom form
+			 * fields as booking meta.
+			 *
+			 * @param array  $metaInput       Associative array of meta key => value pairs.
+			 * @param int    $itemId          The item post ID.
+			 * @param int    $locationId      The location post ID.
+			 * @param int    $repetitionStart Unix timestamp of the booking start.
+			 * @param int    $repetitionEnd   Unix timestamp of the booking end.
+			 *
+			 * @since 2.9
+			 *
+			 * Example usage:
+			 *   add_filter( 'commonsbooking_booking_meta_input', function( $meta, $itemId, $locationId, $start, $end ) {
+			 *       $meta['my_custom_field'] = sanitize_text_field( $_REQUEST['my_custom_field'] ?? '' );
+			 *       return $meta;
+			 *   }, 10, 5 );
+			 */
+			$postarr['meta_input'] = apply_filters(
+				'commonsbooking_booking_meta_input',
+				$metaInput,
+				$itemId,
+				$locationId,
+				$repetitionStart,
+				$repetitionEnd
 			);
 
 			$postId          = wp_insert_post( $postarr, true );
@@ -377,6 +429,30 @@ class Booking extends Timeframe {
 			);
 		}
 
+		/**
+		 * Action: commonsbooking_booking_pre_validate
+		 *
+		 * Fires before the built-in booking rules are evaluated. Throw a
+		 * BookingDeniedException to reject the booking with a user-facing error message;
+		 * the exception is caught by the same handler as core validation errors.
+		 *
+		 * @param int    $itemId          The item post ID.
+		 * @param int    $locationId      The location post ID.
+		 * @param string $post_status     The target booking status ('unconfirmed', 'confirmed', 'canceled', …).
+		 * @param int    $repetitionStart Unix timestamp of the booking start.
+		 * @param int    $repetitionEnd   Unix timestamp of the booking end.
+		 *
+		 * @since 2.9
+		 *
+		 * Example usage – require a custom code:
+		 *   add_action( 'commonsbooking_booking_pre_validate', function( $itemId, $locationId, $status, $start, $end ) {
+		 *       if ( empty( $_REQUEST['access_code'] ) || $_REQUEST['access_code'] !== 'SECRET' ) {
+		 *           throw new \CommonsBooking\Exception\BookingDeniedException( __( 'Invalid access code.', 'my-plugin' ) );
+		 *       }
+		 *   }, 10, 5 );
+		 */
+		do_action( 'commonsbooking_booking_pre_validate', $itemId, $locationId, $post_status, $repetitionStart, $repetitionEnd );
+
 		// check if the Booking we want to create conforms to the set booking rules
 		if ( $needsValidation ) {
 			try {
@@ -393,6 +469,55 @@ class Booking extends Timeframe {
 												PHP_EOL . implode( ', ', $postId->get_error_messages() )
 			);
 		}
+
+		/**
+		 * Action: commonsbooking_booking_created
+		 *
+		 * Fires after a brand-new booking has been created with status 'unconfirmed'.
+		 *
+		 * @param int                            $postId  The booking post ID.
+		 * @param \CommonsBooking\Model\Booking  $booking The booking model object.
+		 *
+		 * @since 2.9
+		 */
+		if ( $post_status === 'unconfirmed' && empty( $booking ) ) {
+			do_action( 'commonsbooking_booking_created', $postId, $bookingModel );
+		}
+
+		/**
+		 * Action: commonsbooking_booking_confirmed
+		 *
+		 * Fires after an existing booking has been transitioned to status 'confirmed'.
+		 *
+		 * @param int                            $postId  The booking post ID.
+		 * @param \CommonsBooking\Model\Booking  $booking The booking model object.
+		 *
+		 * @since 2.9
+		 */
+		if ( $post_status === 'confirmed' ) {
+			do_action( 'commonsbooking_booking_confirmed', $postId, $bookingModel );
+		}
+
+		/**
+		 * Action: commonsbooking_save_booking_meta
+		 *
+		 * Fires after every booking form submission (new creation or status update). Use
+		 * this hook to persist custom form fields added via commonsbooking_booking_form_fields
+		 * or commonsbooking_booking_confirmation_fields as post meta.
+		 *
+		 * @param int    $postId      The booking post ID.
+		 * @param string $post_status The booking status after this request ('unconfirmed', 'confirmed', 'canceled', …).
+		 *
+		 * @since 2.9
+		 *
+		 * Example usage:
+		 *   add_action( 'commonsbooking_save_booking_meta', function( $postId, $status ) {
+		 *       if ( isset( $_REQUEST['my_custom_field'] ) ) {
+		 *           update_post_meta( $postId, 'my_custom_field', sanitize_text_field( wp_unslash( $_REQUEST['my_custom_field'] ) ) );
+		 *       }
+		 *   }, 10, 2 );
+		 */
+		do_action( 'commonsbooking_save_booking_meta', $postId, $post_status );
 
 		return $postId;
 	}

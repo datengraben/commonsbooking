@@ -116,6 +116,23 @@ if ( ! array_key_exists( 'backend', $templateData ) || $templateData['backend'] 
 				?>
 			</div>
 			<?php
+			/**
+			 * Filter: commonsbooking_booking_form_fields
+			 *
+			 * Allows injecting extra HTML (e.g. hidden inputs, prompts, checkboxes) into the
+			 * initial booking form, rendered just before the submit button.
+			 *
+			 * @param string $html         Additional HTML to output inside the form.
+			 * @param array  $templateData The current template data array (contains item, location, calendar_data, etc.).
+			 *
+			 * @since 2.9
+			 *
+			 * Example usage:
+			 *   add_filter( 'commonsbooking_booking_form_fields', function( $html, $templateData ) {
+			 *       return $html . '<input type="hidden" name="my_field" value="my_value"/>';
+			 *   }, 10, 2 );
+			 */
+			echo apply_filters( 'commonsbooking_booking_form_fields', '', $templateData ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- filter output is caller's responsibility
 			if ( is_user_logged_in() ) {
 				?>
 				<input type="submit" name="booking-update" disabled="disabled"

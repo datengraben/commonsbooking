@@ -44,6 +44,31 @@ if ( isset( $form_post_status ) ) {
 		<input type="hidden" name="post_status" value="<?php echo esc_attr( $form_post_status ); ?>"/>
 		<input type="hidden" name="repetition-start" value="<?php echo esc_attr( $booking->getMeta( 'repetition-start' ) ); ?>">
 		<input type="hidden" name="repetition-end" value="<?php echo esc_attr( $booking->getMeta( 'repetition-end' ) ); ?>">
+		<?php
+		/**
+		 * Filter: commonsbooking_booking_confirmation_fields
+		 *
+		 * Allows injecting extra HTML into the booking action forms on the booking-single page,
+		 * rendered just before the submit button. This fires for confirm, cancel, and
+		 * delete_unconfirmed forms; use $form_post_status to target a specific action.
+		 *
+		 * @param string                         $html             Additional HTML to output inside the form.
+		 * @param \CommonsBooking\Model\Booking  $booking          The current booking model object.
+		 * @param string                         $form_post_status The status the form will transition to
+		 *                                                         ('confirmed', 'canceled', 'delete_unconfirmed').
+		 *
+		 * @since 2.9
+		 *
+		 * Example usage:
+		 *   add_filter( 'commonsbooking_booking_confirmation_fields', function( $html, $booking, $status ) {
+		 *       if ( $status === 'confirmed' ) {
+		 *           return $html . '<label><input type="checkbox" name="cb_accept_terms" required> I accept the terms</label>';
+		 *       }
+		 *       return $html;
+		 *   }, 10, 3 );
+		 */
+		echo apply_filters( 'commonsbooking_booking_confirmation_fields', '', $booking, $form_post_status ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- filter output is caller's responsibility
+		?>
 		<input type="submit" value="<?php echo esc_attr( $button_label ); ?>" class="<?php echo 'cb-action-' . commonsbooking_sanitizeHTML( $form_post_status ); ?>"/>
 		<?php if ( ! empty( $icalbutton_label ) ) { ?>
 			<input type="submit" name="calendar-download" value="<?php echo esc_attr( $icalbutton_label ); ?>" class="cb-action-get_ics"/>
