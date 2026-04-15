@@ -67,6 +67,18 @@
 							}
 						}
 
+						$all_plugins    = get_plugins();
+						$active_plugins = get_option( 'active_plugins', [] );
+						if ( $active_plugins ) {
+							$support_body .= "\r\nActive plugins:\r\n";
+							foreach ( $active_plugins as $plugin_file ) {
+								$plugin_data   = $all_plugins[ $plugin_file ] ?? null;
+								$plugin_name   = $plugin_data ? $plugin_data['Name'] : $plugin_file;
+								$plugin_version = $plugin_data ? $plugin_data['Version'] : '?';
+								$support_body .= '  - ' . $plugin_name . ' ' . $plugin_version . "\r\n";
+							}
+						}
+
 						$support_href  = 'mailto:mail@commonsbooking.org'
 							. '?subject=' . rawurlencode( 'Support Request - CommonsBooking' )
 							. '&body=' . rawurlencode( $support_body );
