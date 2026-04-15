@@ -17,7 +17,17 @@
 					<h3><?php echo esc_html__( 'Support', 'commonsbooking' ); ?></h3>
 					<ul>
 						<li><a href="https://commonsbooking.org/documentation" target="_blank"><?php echo esc_html__( 'Documentation & Tutorials', 'commonsbooking' ); ?></a></li>
-						<li><a href="mailto:mail@commonsbooking.org?body=%0D%0A%0D%0A-----------%0D%0A%0D%0AInstallations-URL: <?php echo home_url(); ?>%0D%0A%0D%0ACB-Version: <?php echo commonsbooking_sanitizeHTML( COMMONSBOOKING_VERSION ); ?>" target="_blank"><?php echo esc_html__( 'Support E-Mail', 'commonsbooking' ); ?></a></li>
+						<?php
+						$support_body  = "\r\n\r\n-----------\r\n\r\n";
+						$support_body .= 'Installations-URL: ' . home_url() . "\r\n\r\n";
+						$support_body .= 'WP-Version: ' . get_bloginfo( 'version' ) . "\r\n";
+						$support_body .= 'PHP-Version: ' . phpversion() . "\r\n";
+						$support_body .= 'CB-Version: ' . COMMONSBOOKING_VERSION . "\r\n";
+						$support_href  = 'mailto:mail@commonsbooking.org'
+							. '?subject=' . rawurlencode( 'Support Request - CommonsBooking' )
+							. '&body=' . rawurlencode( $support_body );
+						?>
+						<li><a href="<?php echo esc_attr( $support_href ); ?>" target="_blank"><?php echo esc_html__( 'Support E-Mail', 'commonsbooking' ); ?></a></li>
 						<li><a href="https://commonsbooking.org/contact/" target="_blank"><?php echo __( 'Contact & Newsletter', 'commonsbooking' ); ?></a></li>
 					</ul>
 				<p>			<?php echo esc_html__( 'CommonsBooking Version', 'commonsbooking' ) . ' ' . commonsbooking_sanitizeHTML( COMMONSBOOKING_VERSION . ' ' . COMMONSBOOKING_VERSION_COMMENT ); ?></p>
