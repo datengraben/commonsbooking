@@ -35,6 +35,9 @@
 						if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
 							$support_body .= 'WP-Cron: disabled' . "\r\n";
 						}
+						if ( wp_using_ext_object_cache() ) {
+							$support_body .= 'External-Object-Cache: active' . "\r\n";
+						}
 
 						// Check for known incompatible plugins (see FAQ)
 						if ( ! function_exists( 'is_plugin_active' ) ) {
