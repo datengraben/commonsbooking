@@ -546,9 +546,13 @@ class Plugin {
 
 	/**
 	 * Register Admin-Options
+	 *
+	 * Applies the 'commonsbooking_options_array' filter before processing
+	 * so that external code can add, modify or remove tabs and their field groups.
 	 */
 	public static function registerAdminOptions() {
 		$options_array = include COMMONSBOOKING_PLUGIN_DIR . '/includes/OptionsArray.php';
+		$options_array = apply_filters( 'commonsbooking_options_array', $options_array );
 		foreach ( $options_array as $tab_id => $tab ) {
 			new OptionsTab( $tab_id, $tab );
 		}
