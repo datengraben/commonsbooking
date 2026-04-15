@@ -23,6 +23,35 @@
 						$support_body .= 'WP-Version: ' . get_bloginfo( 'version' ) . "\r\n";
 						$support_body .= 'PHP-Version: ' . phpversion() . "\r\n";
 						$support_body .= 'CB-Version: ' . COMMONSBOOKING_VERSION . "\r\n";
+
+						// Check for known incompatible plugins (see FAQ)
+						if ( ! function_exists( 'is_plugin_active' ) ) {
+							include_once ABSPATH . 'wp-admin/includes/plugin.php';
+						}
+						$known_problematic_plugins = [
+							'wp-maintenance-mode/wp-maintenance-mode.php'         => 'Lightstart (wp-maintenance-mode)',
+							'all-in-one-event-calendar/all-in-one-event-calendar.php' => 'All-in-One Event Calendar',
+							'redis-cache/redis-cache.php'                         => 'Redis Object Cache',
+							'ultimate-member/ultimate-member.php'                 => 'Ultimate Member',
+							'autoptimize/autoptimize.php'                         => 'Autoptimize',
+						];
+						$active_problematic = [];
+						foreach ( $known_problematic_plugins as $plugin_file => $plugin_name ) {
+							if ( is_plugin_active( $plugin_file ) ) {
+								$active_problematic[] = $plugin_name;
+							}
+						}
+						// Also check for the incompatible GridBulletin theme
+						if ( 'gridbulletin' === wp_get_theme()->get_template() ) {
+							$active_problematic[] = 'GridBulletin (active theme)';
+						}
+						if ( $active_problematic ) {
+							$support_body .= "\r\nActive known-problematic plugins/themes:\r\n";
+							foreach ( $active_problematic as $name ) {
+								$support_body .= '  - ' . $name . "\r\n";
+							}
+						}
+
 						$support_href  = 'mailto:mail@commonsbooking.org'
 							. '?subject=' . rawurlencode( 'Support Request - CommonsBooking' )
 							. '&body=' . rawurlencode( $support_body );
