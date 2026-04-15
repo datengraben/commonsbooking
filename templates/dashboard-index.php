@@ -32,6 +32,9 @@
 						if ( is_multisite() ) {
 							$support_body .= 'Multisite: yes' . "\r\n";
 						}
+						if ( defined( 'DISABLE_WP_CRON' ) && DISABLE_WP_CRON ) {
+							$support_body .= 'WP-Cron: disabled' . "\r\n";
+						}
 
 						// Check for known incompatible plugins (see FAQ)
 						if ( ! function_exists( 'is_plugin_active' ) ) {
