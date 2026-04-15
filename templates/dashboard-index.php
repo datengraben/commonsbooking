@@ -77,6 +77,9 @@
 						$support_body .= '  iCal-Feed: ' . ( ! empty( $cb_advanced['feed_enabled'] ) ? 'enabled' : 'disabled' ) . "\r\n";
 						$support_body .= '  API: ' . ( ! empty( $cb_api['api-activated'] ) ? 'enabled' : 'disabled' ) . "\r\n";
 						$support_body .= '  Cache-Adapter: ' . ( $cb_advanced['cache_adapter'] ?? 'filesystem' ) . "\r\n";
+						$bookings_page_id    = $cb_general['bookings_page'] ?? '';
+						$bookings_page_title = $bookings_page_id ? get_the_title( (int) $bookings_page_id ) : '(not set)';
+						$support_body .= '  Bookings-Page: ' . $bookings_page_title . ' (ID: ' . ( $bookings_page_id ?: 'none' ) . ')' . "\r\n";
 
 						$all_plugins    = get_plugins();
 						$active_plugins = get_option( 'active_plugins', [] );
