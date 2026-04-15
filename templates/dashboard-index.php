@@ -67,6 +67,8 @@
 							}
 						}
 
+						$support_body .= 'Max-Upload-Size: ' . size_format( wp_max_upload_size() ) . "\r\n";
+
 						$all_plugins    = get_plugins();
 						$active_plugins = get_option( 'active_plugins', [] );
 						if ( $active_plugins ) {
