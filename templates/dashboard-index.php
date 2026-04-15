@@ -25,6 +25,7 @@
 						$support_body .= 'CB-Version: ' . COMMONSBOOKING_VERSION . "\r\n";
 						$support_body .= 'Theme: ' . wp_get_theme()->get( 'Name' ) . ' ' . wp_get_theme()->get( 'Version' ) . "\r\n";
 						$support_body .= 'Locale: ' . get_locale() . "\r\n";
+						$support_body .= 'WP_DEBUG: ' . ( defined( 'WP_DEBUG' ) && WP_DEBUG ? 'enabled' : 'disabled' ) . "\r\n";
 
 						// Check for known incompatible plugins (see FAQ)
 						if ( ! function_exists( 'is_plugin_active' ) ) {
