@@ -69,6 +69,15 @@
 
 						$support_body .= 'Max-Upload-Size: ' . size_format( wp_max_upload_size() ) . "\r\n";
 
+						$cb_general  = get_option( 'commonsbooking_options_general', [] );
+						$cb_advanced = get_option( 'commonsbooking_options_advanced-options', [] );
+						$cb_api      = get_option( 'commonsbooking_options_api', [] );
+						$support_body .= "\r\nCB Settings:\r\n";
+						$support_body .= '  Booking-Comments: ' . ( ! empty( $cb_general['booking-comment-active'] ) ? 'enabled' : 'disabled' ) . "\r\n";
+						$support_body .= '  iCal-Feed: ' . ( ! empty( $cb_advanced['feed_enabled'] ) ? 'enabled' : 'disabled' ) . "\r\n";
+						$support_body .= '  API: ' . ( ! empty( $cb_api['api-activated'] ) ? 'enabled' : 'disabled' ) . "\r\n";
+						$support_body .= '  Cache-Adapter: ' . ( $cb_advanced['cache_adapter'] ?? 'filesystem' ) . "\r\n";
+
 						$all_plugins    = get_plugins();
 						$active_plugins = get_option( 'active_plugins', [] );
 						if ( $active_plugins ) {
