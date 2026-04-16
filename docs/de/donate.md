@@ -34,6 +34,18 @@ Der Linktext und eine CSS-Klasse lassen sich anpassen:
 
 ---
 
+## Features, die Förderung benötigen
+
+Die folgenden Features möchte das Team umsetzen, für die aber eine gezielte Finanzierung notwendig ist. Wenn ihr oder eure Organisation eines davon unterstützen möchtet, [meldet euch gerne bei uns](contact.md).
+
+| Feature | Beschreibung | Geschätzte Kosten |
+|---------|--------------|-------------------|
+| <!-- Feature-Name --> | <!-- Was es macht und warum es wichtig ist --> | <!-- € --> |
+
+Außerdem könnt ihr auf GitHub die [offenen Issues mit dem Label **„help wanted"**](https://github.com/datengraben/commonsbooking/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) durchstöbern – manche davon benötigen finanzielle Unterstützung, andere Code-Beiträge oder sonstige Hilfe.
+
+---
+
 ## Geförderte Entwicklung
 
 Die folgenden Features wurden durch Spenden oder direkte Beiträge finanziert. Herzlichen Dank an alle, die das möglich gemacht haben!

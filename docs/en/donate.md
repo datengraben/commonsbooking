@@ -30,6 +30,18 @@ You can customise the link text and add a CSS class:
 
 ---
 
+## Features that need funding
+
+The items below are features the team wants to build but that require dedicated funding to happen. If you or your organisation would like to sponsor one of them, please [get in touch](contact.md).
+
+| Feature | Description | Estimated cost |
+|---------|-------------|----------------|
+| <!-- feature name --> | <!-- what it does and why it matters --> | <!-- € --> |
+
+You can also browse [open issues labelled **"help wanted"**](https://github.com/datengraben/commonsbooking/issues?q=is%3Aopen+is%3Aissue+label%3A%22help+wanted%22) on GitHub — some of these may need funding, others need code contributions or other support.
+
+---
+
 ## Funded development
 
 The following features were funded by donations or direct contributions. Thank you to everyone who made this possible!
