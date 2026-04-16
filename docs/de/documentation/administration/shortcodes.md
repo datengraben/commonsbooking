@@ -138,3 +138,29 @@ User in der Rolle von Administrator*innen sehen hier alle Buchungen.
   * Import in digitalen Kalender über [iCalendar](../manage-bookings/icalendar-feed)-Format möglich
 
 ![](/img/shortcode-cb-bookings.png)
+
+## Unterstützungs-Link
+
+Zeigt einen Link zur CommonsBooking-Förderseite auf betterplace.org an und nennt dabei CommonsBooking sowie den wielebenwir e.V. Platziert diesen Shortcode auf einer beliebigen Seite eurer Website, damit Besucher:innen erfahren, dass sie die Weiterentwicklung des Plugins unterstützen können.
+
+  * Shortcode: `[cb_support_link]`
+  * Parameter:
+    * `text`: Der sichtbare Link-Text. Standard: `Support CommonsBooking & wielebenwir e.V.`
+    * `class`: Eine oder mehrere zusätzliche CSS-Klassen für das `<a>`-Element, z.B. zur Gestaltung als Button.
+
+**Standardnutzung:**
+```
+[cb_support_link]
+```
+
+**Eigener Link-Text:**
+```
+[cb_support_link text="Wir unterstützen CommonsBooking!"]
+```
+
+**Mit CSS-Klasse (z.B. für Button-Styling):**
+```
+[cb_support_link text="Jetzt unterstützen" class="mein-button"]
+```
+
+Der generierte Link öffnet immer in einem neuen Tab und verweist auf die betterplace.org-Spendenseite des wielebenwir e.V. – dem gemeinnützigen Verein hinter CommonsBooking.
