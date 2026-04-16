@@ -560,6 +560,8 @@ class Plugin {
 		 * or remove entries from the CommonsBooking admin settings page without
 		 * modifying plugin core files.
 		 *
+		 * @since 2.10.10
+		 *
 		 * @param array $options_array {
 		 *     Associative array of tab definitions, keyed by tab ID.
 		 *
@@ -579,6 +581,7 @@ class Plugin {
 		 *         }
 		 *     }
 		 * }
+		 * @return array The filtered options array.
 		 */
 		$options_array = apply_filters( 'commonsbooking_options_array', $options_array );
 		foreach ( $options_array as $tab_id => $tab ) {
