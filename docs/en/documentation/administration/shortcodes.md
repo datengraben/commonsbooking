@@ -125,3 +125,35 @@ Users in the administrator role see all bookings here.
   * Import to digital calendar via [iCalendar](../manage-bookings/icalendar-feed) format possible
 
 ![](/img/shortcode-cb-bookings.png)
+
+## Support link
+
+Renders a link to the CommonsBooking funding page on betterplace.org, naming CommonsBooking and wielebenwir e.V. Place this on any page of your site to let visitors know they can support the plugin's development.
+
+  * Shortcode: `[cb_support_link]`
+  * Parameters:
+    * `text`: The visible link label. Defaults to `Support CommonsBooking & wielebenwir e.V.`
+    * `class`: One or more additional CSS classes added to the `<a>` element, useful for styling the link as a button.
+
+**Default usage:**
+```
+[cb_support_link]
+```
+
+**Custom label:**
+```
+[cb_support_link text="We support CommonsBooking!"]
+```
+
+**With a CSS class (e.g. for button styling):**
+```
+[cb_support_link text="Support us" class="my-button"]
+```
+
+The rendered link always opens in a new tab and points to the CommonsBooking donate page (`commonsbooking.org/en/donate` or `/de/donate` depending on the site's WordPress locale). It automatically appends UTM parameters so the CommonsBooking team can see which sites are sending visitors:
+
+| Parameter | Value |
+|-----------|-------|
+| `utm_source` | Domain of the WordPress site the shortcode is placed on |
+| `utm_medium` | `website` |
+| `utm_campaign` | `support_link` |
