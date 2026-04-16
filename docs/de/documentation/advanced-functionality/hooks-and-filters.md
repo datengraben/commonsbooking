@@ -50,6 +50,10 @@ add_action( 'commonsbooking_before_item-single', 'itemsingle_callback' );
   * commonsbooking_before_item-single
   * commonsbooking_after_item-single
   * commonsbooking_mail_sent
+  * commonsbooking_booking_pre_validate *(ab 2.10.11)*
+  * commonsbooking_booking_created *(ab 2.10.11)*
+  * commonsbooking_booking_confirmed *(ab 2.10.11)*
+  * commonsbooking_save_booking_meta *(ab 2.10.11)*
 
 ### Hooks im Objektkontext (seit 2.10.8)
 
@@ -96,6 +100,10 @@ zurückgibt.
   * commonsbooking_mail_body
   * commonsbooking_mail_attachment
   * commonsbooking_disableCache
+  * commonsbooking_booking_form_fields *(ab 2.10.11)*
+  * commonsbooking_booking_confirmation_fields *(ab 2.10.11)*
+  * commonsbooking_booking_redirect_url *(ab 2.10.11)*
+  * commonsbooking_booking_meta_input *(ab 2.10.11)*
 
 Es gibt auch Filter Hooks, mit denen du zusätzliche Benutzerrollen, die
 zusätzlich zum CB Manager Artikel und Standorte administrieren können,
@@ -182,4 +190,196 @@ Nutzungs-Beispiel:
 ```php
 // Sets the mobile calendar view to display 2 month
 add_filter('commonsbooking_mobile_calendar_month_count', fn(): int => 2);
+```
+
+---
+
+## Hooks für den Buchungsprozess (ab 2.10.11)
+
+Die folgenden Hooks erlauben es, in den Buchungsprozess einzugreifen und ihn zu erweitern –
+vom Datumsauswahl-Formular bis zur abschließenden Bestätigung.
+Sie können genutzt werden, um zusätzliche Formularfelder einzufügen, eigene Validierungen
+durchzuführen, Nutzer:innen auf Zwischenseiten weiterzuleiten oder weitere Daten
+zusammen mit einer Buchung zu speichern.
+
+### Filter `commonsbooking_booking_form_fields`
+
+Fügt zusätzliches HTML in das **erste Buchungsformular** (Schritt 1 – Datumsauswahl) ein,
+direkt vor dem Absende-Button. Nützlich für versteckte Eingaben, sichtbare Hinweise oder
+Checkboxen, die vor der Buchungserstellung abgefragt werden sollen.
+
+Übergebene Parameter:
+
+| # | Typ | Beschreibung |
+|---|-----|-------------|
+| 1 | `string` | `$html` — bisher gesammeltes HTML (leer starten, dann ergänzen) |
+| 2 | `array` | `$templateData` — Template-Daten-Array (enthält `item`, `location`, `calendar_data` usw.) |
+
+```php
+add_filter( 'commonsbooking_booking_form_fields', function( $html, $templateData ) {
+    $html .= '<p><label>';
+    $html .= '<input type="checkbox" name="cb_accept_terms" value="1" required> ';
+    $html .= esc_html__( 'Ich akzeptiere die Nutzungsbedingungen', 'mein-plugin' );
+    $html .= '</label></p>';
+    return $html;
+}, 10, 2 );
+```
+
+### Filter `commonsbooking_booking_confirmation_fields`
+
+Fügt zusätzliches HTML in die **Aktionsformulare auf der Buchungs-Detailseite** (Schritt 2) ein,
+direkt vor dem Absende-Button. Der Parameter `$form_post_status` zeigt an, welches Formular
+gerade gerendert wird, sodass z.B. nur das Bestätigungsformular erweitert werden kann.
+
+Parameter:
+
+| # | Typ | Beschreibung |
+|---|-----|-------------|
+| 1 | `string` | `$html` — bisher gesammeltes HTML |
+| 2 | `\CommonsBooking\Model\Booking` | `$booking` — das aktuelle Buchungsobjekt |
+| 3 | `string` | `$form_post_status` — Zielstatus: `confirmed`, `canceled` oder `delete_unconfirmed` |
+
+```php
+add_filter( 'commonsbooking_booking_confirmation_fields', function( $html, $booking, $status ) {
+    if ( $status === 'confirmed' ) {
+        $html .= '<p><label>';
+        $html .= '<input type="checkbox" name="cb_accept_terms" value="1" required> ';
+        $html .= esc_html__( 'Ich akzeptiere die Nutzungsbedingungen', 'mein-plugin' );
+        $html .= '</label></p>';
+    }
+    return $html;
+}, 10, 3 );
+```
+
+### Filter `commonsbooking_booking_redirect_url`
+
+Überschreibt die URL, zu der Nutzer:innen **nach dem Absenden des ersten Buchungsformulars**
+weitergeleitet werden (also nachdem eine unbestätigte Buchung erstellt wurde). Dies ist der
+zentrale Hook, um **Zwischenseiten** in den Buchungsprozess einzufügen – z.B. eine Seite,
+die zusätzliche Angaben abfragt, bevor die Bestätigungsseite erscheint.
+
+Parameter:
+
+| # | Typ | Beschreibung |
+|---|-----|-------------|
+| 1 | `string` | `$url` — die Standard-URL der Buchungs-Detailseite |
+| 2 | `int` | `$postId` — die Post-ID der neu erstellten Buchung |
+
+```php
+add_filter( 'commonsbooking_booking_redirect_url', function( $url, $postId ) {
+    // Nutzer:in auf eine eigene Zwischenseite weiterleiten, Buchungs-ID mitgeben
+    return add_query_arg( [ 'cb_booking_id' => $postId ], get_permalink( MEINE_ZWISCHENSEITE_ID ) );
+}, 10, 2 );
+```
+
+### Filter `commonsbooking_booking_meta_input`
+
+Filtert das **Meta-Input-Array**, das beim **Erstellen einer neuen Buchung** in der Datenbank
+gespeichert wird. In Kombination mit `commonsbooking_booking_form_fields` lassen sich eigene
+Formularfelder direkt als Post-Meta in der Buchung ablegen.
+
+Parameter:
+
+| # | Typ | Beschreibung |
+|---|-----|-------------|
+| 1 | `array` | `$metaInput` — assoziatives Array aus `meta_key => Wert`-Paaren |
+| 2 | `int` | `$itemId` — Post-ID des Artikels |
+| 3 | `int` | `$locationId` — Post-ID der Station |
+| 4 | `int` | `$repetitionStart` — Unix-Zeitstempel des Buchungsbeginns |
+| 5 | `int` | `$repetitionEnd` — Unix-Zeitstempel des Buchungsendes |
+
+```php
+add_filter( 'commonsbooking_booking_meta_input', function( $meta, $itemId, $locationId, $start, $end ) {
+    $meta['mein_feld'] = sanitize_text_field( wp_unslash( $_REQUEST['mein_feld'] ?? '' ) );
+    return $meta;
+}, 10, 5 );
+```
+
+### Action `commonsbooking_booking_pre_validate`
+
+Wird ausgelöst **bevor die internen Buchungsregeln geprüft werden**. Wirf eine
+`\CommonsBooking\Exception\BookingDeniedException`, um die Buchung abzulehnen –
+die Fehlermeldung wird dann genauso wie ein interner Validierungsfehler angezeigt.
+
+Parameter:
+
+| # | Typ | Beschreibung |
+|---|-----|-------------|
+| 1 | `int` | `$itemId` |
+| 2 | `int` | `$locationId` |
+| 3 | `string` | `$post_status` — Zielstatus (`unconfirmed`, `confirmed`, `canceled` …) |
+| 4 | `int` | `$repetitionStart` — Unix-Zeitstempel |
+| 5 | `int` | `$repetitionEnd` — Unix-Zeitstempel |
+
+```php
+add_action( 'commonsbooking_booking_pre_validate', function( $itemId, $locationId, $status, $start, $end ) {
+    if ( empty( $_REQUEST['zugangscode'] ) || $_REQUEST['zugangscode'] !== 'GEHEIM' ) {
+        throw new \CommonsBooking\Exception\BookingDeniedException(
+            __( 'Ungültiger Zugangscode.', 'mein-plugin' )
+        );
+    }
+}, 10, 5 );
+```
+
+### Action `commonsbooking_booking_created`
+
+Wird ausgelöst, **nachdem eine neue Buchung mit dem Status `unconfirmed` gespeichert wurde**
+(Schritt 1 abgeschlossen).
+
+Parameter:
+
+| # | Typ | Beschreibung |
+|---|-----|-------------|
+| 1 | `int` | `$postId` — Post-ID der Buchung |
+| 2 | `\CommonsBooking\Model\Booking` | `$booking` — das Buchungs-Modell-Objekt |
+
+```php
+add_action( 'commonsbooking_booking_created', function( $postId, $booking ) {
+    // z.B. Ereignis protokollieren oder Drittsystem benachrichtigen
+    error_log( 'Neue unbestätigte Buchung erstellt: ' . $postId );
+}, 10, 2 );
+```
+
+### Action `commonsbooking_booking_confirmed`
+
+Wird ausgelöst, **nachdem eine Buchung auf den Status `confirmed` gesetzt wurde**
+(Schritt 2 abgeschlossen).
+
+Parameter:
+
+| # | Typ | Beschreibung |
+|---|-----|-------------|
+| 1 | `int` | `$postId` — Post-ID der Buchung |
+| 2 | `\CommonsBooking\Model\Booking` | `$booking` — das Buchungs-Modell-Objekt |
+
+```php
+add_action( 'commonsbooking_booking_confirmed', function( $postId, $booking ) {
+    // z.B. externen Kalender synchronisieren
+}, 10, 2 );
+```
+
+### Action `commonsbooking_save_booking_meta`
+
+Wird **bei jeder Buchungsformular-Übermittlung** ausgelöst – sowohl beim erstmaligen Erstellen
+als auch bei Aktualisierungen (Bestätigung, Stornierung usw.). Nutze diesen Hook, um eigene
+`$_REQUEST`-Felder, die du über `commonsbooking_booking_form_fields` oder
+`commonsbooking_booking_confirmation_fields` eingefügt hast, als Post-Meta zu speichern.
+
+Parameter:
+
+| # | Typ | Beschreibung |
+|---|-----|-------------|
+| 1 | `int` | `$postId` — Post-ID der Buchung |
+| 2 | `string` | `$post_status` — Buchungsstatus nach dieser Anfrage |
+
+```php
+add_action( 'commonsbooking_save_booking_meta', function( $postId, $status ) {
+    if ( isset( $_REQUEST['mein_feld'] ) ) {
+        update_post_meta(
+            $postId,
+            'mein_feld',
+            sanitize_text_field( wp_unslash( $_REQUEST['mein_feld'] ) )
+        );
+    }
+}, 10, 2 );
 ```
