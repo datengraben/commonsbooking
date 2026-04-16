@@ -34,12 +34,21 @@ function commonsbooking_support_link( $atts ) {
 		'cb_support_link'
 	);
 
-	$url   = 'https://www.betterplace.org/de/donate/platform/projects/26362-unterstuetzung-der-projekte-des-wielebenwir-e-v';
+	$lang       = strncmp( get_locale(), 'de', 2 ) === 0 ? 'de' : 'en';
+	$source     = wp_parse_url( home_url(), PHP_URL_HOST );
+	$donate_url = add_query_arg(
+		array(
+			'utm_source'   => $source,
+			'utm_medium'   => 'website',
+			'utm_campaign' => 'support_link',
+		),
+		'https://commonsbooking.org/' . $lang . '/donate'
+	);
 	$class = $atts['class'] ? ' ' . esc_attr( $atts['class'] ) : '';
 
 	return sprintf(
 		'<a href="%s" target="_blank" rel="noopener noreferrer" class="cb-support-link%s">%s</a>',
-		esc_url( $url ),
+		esc_url( $donate_url ),
 		$class,
 		wp_kses( $atts['text'], array() )
 	);

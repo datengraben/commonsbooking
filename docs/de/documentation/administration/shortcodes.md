@@ -163,4 +163,10 @@ Zeigt einen Link zur CommonsBooking-Förderseite auf betterplace.org an und nenn
 [cb_support_link text="Jetzt unterstützen" class="mein-button"]
 ```
 
-Der generierte Link öffnet immer in einem neuen Tab und verweist auf die betterplace.org-Spendenseite des wielebenwir e.V. – dem gemeinnützigen Verein hinter CommonsBooking.
+Der generierte Link öffnet immer in einem neuen Tab und verweist auf die CommonsBooking-Spendenseite (`commonsbooking.org/de/donate` bzw. `/en/donate` je nach WordPress-Spracheinstellung der Website). Es werden automatisch UTM-Parameter angehängt, damit das CommonsBooking-Team sehen kann, von welchen Websites Besucher:innen kommen:
+
+| Parameter | Wert |
+|-----------|------|
+| `utm_source` | Domain der WordPress-Website, auf der der Shortcode platziert ist |
+| `utm_medium` | `website` |
+| `utm_campaign` | `support_link` |

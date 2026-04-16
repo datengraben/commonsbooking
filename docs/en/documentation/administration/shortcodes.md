@@ -150,4 +150,10 @@ Renders a link to the CommonsBooking funding page on betterplace.org, naming Com
 [cb_support_link text="Support us" class="my-button"]
 ```
 
-The rendered link always opens in a new tab and points to the betterplace.org donation page for wielebenwir e.V., the non-profit organisation behind CommonsBooking.
+The rendered link always opens in a new tab and points to the CommonsBooking donate page (`commonsbooking.org/en/donate` or `/de/donate` depending on the site's WordPress locale). It automatically appends UTM parameters so the CommonsBooking team can see which sites are sending visitors:
+
+| Parameter | Value |
+|-----------|-------|
+| `utm_source` | Domain of the WordPress site the shortcode is placed on |
+| `utm_medium` | `website` |
+| `utm_campaign` | `support_link` |
