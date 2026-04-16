@@ -54,3 +54,56 @@ tested against, fetched from the file headers and rendered in the README.
 
 Define what happens when a CB core hook is renamed or removed: how do we mark
 snippets as deprecated, and how long do we keep them in the library?
+
+---
+
+## Promotion pathway: community snippet → `CommonsBooking\Contrib\*`
+
+This is the most significant future direction for this library.
+
+### The idea
+
+Snippets that prove broadly useful can be promoted by the core team into an
+official optional namespace inside the main plugin — `src/Contrib/` —
+mirroring the pattern of `django.contrib` in Django. These modules:
+
+- Ship in the release zip (unlike community snippets, which are `.distignore`d)
+- Are maintained and tested by the CB core team
+- Live under the PHP namespace `CommonsBooking\Contrib\<ModuleName>`
+- Are **optional by default** — shortcodes/features activate only when used,
+  no settings toggle required
+- Carry the signal "this started as a community idea and proved its value"
+
+### Three-tier model
+
+```
+contrib/snippets/          Community, copy-paste, not shipped
+        ↓ (proven useful for many sites)
+src/Contrib/               Official optional, shipped, CB-maintained
+        ↓ (universally needed)
+src/                       Core plugin
+```
+
+### Promotion criteria (suggested)
+
+A snippet becomes a candidate for `src/Contrib/` when it meets all of:
+
+1. Requested or adopted independently by multiple sites / networks
+2. Uses only public CB hooks, filters, or shortcode APIs (no internals)
+3. Has a single, well-scoped responsibility
+4. The community snippet has been stable across ≥ 1 CB release cycle
+
+### What NOT to promote
+
+- Highly site-specific snippets (custom email text, local contact details)
+- Snippets that require configuration not easily expressible in PHP constants
+- Anything that would need a settings UI — those belong in a separate plugin
+
+### Implementation notes (when ready)
+
+- Create `src/Contrib/` directory with its own `README.md`
+- Each module is a single class file loaded via the existing autoloader
+- Module classes register their hooks/filters in a `register()` method called
+  from the main plugin bootstrap (conditionally, e.g. only if a constant is set
+  or always — depending on the module)
+- Add integration tests under `tests/php/Contrib/`

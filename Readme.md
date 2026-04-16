@@ -61,6 +61,7 @@ Contributions are welcome either through
 
 * Translating WordPress into your native tongue ([see the already existing WordPress Plugin Translations](https://translate.wordpress.org/projects/wp-plugins/commonsbooking/))
 * Improving or translating the documentation at https://commonsbooking.org
+* Sharing PHP snippets for customizing CommonsBooking via the [community snippet library](contrib/)
 * or through developing and testing new versions of the application (see [Development](#development))
 
 ## Development
