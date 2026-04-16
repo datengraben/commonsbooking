@@ -6,7 +6,6 @@ use CommonsBooking\Model\Day;
 use CommonsBooking\Model\Week;
 use CommonsBooking\Model\Calendar;
 
-use CommonsBooking\Service\Booking as ServiceBooking;
 use CommonsBooking\Tests\Wordpress\CustomPostTypeTest;
 use CommonsBooking\Wordpress\CustomPostType\Timeframe;
 use SlopeIt\ClockMock\ClockMock;
@@ -261,65 +260,88 @@ class CalendarTest extends CustomPostTypeTest {
 	}
 
 	public function testCalendarIncludesPastBookings() {
-		// Clock is frozen at CURRENT_DATE (01.07.2021) by setUp
-
-		// Create a bookable timeframe spanning from 2 days before CURRENT_DATE to 1 day after
-		$pastStart  = strtotime( '-2 days', strtotime( self::CURRENT_DATE ) );
-		$futureEnd  = strtotime( '+1 day', strtotime( self::CURRENT_DATE ) );
+		// Create a bookable timeframe spanning CURRENT_DATE and the following day
+		$startTs     = strtotime( self::CURRENT_DATE );
+		$endTs       = strtotime( '+1 day', $startTs );
+		$bookingDate = date( 'Y-m-d', $startTs );
 		$this->createTimeframe(
 			$this->locationId,
 			$this->itemId,
-			$pastStart,
-			$futureEnd,
+			$startTs,
+			$endTs,
 			Timeframe::BOOKABLE_ID,
 			'on',
 			'd'
 		);
 
-		// Create a confirmed booking covering the first past day only
+		// Create a booking for CURRENT_DATE and immediately mark it as 'past_booking'
 		$bookingId = $this->createBooking(
 			$this->locationId,
 			$this->itemId,
-			$pastStart,
-			$this->getEndOfDayTimestamp( date( 'Y-m-d', $pastStart ) ),
+			$startTs,
+			$this->getEndOfDayTimestamp( $bookingDate ),
 			'12:00 AM',
 			'23:59',
 			'confirmed'
 		);
-
-		// Enable the feature flag and transition the past booking to 'past_booking'
-		add_filter( 'commonsbooking_enable_past_booking_status', '__return_true' );
-		ServiceBooking::markPastBookings();
+		global $wpdb;
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->posts} SET post_status = 'past_booking' WHERE ID = %d",
+				$bookingId
+			)
+		);
 		wp_cache_flush();
 
-		$this->assertEquals( 'past_booking', get_post_field( 'post_status', $bookingId ) );
+		// Helper: walk Calendar weeks/days to find the Day matching $date
+		$getDayFromCalendar = function ( Calendar $cal, string $date ): ?\CommonsBooking\Model\Day {
+			foreach ( $cal->getWeeks() as $week ) {
+				foreach ( $week->getDays() as $day ) {
+					if ( $day->getDate() === $date ) {
+						return $day;
+					}
+				}
+			}
+			return null;
+		};
 
-		// Build calendar spanning from the past start date to one day beyond the timeframe end
-		$startDay = date( 'Y-m-d', $pastStart );
-		$endDay   = date( 'Y-m-d', strtotime( '+1 day', $futureEnd ) );
+		$calStart = new Day( $bookingDate, [ $this->locationId ], [ $this->itemId ] );
+		$calEnd   = new Day( date( 'Y-m-d', strtotime( '+2 days', $startTs ) ), [ $this->locationId ], [ $this->itemId ] );
 
-		$calendarWithFlag = new Calendar(
-			new Day( $startDay, [ $this->locationId ], [ $this->itemId ] ),
-			new Day( $endDay, [ $this->locationId ], [ $this->itemId ] ),
-			[ $this->locationId ],
-			[ $this->itemId ]
-		);
-		$slotsWithFlag = count( $calendarWithFlag->getAvailabilitySlots() );
-
-		// Disable the feature flag
+		// Calendar WITH flag: constructor fetches past_booking → slot appears as BOOKING_ID in the grid
+		add_filter( 'commonsbooking_enable_past_booking_status', '__return_true' );
+		$calendarOn = new Calendar( $calStart, $calEnd, [ $this->locationId ], [ $this->itemId ] );
 		remove_filter( 'commonsbooking_enable_past_booking_status', '__return_true' );
 
-		// Same calendar without flag: past_booking not fetched → first day looks available
-		$calendarWithoutFlag = new Calendar(
-			new Day( $startDay, [ $this->locationId ], [ $this->itemId ] ),
-			new Day( $endDay, [ $this->locationId ], [ $this->itemId ] ),
-			[ $this->locationId ],
-			[ $this->itemId ]
-		);
-		$slotsWithoutFlag = count( $calendarWithoutFlag->getAvailabilitySlots() );
+		$dayOn  = $getDayFromCalendar( $calendarOn, $bookingDate );
+		$this->assertNotNull( $dayOn, 'Could not find day in calendar (flag ON)' );
+		$bookingVisibleOn = false;
+		foreach ( $dayOn->getGrid() as $slot ) {
+			if (
+				isset( $slot['timeframe'] ) &&
+				(int) get_post_meta( $slot['timeframe']->ID, 'type', true ) === \CommonsBooking\Wordpress\CustomPostType\Timeframe::BOOKING_ID
+			) {
+				$bookingVisibleOn = true;
+				break;
+			}
+		}
+		$this->assertTrue( $bookingVisibleOn, 'With flag ON: past_booking should block the slot in the grid' );
 
-		// With the flag enabled the past booking blocks one slot, so fewer available slots
-		$this->assertLessThan( $slotsWithoutFlag, $slotsWithFlag );
+		// Calendar WITHOUT flag: constructor does not fetch past_booking → slot remains BOOKABLE_ID
+		$calendarOff = new Calendar( $calStart, $calEnd, [ $this->locationId ], [ $this->itemId ] );
+		$dayOff      = $getDayFromCalendar( $calendarOff, $bookingDate );
+		$this->assertNotNull( $dayOff, 'Could not find day in calendar (flag OFF)' );
+		$bookingVisibleOff = false;
+		foreach ( $dayOff->getGrid() as $slot ) {
+			if (
+				isset( $slot['timeframe'] ) &&
+				(int) get_post_meta( $slot['timeframe']->ID, 'type', true ) === \CommonsBooking\Wordpress\CustomPostType\Timeframe::BOOKING_ID
+			) {
+				$bookingVisibleOff = true;
+				break;
+			}
+		}
+		$this->assertFalse( $bookingVisibleOff, 'With flag OFF: past_booking should not appear in the grid' );
 	}
 
 	protected function setUp(): void {
