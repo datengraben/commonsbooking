@@ -4,6 +4,7 @@ namespace CommonsBooking\Model;
 
 use CommonsBooking\Helper\Wordpress;
 use CommonsBooking\Plugin;
+use CommonsBooking\Service\QueryTimer;
 use stdClass;
 
 /**
@@ -66,8 +67,10 @@ class Calendar {
 		$this->locations = $locations;
 		$this->types     = $types;
 
+		$pastBookingFlagEnabled = (bool) apply_filters( 'commonsbooking_enable_past_booking_status', false );
+
 		$defaultStatuses = [ 'confirmed', 'publish' ];
-		if ( apply_filters( 'commonsbooking_enable_past_booking_status', false ) ) {
+		if ( $pastBookingFlagEnabled ) {
 			$defaultStatuses[] = 'past_booking';
 		}
 
@@ -82,14 +85,23 @@ class Calendar {
 		 */
 		$calendarStatuses = apply_filters( 'commonsbooking_calendar_booking_statuses', $defaultStatuses );
 
-		$this->timeframes = \CommonsBooking\Repository\Timeframe::getInRange(
-			$this->startDate->getStartTimestamp(),
-			$this->endDate->getEndTimestamp(),
-			$this->locations,
-			$this->items,
-			$this->types,
-			true,
-			$calendarStatuses
+		$this->timeframes = QueryTimer::measure(
+			'calendar.timeframe_query',
+			fn() => \CommonsBooking\Repository\Timeframe::getInRange(
+				$this->startDate->getStartTimestamp(),
+				$this->endDate->getEndTimestamp(),
+				$this->locations,
+				$this->items,
+				$this->types,
+				true,
+				$calendarStatuses
+			),
+			[
+				'past_booking_flag' => $pastBookingFlagEnabled,
+				'statuses'          => $calendarStatuses,
+				'location_count'    => count( $this->locations ),
+				'item_count'        => count( $this->items ),
+			]
 		);
 	}
 

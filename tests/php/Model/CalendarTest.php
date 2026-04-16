@@ -5,6 +5,7 @@ namespace CommonsBooking\Tests\Model;
 use CommonsBooking\Model\Day;
 use CommonsBooking\Model\Week;
 use CommonsBooking\Model\Calendar;
+use CommonsBooking\Service\QueryTimer;
 
 use CommonsBooking\Tests\Wordpress\CustomPostTypeTest;
 use CommonsBooking\Wordpress\CustomPostType\Timeframe;
@@ -344,9 +345,53 @@ class CalendarTest extends CustomPostTypeTest {
 		$this->assertFalse( $bookingVisibleOff, 'With flag OFF: past_booking should not appear in the grid' );
 	}
 
+	/**
+	 * Verifies that constructing a Calendar records a timing sample via QueryTimer,
+	 * and that the sample contains the feature-flag value in its context.
+	 */
+	public function testCalendarTimerRecordsSample() {
+		$this->createBookableTimeFrameIncludingCurrentDay();
+
+		$today    = $this->now->format( 'Y-m-d' );
+		$tomorrow = date( 'Y-m-d', strtotime( '+1 day', $this->now->getTimestamp() ) );
+
+		// Construct a calendar (triggers QueryTimer::measure inside __construct)
+		new Calendar(
+			new Day( $today, [ $this->locationId ], [ $this->itemId ] ),
+			new Day( $tomorrow, [ $this->locationId ], [ $this->itemId ] ),
+			[ $this->locationId ],
+			[ $this->itemId ]
+		);
+
+		// Flush pending samples from the shutdown buffer
+		QueryTimer::flushPending();
+
+		$samples = QueryTimer::getSamples();
+		$this->assertNotEmpty( $samples, 'QueryTimer should have recorded at least one sample' );
+
+		// Find our sample
+		$timerSample = null;
+		foreach ( $samples as $s ) {
+			if ( $s['label'] === 'calendar.timeframe_query' ) {
+				$timerSample = $s;
+				break;
+			}
+		}
+		$this->assertNotNull( $timerSample, 'No sample with label calendar.timeframe_query found' );
+		$this->assertGreaterThan( 0, $timerSample['duration'], 'Duration must be positive' );
+		$this->assertArrayHasKey( 'past_booking_flag', $timerSample['context'] );
+		$this->assertIsBool( $timerSample['context']['past_booking_flag'] );
+	}
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->now = new \DateTime( self::CURRENT_DATE );
 		ClockMock::freeze( $this->now );
+	}
+
+	protected function tearDown(): void {
+		QueryTimer::clearSamples();
+		QueryTimer::flushPending(); // reset pending buffer
+		parent::tearDown();
 	}
 }
