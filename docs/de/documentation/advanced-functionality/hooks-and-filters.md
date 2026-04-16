@@ -96,6 +96,7 @@ zurückgibt.
   * commonsbooking_mail_body
   * commonsbooking_mail_attachment
   * commonsbooking_disableCache
+  * commonsbooking_options_array
 
 Es gibt auch Filter Hooks, mit denen du zusätzliche Benutzerrollen, die
 zusätzlich zum CB Manager Artikel und Standorte administrieren können,
@@ -182,4 +183,75 @@ Nutzungs-Beispiel:
 ```php
 // Sets the mobile calendar view to display 2 month
 add_filter('commonsbooking_mobile_calendar_month_count', fn(): int => 2);
+```
+
+### Filter `commonsbooking_options_array`
+
+Mit diesem Filter kannst du das vollständige Options-Array, das alle Tabs,
+Feldgruppen und Felder auf der CommonsBooking-Einstellungsseite definiert,
+vor der Darstellung verändern. Dies ist der richtige Erweiterungspunkt, um neue
+Einstellungs-Tabs hinzuzufügen oder Felder zu bestehenden Gruppen anzufügen,
+ohne die Plugin-Kerndateien zu verändern.
+
+Die an deinen Callback übergebene Struktur entspricht dem Array in
+[`OptionsArray.php`](https://github.com/wielebenwir/commonsbooking/blob/master/includes/OptionsArray.php):
+
+```
+array(
+    'tab_id' => array(
+        'title'        => string,
+        'id'           => string,
+        'field_groups' => array(
+            'group_id' => array(
+                'title'  => string,
+                'id'     => string,
+                'fields' => array( /* CMB2-Felder */ ),
+            ),
+        ),
+    ),
+)
+```
+
+#### Beispiel: Einen neuen Einstellungs-Tab hinzufügen
+
+Verwende einen plugin-spezifischen Schlüssel, um bestehende Tabs nicht zu überschreiben.
+
+```php
+add_filter( 'commonsbooking_options_array', function ( array $options_array ): array {
+    $options_array['my_plugin_tab'] = array(
+        'title'        => __( 'Mein Plugin', 'my-plugin' ),
+        'id'           => 'my_plugin_tab',
+        'field_groups' => array(
+            'my_plugin_group' => array(
+                'title'  => __( 'Mein Plugin Einstellungen', 'my-plugin' ),
+                'id'     => 'my_plugin_group',
+                'fields' => array(
+                    array(
+                        'name'    => __( 'Funktion aktivieren', 'my-plugin' ),
+                        'id'      => 'my_plugin_enable_feature',
+                        'type'    => 'checkbox',
+                        'default' => false,
+                    ),
+                ),
+            ),
+        ),
+    );
+    return $options_array;
+} );
+```
+
+#### Beispiel: Ein Feld zu einer bestehenden Gruppe hinzufügen
+
+Dieses Beispiel fügt ein Textfeld zur bestehenden Gruppe `posttypes` im Tab `general` hinzu.
+
+```php
+add_filter( 'commonsbooking_options_array', function ( array $options_array ): array {
+    $options_array['general']['field_groups']['posttypes']['fields'][] = array(
+        'name'    => __( 'Eigenes Slug-Suffix', 'my-plugin' ),
+        'id'      => 'my_plugin_custom_suffix',
+        'type'    => 'text',
+        'default' => '',
+    );
+    return $options_array;
+} );
 ```

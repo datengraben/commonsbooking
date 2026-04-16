@@ -546,9 +546,44 @@ class Plugin {
 
 	/**
 	 * Register Admin-Options
+	 *
+	 * Applies the 'commonsbooking_options_array' filter before processing
+	 * so that external code can add, modify or remove tabs and their field groups.
 	 */
 	public static function registerAdminOptions() {
 		$options_array = include COMMONSBOOKING_PLUGIN_DIR . '/includes/OptionsArray.php';
+
+		/**
+		 * Filters the options array before it is processed into admin settings tabs.
+		 *
+		 * Use this filter to add new tabs, append fields to existing field groups,
+		 * or remove entries from the CommonsBooking admin settings page without
+		 * modifying plugin core files.
+		 *
+		 * @since 2.10.10
+		 *
+		 * @param array $options_array {
+		 *     Associative array of tab definitions, keyed by tab ID.
+		 *
+		 *     @type array $tab {
+		 *         @type string $title        Tab title shown in the admin UI.
+		 *         @type string $id           Tab identifier (must be unique).
+		 *         @type bool   $is_top_level Optional. Makes this the top-level plugin page.
+		 *         @type array  $field_groups {
+		 *             Associative array of field group definitions, keyed by group ID.
+		 *
+		 *             @type array $group {
+		 *                 @type string $title  Group heading shown in the form.
+		 *                 @type string $id     Group identifier (must be unique within the tab).
+		 *                 @type string $desc   Optional. Description HTML shown below the heading.
+		 *                 @type array  $fields Array of CMB2 field definition arrays.
+		 *             }
+		 *         }
+		 *     }
+		 * }
+		 * @return array The filtered options array.
+		 */
+		$options_array = apply_filters( 'commonsbooking_options_array', $options_array );
 		foreach ( $options_array as $tab_id => $tab ) {
 			new OptionsTab( $tab_id, $tab );
 		}
