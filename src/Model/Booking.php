@@ -54,6 +54,7 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 		'canceled',
 		'confirmed',
 		'unconfirmed',
+		'past_booking',
 	];
 
 	/**
@@ -585,7 +586,9 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 		}
 
 		if ( isset( $noticeText ) ) {
-			return sprintf( '<div class="cb-notice cb-booking-notice cb-status-%s">%s</div>', $this->post_status, $noticeText );
+			// Map past_booking to confirmed so the CSS class is consistent with confirmed bookings
+			$statusClass = $this->isPastBookingStatus() ? 'confirmed' : $this->post_status;
+			return sprintf( '<div class="cb-notice cb-booking-notice cb-status-%s">%s</div>', $statusClass, $noticeText );
 		}
 
 		return null;
@@ -725,6 +728,17 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 		} else {
 			return false;
 		}
+	}
+
+	/**
+	 * Returns true when the booking post has the 'past_booking' status.
+	 * This status is assigned by a cron job to confirmed bookings whose end date has passed,
+	 * allowing more efficient date-range queries by reducing the active 'confirmed' pool.
+	 *
+	 * @return bool
+	 */
+	public function isPastBookingStatus(): bool {
+		return $this->post_status === 'past_booking';
 	}
 
 	/**
@@ -1018,7 +1032,7 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 * @return string
 	 */
 	public function getStatus(): string {
-		if ( $this->isConfirmed() ) {
+		if ( $this->isConfirmed() || $this->isPastBookingStatus() ) {
 			return __( 'Confirmed', 'commonsbooking' );
 		} elseif ( $this->isUnconfirmed() ) {
 			return __( 'Unconfirmed', 'commonsbooking' );

@@ -12,6 +12,124 @@ use WP_Query;
 class Booking {
 
 	/**
+	 * Default number of booking posts to process per database batch in the migration job.
+	 * Override via the 'commonsbooking_past_booking_batch_size' filter.
+	 */
+	const MIGRATION_BATCH_SIZE = 100;
+
+	/**
+	 * Transitions booking post statuses based on the 'past_booking' feature flag.
+	 *
+	 * Flag ON  (forward):  confirmed bookings whose end date has passed → 'past_booking'.
+	 *                      Keeps the active confirmed pool small for faster meta queries.
+	 * Flag OFF (reverse):  any existing 'past_booking' posts → 'confirmed'.
+	 *                      Allows clean rollback when the feature is disabled.
+	 *
+	 * Processes in batches (default: 100) to limit peak memory usage on large datasets.
+	 * Always re-queries page 1 — processed records change status and drop out of the
+	 * result set, so the loop drains naturally without offset drift.
+	 *
+	 * Batch size is filterable via 'commonsbooking_past_booking_batch_size'.
+	 * Uses a direct SQL UPDATE (same pattern as Model\Booking::cancel()) to avoid
+	 * wp_update_post() wiping post meta.
+	 */
+	public static function markPastBookings(): void {
+		if ( apply_filters( 'commonsbooking_enable_past_booking_status', false ) ) {
+			// Forward: transition expired confirmed bookings to past_booking
+			self::batchTransitionBookingStatus(
+				'confirmed',
+				'past_booking',
+				[
+					'relation' => 'AND',
+					[
+						'key'     => \CommonsBooking\Model\Timeframe::REPETITION_END,
+						'value'   => current_time( 'timestamp' ),
+						'compare' => '<',
+						'type'    => 'numeric',
+					],
+					[
+						'key'     => 'type',
+						'value'   => Timeframe::BOOKING_ID,
+						'compare' => '=',
+					],
+				]
+			);
+		} else {
+			// Reverse: revert any past_booking posts back to confirmed
+			self::batchTransitionBookingStatus(
+				'past_booking',
+				'confirmed',
+				[
+					[
+						'key'     => 'type',
+						'value'   => Timeframe::BOOKING_ID,
+						'compare' => '=',
+					],
+				]
+			);
+		}
+	}
+
+	/**
+	 * Transitions booking posts from one status to another in batches.
+	 *
+	 * Processes $batchSize records per loop iteration, always fetching page 1.
+	 * Since updated records leave the $fromStatus pool they will not appear in
+	 * subsequent queries, so the loop terminates without page-offset drift.
+	 *
+	 * A single UPDATE ... IN (...) per batch minimises round-trips.
+	 *
+	 * @param string $fromStatus Source post status to match.
+	 * @param string $toStatus   Target post status to write.
+	 * @param array  $metaQuery  WP_Query meta_query array for additional constraints.
+	 */
+	private static function batchTransitionBookingStatus(
+		string $fromStatus,
+		string $toStatus,
+		array $metaQuery
+	): void {
+		global $wpdb;
+
+		$batchSize = (int) apply_filters( 'commonsbooking_past_booking_batch_size', self::MIGRATION_BATCH_SIZE );
+
+		do {
+			$query = new WP_Query(
+				[
+					'post_type'      => \CommonsBooking\Wordpress\CustomPostType\Booking::$postType,
+					'post_status'    => $fromStatus,
+					'meta_query'     => $metaQuery,
+					'posts_per_page' => $batchSize,
+					'paged'          => 1,
+					'fields'         => 'ids',
+					'no_found_rows'  => true,
+					'cache_results'  => false,
+				]
+			);
+
+			$postIds = $query->get_posts();
+
+			if ( empty( $postIds ) ) {
+				break;
+			}
+
+			// Cast to int before inlining — avoids dynamic placeholders and
+			// is safe because WP_Query already returns integer post IDs.
+			$intIds  = array_map( 'intval', $postIds );
+			$idList  = implode( ', ', $intIds );
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->posts} SET post_status = %s WHERE ID IN ({$idList}) AND post_status = %s",
+					$toStatus,
+					$fromStatus
+				)
+			);
+
+			wp_cache_flush();
+
+		} while ( count( $postIds ) >= $batchSize );
+	}
+
+	/**
 	 * Removes all unconfirmed bookings older than 10 minutes
 	 * is triggered in  Service\Scheduler initHooks()
 	 *

@@ -74,7 +74,7 @@ class MassOperations {
 					<td class="manage-column column-cb_item">' . $itemTitle . '</td>
 					<td class="manage-column column-cb_start">' . $booking->getFormattedStartDate() . '</td>
 					<td class="manage-column column-cb_end">' . $booking->getFormattedEndDate() . '</td>
-					<td class="manage-column column-cb_status">' . $booking->post_status . '</td>
+					<td class="manage-column column-cb_status">' . ( $booking->isPastBookingStatus() ? 'confirmed' : $booking->post_status ) . '</td>
 					<td class="manage-column column-cb_location">' . $locationTitle . '</td>
 					<td class="manage-column column-cb_new_location">' . $newLocationTitle . '</td>
 				</tr>';

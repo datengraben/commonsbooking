@@ -140,6 +140,13 @@ class Scheduler {
 			'ten_minutes'
 		);
 
+		// Transition past confirmed bookings to 'past_booking' status (opt-in via filter)
+		new Scheduler(
+			'mark_past_bookings',
+			array( \CommonsBooking\Service\Booking::class, 'markPastBookings' ),
+			'hourly'
+		);
+
 		// Init booking reminder job
 		new Scheduler(
 			'reminder',

@@ -188,7 +188,7 @@ class Booking extends View {
 					'locationLong'       => $location ? $location->getMeta( 'geo_longitude' ) : 0,
 					'bookingDate'        => date( 'd.m.Y H:i', strtotime( $booking->post_date ) ),
 					'user'               => $userInfo->user_login,
-					'status'             => $booking->post_status,
+					'status'             => $booking->isPastBookingStatus() ? 'confirmed' : $booking->post_status,
 					'fullDay'            => $booking->getMeta( 'full-day' ),
 					'calendarLink'       => $item && $location ? add_query_arg( 'cb-item', $item->ID, get_permalink( $location->ID ) ) : '',
 					'content'            => [
@@ -198,7 +198,7 @@ class Booking extends View {
 						],
 						'status' => [
 							'label' => commonsbooking_sanitizeHTML( __( 'Status', 'commonsbooking' ) ),
-							'value' => commonsbooking_sanitizeHTML( __( $booking->post_status, 'commonsbooking' ) ),
+							'value' => commonsbooking_sanitizeHTML( __( $booking->isPastBookingStatus() ? 'confirmed' : $booking->post_status, 'commonsbooking' ) ),
 						],
 					],
 				];

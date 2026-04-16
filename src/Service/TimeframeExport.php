@@ -489,7 +489,7 @@ class TimeframeExport {
 					$dt->format( 'Y-m-d' ),
 					false,
 					null,
-					[ 'canceled', 'confirmed', 'unconfirmed', 'publish', 'inherit' ]
+					[ 'canceled', 'confirmed', 'past_booking', 'unconfirmed', 'publish', 'inherit' ]
 				);
 				foreach ( $dayTimeframes as $timeframe ) {
 					if ( ! in_array( $timeframe->ID, $this->relevantTimeframes ) ) {
@@ -505,7 +505,7 @@ class TimeframeExport {
 				$page,
 				self::ITERATION_COUNTS,
 				$types,
-				[ 'confirmed', 'unconfirmed', 'canceled', 'publish', 'inherit' ],
+				[ 'confirmed', 'past_booking', 'unconfirmed', 'canceled', 'publish', 'inherit' ],
 				false,
 				$customArgs
 			);
@@ -584,6 +584,10 @@ class TimeframeExport {
 				continue;
 			}
 			$timeframeData = self::getRelevantTimeframeFields( $timeframePost );
+			// Map internal past_booking status to confirmed for user-facing export output
+			if ( isset( $timeframeData['post_status'] ) && $timeframeData['post_status'] === 'past_booking' ) {
+				$timeframeData['post_status'] = 'confirmed';
+			}
 			// Timeframe typ
 			$timeframeTypeId       = $timeframePost->getFieldValue( 'type' );
 			$timeframeTypes        = \CommonsBooking\Wordpress\CustomPostType\Timeframe::getTypes();

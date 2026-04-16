@@ -5,6 +5,7 @@ namespace CommonsBooking\Tests\Model;
 use CommonsBooking\Model\Day;
 use CommonsBooking\Model\Week;
 use CommonsBooking\Model\Calendar;
+use CommonsBooking\Service\QueryTimer;
 
 use CommonsBooking\Tests\Wordpress\CustomPostTypeTest;
 use CommonsBooking\Wordpress\CustomPostType\Timeframe;
@@ -259,9 +260,138 @@ class CalendarTest extends CustomPostTypeTest {
 		$this->assertEquals( $expectedSlotsObject, $availabilitySlots );
 	}
 
+	public function testCalendarIncludesPastBookings() {
+		// Create a bookable timeframe spanning CURRENT_DATE and the following day
+		$startTs     = strtotime( self::CURRENT_DATE );
+		$endTs       = strtotime( '+1 day', $startTs );
+		$bookingDate = date( 'Y-m-d', $startTs );
+		$this->createTimeframe(
+			$this->locationId,
+			$this->itemId,
+			$startTs,
+			$endTs,
+			Timeframe::BOOKABLE_ID,
+			'on',
+			'd'
+		);
+
+		// Create a booking for CURRENT_DATE and immediately mark it as 'past_booking'
+		$bookingId = $this->createBooking(
+			$this->locationId,
+			$this->itemId,
+			$startTs,
+			$this->getEndOfDayTimestamp( $bookingDate ),
+			'12:00 AM',
+			'23:59',
+			'confirmed'
+		);
+		global $wpdb;
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->posts} SET post_status = 'past_booking' WHERE ID = %d",
+				$bookingId
+			)
+		);
+		wp_cache_flush();
+
+		// Helper: walk Calendar weeks/days to find the Day matching $date
+		$getDayFromCalendar = function ( Calendar $cal, string $date ): ?\CommonsBooking\Model\Day {
+			foreach ( $cal->getWeeks() as $week ) {
+				foreach ( $week->getDays() as $day ) {
+					if ( $day->getDate() === $date ) {
+						return $day;
+					}
+				}
+			}
+			return null;
+		};
+
+		$calStart = new Day( $bookingDate, [ $this->locationId ], [ $this->itemId ] );
+		$calEnd   = new Day( date( 'Y-m-d', strtotime( '+2 days', $startTs ) ), [ $this->locationId ], [ $this->itemId ] );
+
+		// Calendar WITH flag: constructor fetches past_booking → slot appears as BOOKING_ID in the grid
+		add_filter( 'commonsbooking_enable_past_booking_status', '__return_true' );
+		$calendarOn = new Calendar( $calStart, $calEnd, [ $this->locationId ], [ $this->itemId ] );
+		remove_filter( 'commonsbooking_enable_past_booking_status', '__return_true' );
+
+		$dayOn  = $getDayFromCalendar( $calendarOn, $bookingDate );
+		$this->assertNotNull( $dayOn, 'Could not find day in calendar (flag ON)' );
+		$bookingVisibleOn = false;
+		foreach ( $dayOn->getGrid() as $slot ) {
+			if (
+				isset( $slot['timeframe'] ) &&
+				(int) get_post_meta( $slot['timeframe']->ID, 'type', true ) === \CommonsBooking\Wordpress\CustomPostType\Timeframe::BOOKING_ID
+			) {
+				$bookingVisibleOn = true;
+				break;
+			}
+		}
+		$this->assertTrue( $bookingVisibleOn, 'With flag ON: past_booking should block the slot in the grid' );
+
+		// Calendar WITHOUT flag: constructor does not fetch past_booking → slot remains BOOKABLE_ID
+		$calendarOff = new Calendar( $calStart, $calEnd, [ $this->locationId ], [ $this->itemId ] );
+		$dayOff      = $getDayFromCalendar( $calendarOff, $bookingDate );
+		$this->assertNotNull( $dayOff, 'Could not find day in calendar (flag OFF)' );
+		$bookingVisibleOff = false;
+		foreach ( $dayOff->getGrid() as $slot ) {
+			if (
+				isset( $slot['timeframe'] ) &&
+				(int) get_post_meta( $slot['timeframe']->ID, 'type', true ) === \CommonsBooking\Wordpress\CustomPostType\Timeframe::BOOKING_ID
+			) {
+				$bookingVisibleOff = true;
+				break;
+			}
+		}
+		$this->assertFalse( $bookingVisibleOff, 'With flag OFF: past_booking should not appear in the grid' );
+	}
+
+	/**
+	 * Verifies that constructing a Calendar records a timing sample via QueryTimer,
+	 * and that the sample contains the feature-flag value in its context.
+	 */
+	public function testCalendarTimerRecordsSample() {
+		$this->createBookableTimeFrameIncludingCurrentDay();
+
+		$today    = $this->now->format( 'Y-m-d' );
+		$tomorrow = date( 'Y-m-d', strtotime( '+1 day', $this->now->getTimestamp() ) );
+
+		// Construct a calendar (triggers QueryTimer::measure inside __construct)
+		new Calendar(
+			new Day( $today, [ $this->locationId ], [ $this->itemId ] ),
+			new Day( $tomorrow, [ $this->locationId ], [ $this->itemId ] ),
+			[ $this->locationId ],
+			[ $this->itemId ]
+		);
+
+		// Flush pending samples from the shutdown buffer
+		QueryTimer::flushPending();
+
+		$samples = QueryTimer::getSamples();
+		$this->assertNotEmpty( $samples, 'QueryTimer should have recorded at least one sample' );
+
+		// Find our sample
+		$timerSample = null;
+		foreach ( $samples as $s ) {
+			if ( $s['label'] === 'calendar.timeframe_query' ) {
+				$timerSample = $s;
+				break;
+			}
+		}
+		$this->assertNotNull( $timerSample, 'No sample with label calendar.timeframe_query found' );
+		$this->assertGreaterThan( 0, $timerSample['duration'], 'Duration must be positive' );
+		$this->assertArrayHasKey( 'past_booking_flag', $timerSample['context'] );
+		$this->assertIsBool( $timerSample['context']['past_booking_flag'] );
+	}
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->now = new \DateTime( self::CURRENT_DATE );
 		ClockMock::freeze( $this->now );
+	}
+
+	protected function tearDown(): void {
+		QueryTimer::clearSamples();
+		QueryTimer::flushPending(); // reset pending buffer
+		parent::tearDown();
 	}
 }

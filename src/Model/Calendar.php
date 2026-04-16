@@ -4,6 +4,7 @@ namespace CommonsBooking\Model;
 
 use CommonsBooking\Helper\Wordpress;
 use CommonsBooking\Plugin;
+use CommonsBooking\Service\QueryTimer;
 use stdClass;
 
 /**
@@ -66,14 +67,41 @@ class Calendar {
 		$this->locations = $locations;
 		$this->types     = $types;
 
-		$this->timeframes = \CommonsBooking\Repository\Timeframe::getInRange(
-			$this->startDate->getStartTimestamp(),
-			$this->endDate->getEndTimestamp(),
-			$this->locations,
-			$this->items,
-			$this->types,
-			true,
-			[ 'confirmed', 'publish' ]
+		$pastBookingFlagEnabled = (bool) apply_filters( 'commonsbooking_enable_past_booking_status', false );
+
+		$defaultStatuses = [ 'confirmed', 'publish' ];
+		if ( $pastBookingFlagEnabled ) {
+			$defaultStatuses[] = 'past_booking';
+		}
+
+		/**
+		 * Filters the post statuses used when fetching timeframes for the calendar widget.
+		 *
+		 * Adding 'past_booking' here enables the experimental past-booking status feature,
+		 * which lets the calendar display historically booked slots correctly while keeping
+		 * overlap detection queries fast.
+		 *
+		 * @param string[] $statuses Post status slugs to include in the calendar query.
+		 */
+		$calendarStatuses = apply_filters( 'commonsbooking_calendar_booking_statuses', $defaultStatuses );
+
+		$this->timeframes = QueryTimer::measure(
+			'calendar.timeframe_query',
+			fn() => \CommonsBooking\Repository\Timeframe::getInRange(
+				$this->startDate->getStartTimestamp(),
+				$this->endDate->getEndTimestamp(),
+				$this->locations,
+				$this->items,
+				$this->types,
+				true,
+				$calendarStatuses
+			),
+			[
+				'past_booking_flag' => $pastBookingFlagEnabled,
+				'statuses'          => $calendarStatuses,
+				'location_count'    => count( $this->locations ),
+				'item_count'        => count( $this->items ),
+			]
 		);
 	}
 
