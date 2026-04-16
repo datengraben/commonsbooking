@@ -21,17 +21,24 @@ A community-maintained library of PHP snippets for extending [CommonsBooking](ht
 
 | File | Description | CB Version |
 |------|-------------|------------|
-| [filter-mail-body-add-custom-text.php](snippets/filters/filter-mail-body-add-custom-text.php) | Append custom text to all booking confirmation emails | 2.8+ |
+| [filter-mail-body-add-custom-text.php](snippets/filters/filter-mail-body-add-custom-text.php) | Append custom text to all booking emails | 2.7.3+ |
+| [filter-mail-subject-add-site-name.php](snippets/filters/filter-mail-subject-add-site-name.php) | Prepend site name to all booking email subjects | 2.7.3+ |
+| [filter-mobile-calendar-show-3-months.php](snippets/filters/filter-mobile-calendar-show-3-months.php) | Show 3 months in the mobile booking calendar | 2.10.5+ |
 
 ### Hooks (Actions)
 
 | File | Description | CB Version |
 |------|-------------|------------|
-| [action-booking-single-before-show-user-info.php](snippets/hooks/action-booking-single-before-show-user-info.php) | Display extra user info before the booking single template | 2.10.8+ |
+| [action-booking-single-before-show-user-info.php](snippets/hooks/action-booking-single-before-show-user-info.php) | Display renter contact info above the booking details (admins only) | 2.10.8+ |
+| [action-item-single-after-add-custom-notice.php](snippets/hooks/action-item-single-after-add-custom-notice.php) | Add a custom notice box below every item page | 2.10.8+ |
+| [action-location-single-after-add-opening-hours.php](snippets/hooks/action-location-single-after-add-opening-hours.php) | Display opening hours from a custom field below a location page | 2.10.8+ |
 
 ### Shortcodes
 
-*No snippets yet — [contribute one!](CONTRIBUTING.md)*
+| File | Shortcode | Description | CB Version |
+|------|-----------|-------------|------------|
+| [shortcode-cb-my-next-booking.php](snippets/shortcodes/shortcode-cb-my-next-booking.php) | `[cb_my_next_booking]` | Show the current user's next confirmed booking | 2.10+ |
+| [shortcode-cb-item-availability-badge.php](snippets/shortcodes/shortcode-cb-item-availability-badge.php) | `[cb_item_availability_badge id="42"]` | Render an available / not-available badge for a specific item | 2.10+ |
 
 ### Integrations
 
