@@ -586,7 +586,9 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 		}
 
 		if ( isset( $noticeText ) ) {
-			return sprintf( '<div class="cb-notice cb-booking-notice cb-status-%s">%s</div>', $this->post_status, $noticeText );
+			// Map past_booking to confirmed so the CSS class is consistent with confirmed bookings
+			$statusClass = $this->isPastBookingStatus() ? 'confirmed' : $this->post_status;
+			return sprintf( '<div class="cb-notice cb-booking-notice cb-status-%s">%s</div>', $statusClass, $noticeText );
 		}
 
 		return null;
@@ -1030,7 +1032,7 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 * @return string
 	 */
 	public function getStatus(): string {
-		if ( $this->isConfirmed() ) {
+		if ( $this->isConfirmed() || $this->isPastBookingStatus() ) {
 			return __( 'Confirmed', 'commonsbooking' );
 		} elseif ( $this->isUnconfirmed() ) {
 			return __( 'Unconfirmed', 'commonsbooking' );

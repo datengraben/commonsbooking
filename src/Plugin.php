@@ -488,8 +488,29 @@ class Plugin {
 	 */
 	public static function registerPostStates() {
 		foreach ( Booking::$bookingStates as $bookingState ) {
+			if ( $bookingState === 'past_booking' ) {
+				continue; // Registered separately below without admin UI elements
+			}
 			new PostStatus( $bookingState, __( ucfirst( $bookingState ), 'commonsbooking' ) );
 		}
+
+		// past_booking is an internal performance-optimization status.
+		// It must never appear in admin dropdowns, status filters, or any user-facing output.
+		// Register it with the label "Confirmed" so get_post_status_object() returns the
+		// correct human-readable label if it is ever displayed indirectly.
+		register_post_status(
+			'past_booking',
+			[
+				'label'                     => __( 'Confirmed', 'commonsbooking' ),
+				'public'                    => false,
+				'show_in_admin_all_list'    => false,
+				'show_in_admin_status_list' => false,
+				'label_count'               => _n_noop(
+					'Confirmed <span class="count">(%s)</span>',
+					'Confirmed <span class="count">(%s)</span>'
+				),
+			]
+		);
 	}
 
 	/**
