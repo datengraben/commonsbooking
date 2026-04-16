@@ -26,3 +26,4 @@ tsconfig.*
 webpack.config.js
 phpstan.neon
 phpstan-baseline.neon
+/contrib/

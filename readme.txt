@@ -71,6 +71,10 @@ CommonsBooking was developed for the ["Commons Cargobike" movement](http://commo
 * [Bug-Tracker](https://github.com/wielebenwir/commonsbooking/issues)
 * [Support](https://commonsbooking.org/contact/)
 
+### How can I customize CommonsBooking with my own code?
+
+CommonsBooking exposes a set of action hooks, filter hooks, and shortcode APIs that let you extend the plugin without modifying its files. Ready-to-paste PHP snippets for common customizations are collected in the [community snippet library](https://github.com/wielebenwir/commonsbooking/tree/master/contrib) on GitHub. Copy a snippet into a [Code Snippets plugin](https://wordpress.org/plugins/code-snippets/) or your theme's `functions.php` to get started. For a full reference of available hooks and filters, see the [developer documentation](https://commonsbooking.org/documentation).
+
 
 ## Screenshots
 
