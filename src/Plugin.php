@@ -17,7 +17,6 @@ use CommonsBooking\Service\iCalendar;
 use CommonsBooking\Service\Upgrade;
 use CommonsBooking\Settings\Settings;
 use CommonsBooking\Repository\BookingCodes;
-use CommonsBooking\View\Comparison;
 use CommonsBooking\View\Dashboard;
 use CommonsBooking\View\MassOperations;
 use CommonsBooking\Wordpress\CustomPostType\CustomPostType;
@@ -407,16 +406,6 @@ class Plugin {
 				'manage_' . COMMONSBOOKING_PLUGIN_SLUG,
 				'cb-mass-operations',
 				array( MassOperations::class, 'index' )
-			);
-
-			// Add menu item for plugin comparison
-			add_submenu_page(
-				'cb-dashboard',
-				esc_html__( 'Plugin Comparison', 'commonsbooking' ),
-				esc_html__( 'Plugin Comparison', 'commonsbooking' ),
-				'manage_' . COMMONSBOOKING_PLUGIN_SLUG,
-				'cb-plugin-comparison',
-				array( Comparison::class, 'index' )
 			);
 		}
 	}
