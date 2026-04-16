@@ -12,6 +12,58 @@ use WP_Query;
 class Booking {
 
 	/**
+	 * Transitions confirmed bookings whose end date has passed to the 'past_booking' status.
+	 *
+	 * Enabled only when the 'commonsbooking_enable_past_booking_status' filter returns true.
+	 * This keeps the active 'confirmed' pool small and speeds up date-range meta queries.
+	 *
+	 * Uses a direct SQL UPDATE (same pattern as Model\Booking::cancel()) to avoid
+	 * wp_update_post() wiping post meta.
+	 */
+	public static function markPastBookings(): void {
+		if ( ! apply_filters( 'commonsbooking_enable_past_booking_status', false ) ) {
+			return;
+		}
+
+		global $wpdb;
+
+		$args = [
+			'post_type'      => \CommonsBooking\Wordpress\CustomPostType\Booking::$postType,
+			'post_status'    => 'confirmed',
+			'meta_query'     => [
+				'relation' => 'AND',
+				[
+					'key'     => \CommonsBooking\Model\Timeframe::REPETITION_END,
+					'value'   => current_time( 'timestamp' ),
+					'compare' => '<',
+					'type'    => 'numeric',
+				],
+				[
+					'key'     => 'type',
+					'value'   => Timeframe::BOOKING_ID,
+					'compare' => '=',
+				],
+			],
+			'nopaging'       => true,
+			'fields'         => 'ids',
+		];
+
+		$query = new WP_Query( $args );
+		if ( ! $query->have_posts() ) {
+			return;
+		}
+
+		foreach ( $query->get_posts() as $postId ) {
+			$wpdb->query(
+				$wpdb->prepare(
+					"UPDATE {$wpdb->posts} SET post_status = 'past_booking' WHERE ID = %d AND post_status = 'confirmed'",
+					$postId
+				)
+			);
+		}
+	}
+
+	/**
 	 * Removes all unconfirmed bookings older than 10 minutes
 	 * is triggered in  Service\Scheduler initHooks()
 	 *

@@ -763,6 +763,24 @@ class BookingTest extends CustomPostTypeTest {
 		$this->bookingIds[] = $testBookingSpanningOverTwoSlotsID;
 	}
 
+	public function testIsPastBookingStatus() {
+		// testBookingPast is a confirmed booking ending before CURRENT_DATE — not yet 'past_booking'
+		$this->assertFalse( $this->testBookingPast->isPastBookingStatus() );
+
+		// Update status directly (same pattern as cancel() to avoid wp_update_post meta wipe)
+		global $wpdb;
+		$wpdb->query(
+			$wpdb->prepare(
+				"UPDATE {$wpdb->posts} SET post_status = 'past_booking' WHERE ID = %d",
+				$this->testBookingPastId
+			)
+		);
+		wp_cache_flush();
+
+		$updatedBooking = new \CommonsBooking\Model\Booking( get_post( $this->testBookingPastId ) );
+		$this->assertTrue( $updatedBooking->isPastBookingStatus() );
+	}
+
 	protected function setUp(): void {
 		parent::setUp();
 

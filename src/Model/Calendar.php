@@ -66,6 +66,22 @@ class Calendar {
 		$this->locations = $locations;
 		$this->types     = $types;
 
+		$defaultStatuses = [ 'confirmed', 'publish' ];
+		if ( apply_filters( 'commonsbooking_enable_past_booking_status', false ) ) {
+			$defaultStatuses[] = 'past_booking';
+		}
+
+		/**
+		 * Filters the post statuses used when fetching timeframes for the calendar widget.
+		 *
+		 * Adding 'past_booking' here enables the experimental past-booking status feature,
+		 * which lets the calendar display historically booked slots correctly while keeping
+		 * overlap detection queries fast.
+		 *
+		 * @param string[] $statuses Post status slugs to include in the calendar query.
+		 */
+		$calendarStatuses = apply_filters( 'commonsbooking_calendar_booking_statuses', $defaultStatuses );
+
 		$this->timeframes = \CommonsBooking\Repository\Timeframe::getInRange(
 			$this->startDate->getStartTimestamp(),
 			$this->endDate->getEndTimestamp(),
@@ -73,7 +89,7 @@ class Calendar {
 			$this->items,
 			$this->types,
 			true,
-			[ 'confirmed', 'publish' ]
+			$calendarStatuses
 		);
 	}
 

@@ -54,6 +54,7 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 		'canceled',
 		'confirmed',
 		'unconfirmed',
+		'past_booking',
 	];
 
 	/**
@@ -725,6 +726,17 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 		} else {
 			return false;
 		}
+	}
+
+	/**
+	 * Returns true when the booking post has the 'past_booking' status.
+	 * This status is assigned by a cron job to confirmed bookings whose end date has passed,
+	 * allowing more efficient date-range queries by reducing the active 'confirmed' pool.
+	 *
+	 * @return bool
+	 */
+	public function isPastBookingStatus(): bool {
+		return $this->post_status === 'past_booking';
 	}
 
 	/**

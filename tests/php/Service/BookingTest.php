@@ -35,6 +35,43 @@ class BookingTest extends CustomPostTypeTest {
 		$this->assertNull( get_post( $bookingId ) );
 	}
 
+	public function testMarkPastBookings() {
+		add_filter( 'commonsbooking_enable_past_booking_status', '__return_true' );
+
+		// Create a confirmed booking whose end date is in the past (yesterday)
+		$pastBookingId = $this->createBooking(
+			$this->locationId,
+			$this->itemId,
+			strtotime( '-3 days' ),
+			strtotime( '-1 day' ),
+			'12:00 AM',
+			'23:59',
+			'confirmed'
+		);
+
+		// Create a confirmed booking whose end date is in the future
+		$futureBookingId = $this->createBooking(
+			$this->locationId,
+			$this->itemId,
+			strtotime( '+1 day' ),
+			strtotime( '+3 days' ),
+			'12:00 AM',
+			'23:59',
+			'confirmed'
+		);
+
+		$this->assertEquals( 'confirmed', get_post_field( 'post_status', $pastBookingId ) );
+		$this->assertEquals( 'confirmed', get_post_field( 'post_status', $futureBookingId ) );
+
+		Booking::markPastBookings();
+		wp_cache_flush();
+
+		$this->assertEquals( 'past_booking', get_post_field( 'post_status', $pastBookingId ) );
+		$this->assertEquals( 'confirmed', get_post_field( 'post_status', $futureBookingId ) );
+
+		remove_filter( 'commonsbooking_enable_past_booking_status', '__return_true' );
+	}
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->firstTimeframeId = $this->createBookableTimeFrameIncludingCurrentDay();
