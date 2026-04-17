@@ -54,11 +54,11 @@ class CustomPost {
 	/**
 	 * Returns field value, even if it's a meta field.
 	 *
-	 * @param $fieldName
+	 * @param string $fieldName
 	 *
 	 * @return mixed
 	 */
-	public function getFieldValue( $fieldName ) {
+	public function getFieldValue( string $fieldName ) {
 		$fieldName  = trim( $fieldName );
 		$fieldValue = $this->{$fieldName};
 
@@ -74,9 +74,9 @@ class CustomPost {
 	 *
 	 * @param string $field key of post_meta field for this post
 	 *
-	 * @return string|array The value of the meta field. An empty string if the field doesn't exist.
+	 * @return string|array<mixed> The value of the meta field. An empty string if the field doesn't exist.
 	 */
-	public function getMeta( $field ) {
+	public function getMeta( string $field ) {
 		return get_post_meta( $this->post->ID, $field, true );
 	}
 
@@ -99,11 +99,11 @@ class CustomPost {
 	 * When getting a value from a Model Object, we can use this magic method to get the value from the WP_Post object instead.
 	 * This, for example, allows us to use $booking->post_title instead of $booking->post->post_title.
 	 *
-	 * @param $name
+	 * @param string $name
 	 *
-	 * @return array|mixed|void
+	 * @return array<mixed>|mixed|void
 	 */
-	public function __get( $name ) {
+	public function __get( string $name ) {
 		if ( $this->post == null ) {
 			return;
 		}
@@ -116,13 +116,13 @@ class CustomPost {
 	/**
 	 * Enables that we can call methods of \CustomPost as template tags.
 	 *
-	 * @param string $name of the member function
-	 * @param array  $arguments given to the template tag.
+	 * @param string       $name of the member function
+	 * @param array<mixed> $arguments given to the template tag.
 	 *
-	 * @return array|mixed|void
+	 * @return array<mixed>|mixed|void
 	 * @throws \ReflectionException if called template tag is not a registered method
 	 */
-	public function __call( $name, $arguments ) {
+	public function __call( string $name, array $arguments ) {
 		if ( method_exists( $this->post, $name ) ) {
 			$reflectionMethod = new ReflectionMethod( $this->post, $name );
 

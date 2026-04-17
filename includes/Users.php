@@ -7,12 +7,12 @@ use CommonsBooking\Wordpress\CustomPostType\CustomPostType;
 /**
  * Checks if current user is allowed to edit custom post.
  *
- * @param $post
+ * @param \WP_Post|int $post
  *
  * @return bool
  * @throws Exception
  */
-function commonsbooking_isCurrentUserAllowedToEdit( $post ): bool {
+function commonsbooking_isCurrentUserAllowedToEdit( \WP_Post|int $post ): bool {
 	if ( ! is_user_logged_in() ) {
 		return false; }
 
@@ -24,13 +24,13 @@ function commonsbooking_isCurrentUserAllowedToEdit( $post ): bool {
 /**
  * Checks if user is allowed to edit custom post.
  *
- * @param $post
- * @param $user
+ * @param \WP_Post|int $post
+ * @param WP_User $user
  *
  * @return bool
  * @throws Exception
  */
-function commonsbooking_isUserAllowedToEdit( $post, WP_User $user ): bool {
+function commonsbooking_isUserAllowedToEdit( \WP_Post|int $post, WP_User $user ): bool {
 
 	if ( ! Plugin::isPostCustomPostType( $post ) ) {
 		return false;
@@ -52,9 +52,10 @@ function commonsbooking_isUserAllowedToEdit( $post, WP_User $user ): bool {
 /**
  * Validates if current user is allowed to edit current post in admin.
  *
- * @param $current_screen
+ * @param \WP_Screen $current_screen
+ * @return void
  */
-function commonsbooking_validate_user_on_edit( $current_screen ) {
+function commonsbooking_validate_user_on_edit( \WP_Screen $current_screen ): void {
 	if ( $current_screen->base == 'post' && in_array( $current_screen->id, Plugin::getCustomPostTypesLabels() ) ) {
 		if ( array_key_exists( 'action', $_GET ) && $_GET['action'] == 'edit' ) {
 			$post = get_post( intval( $_GET['post'] ) );
@@ -127,14 +128,25 @@ foreach ( Plugin::getCustomPostTypes() as $custom_post_type ) {
 	add_filter( 'views_edit-' . $custom_post_type, 'commonsbooking_custom_view_count', 10, 1 );
 }
 
-// Filter function for fix of counts in admin lists for custom post types.
-function commonsbooking_custom_view_count( $views ) {
+/**
+ * Filter function for fix of counts in admin lists for custom post types.
+ *
+ * @param array<string, string> $views
+ * @return array<string, string>
+ */
+function commonsbooking_custom_view_count( array $views ): array {
 	global $current_screen;
 	return commonsbooking_fix_view_counts( str_replace( 'edit-', '', $current_screen->id ), $views );
 }
 
-// fixes counts for custom posts countings in admin list
-function commonsbooking_fix_view_counts( $postType, $views ) {
+/**
+ * Fixes counts for custom posts countings in admin list.
+ *
+ * @param string $postType
+ * @param array<string, string> $views
+ * @return array<string, string>
+ */
+function commonsbooking_fix_view_counts( string $postType, array $views ): array {
 	// admin is allowed to see all posts
 	if ( commonsbooking_isCurrentUserAdmin() ) {
 		return $views;
@@ -165,8 +177,12 @@ function commonsbooking_fix_view_counts( $postType, $views ) {
 	return array_intersect_key( $views, $counts );
 }
 
-// Check if current user has admin role
-function commonsbooking_isCurrentUserAdmin() {
+/**
+ * Check if current user has admin role.
+ *
+ * @return bool
+ */
+function commonsbooking_isCurrentUserAdmin(): bool {
 	if ( ! is_user_logged_in() ) {
 		return false; }
 	$user = wp_get_current_user();
@@ -225,8 +241,12 @@ function commonsbooking_isUserCBManager( \WP_User $user ): bool {
 	return apply_filters( 'commonsbooking_isCurrentUserCBManager', $isManager, $user );
 }
 
-// Check if current user has subscriber role
-function commonsbooking_isCurrentUserSubscriber() {
+/**
+ * Check if current user has subscriber role.
+ *
+ * @return bool
+ */
+function commonsbooking_isCurrentUserSubscriber(): bool {
 	$user = wp_get_current_user();
 
 	$isSubscriber = in_array( 'subscriber', $user->roles );
@@ -340,12 +360,12 @@ function commonsbooking_isUserAllowedToSee( $post, WP_User $user ): bool {
  *
  * Used by Service\iCalendar for authentication.
  *
- * @param $user_id
- * @param $user_hash
+ * @param int|string $user_id
+ * @param string $user_hash
  *
  * @return bool
  */
-function commonsbooking_isUIDHashComboCorrect( $user_id, $user_hash ): bool {
+function commonsbooking_isUIDHashComboCorrect( int|string $user_id, string $user_hash ): bool {
 	if ( wp_hash( $user_id ) == $user_hash ) {
 		return true;
 	} else {

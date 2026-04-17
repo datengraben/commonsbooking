@@ -8,15 +8,15 @@ class Holiday {
 	 * Will render the fields in the timeframe settings where the user can define the holidays to get for the different German states and years.
 	 * The actual holidays will be loaded through feiertagejs.
 	 *
-	 * @param $field
-	 * @param $value
-	 * @param $object_id
-	 * @param $object_type
-	 * @param $field_type
+	 * @param mixed $field
+	 * @param mixed $value
+	 * @param mixed $object_id
+	 * @param mixed $object_type
+	 * @param mixed $field_type
 	 *
 	 * @return string
 	 */
-	public static function renderFields( $field, $value, $object_id, $object_type, $field_type ) {
+	public static function renderFields( $field, $value, $object_id, $object_type, $field_type ): string {
 
 		// make sure we specify each part of the value we need.
 		$value = wp_parse_args(

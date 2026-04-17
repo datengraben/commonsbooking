@@ -29,7 +29,7 @@ abstract class BookablePost extends PostRepository {
 	 *
 	 * @param bool $publishedOnly
 	 *
-	 * @return array
+	 * @return WP_Post[]
 	 * @throws CacheException
 	 * @throws InvalidArgumentException
 	 */
@@ -153,7 +153,7 @@ abstract class BookablePost extends PostRepository {
 	 * @param mixed $userId
 	 * @param bool  $asModel - Whether the posts should be returned as their respective model class or as WP_Post
 	 *
-	 * @return array
+	 * @return WP_Post[]|object[]
 	 */
 	public static function getByUserId( $userId, bool $asModel = false ): array {
 		$cbPosts = [];
@@ -214,12 +214,12 @@ abstract class BookablePost extends PostRepository {
 	/**
 	 * Returns an array of CB item post objects
 	 *
-	 * @param array $args WP Post args
-	 * @param bool  $bookable
+	 * @param array<string, mixed> $args WP Post args
+	 * @param bool                 $bookable
 	 *
-	 * @return array
+	 * @return object[]
 	 */
-	public static function get( array $args = array(), bool $bookable = false ) {
+	public static function get( array $args = array(), bool $bookable = false ): array {
 		$posts             = [];
 		$args['post_type'] = static::getPostType();
 		$args['nopaging']  = true;
@@ -268,15 +268,15 @@ abstract class BookablePost extends PostRepository {
 	 * Returns related object based on bookable post.
 	 * Example: We'd like to have the items bookable at a specific location. With this function we are able to get them.
 	 *
-	 * @param $postId
-	 * @param $originType
-	 * @param $relatedType
-	 * @param bool $bookable
+	 * @param int|WP_Post $postId
+	 * @param string      $originType
+	 * @param string      $relatedType
+	 * @param bool        $bookable
 	 *
-	 * @return int[] Array of post ids
+	 * @return WP_Post[]|object[] Array of post objects
 	 * @throws Exception
 	 */
-	protected static function getByRelatedPost( $postId, $originType, $relatedType, bool $bookable = false ): array {
+	protected static function getByRelatedPost( int|WP_Post $postId, string $originType, string $relatedType, bool $bookable = false ): array {
 
 		if ( ! in_array( $originType, self::$relationalTypes ) || ! in_array( $relatedType, self::$relationalTypes ) ) {
 			throw new Exception( 'invalid type submitted' );

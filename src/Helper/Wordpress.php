@@ -13,7 +13,7 @@ use function get_pages;
 class Wordpress {
 
 	/**
-	 * @return array
+	 * @return array<int, string>
 	 */
 	public static function getPageListTitle(): array {
 		$pages    = get_pages();
@@ -31,11 +31,11 @@ class Wordpress {
 	/**
 	 * Flatten array and return it.
 	 *
-	 * @param $posts
+	 * @param object[] $posts
 	 *
-	 * @return array|array[]|null[]|\WP_Post[]
+	 * @return array<int, \WP_Post|null>
 	 */
-	public static function flattenWpdbResult( $posts ): array {
+	public static function flattenWpdbResult( array $posts ): array {
 		return array_map(
 			function ( $post ) {
 				return get_post( $post->ID );
@@ -45,22 +45,22 @@ class Wordpress {
 	}
 
 	/**
-	 * @param $dateString
+	 * @param string $dateString
 	 *
-	 * @return bool|false
+	 * @return bool
 	 */
-	public static function isValidDateString( $dateString ): bool {
+	public static function isValidDateString( string $dateString ): bool {
 		return preg_match( '/^[0-9]{4}\-[0-9]{2}\-[0-9]{2}$/i', $dateString ) === 1;
 	}
 
 	/**
 	 * Returns array with IDs.
 	 *
-	 * @param $posts
+	 * @param object[] $posts
 	 *
-	 * @return array
+	 * @return int[]
 	 */
-	public static function getPostIdArray( $posts ): array {
+	public static function getPostIdArray( array $posts ): array {
 		return array_map(
 			function ( $post ) {
 				return intval( $post->ID );
@@ -73,11 +73,11 @@ class Wordpress {
 	 * Returns all post ids which are in relation to $postId.
 	 * Why? Needed to get tags for cache invalidation.
 	 *
-	 * @param $postId
+	 * @param int $postId
 	 *
-	 * @return array|string[]
+	 * @return string[]
 	 */
-	public static function getRelatedPostIds( $postId ): array {
+	public static function getRelatedPostIds( int $postId ): array {
 		$postIds = [];
 		$post    = get_post( $postId );
 
@@ -108,12 +108,12 @@ class Wordpress {
 	/**
 	 * Returns all post ids in relation to $postId.
 	 *
-	 * @param $postId
+	 * @param int $postId
 	 *
-	 * @return mixed
+	 * @return int[]
 	 * @throws \CommonsBooking\Psr\Cache\InvalidArgumentException
 	 */
-	public static function getRelatedPostsIdsForLocation( $postId ) {
+	public static function getRelatedPostsIdsForLocation( int $postId ): array {
 		$timeframes   = \CommonsBooking\Repository\Timeframe::get( [ $postId ] );
 		$restrictions = \CommonsBooking\Repository\Restriction::get( [ $postId ] );
 		return array_merge(
@@ -127,12 +127,12 @@ class Wordpress {
 	 * Returns all post ids in relation to $postId.
 	 * CAREFUL: This will not get the location that the item is in relation to.
 	 *
-	 * @param $postId
+	 * @param int $postId
 	 *
-	 * @return array
+	 * @return int[]
 	 * @throws \CommonsBooking\Psr\Cache\InvalidArgumentException
 	 */
-	public static function getRelatedPostsIdsForItem( $postId ): array {
+	public static function getRelatedPostsIdsForItem( int $postId ): array {
 		$timeframes   = \CommonsBooking\Repository\Timeframe::get( [], [ $postId ] );
 		$restrictions = \CommonsBooking\Repository\Restriction::get( [], [ $postId ] );
 		return array_merge(
@@ -145,12 +145,12 @@ class Wordpress {
 	/**
 	 * Returns all post ids in relation to $postId.
 	 *
-	 * @param $postId
+	 * @param int $postId
 	 *
-	 * @return array
+	 * @return int[]
 	 * @throws \Exception
 	 */
-	public static function getRelatedPostsIdsForTimeframe( $postId ): array {
+	public static function getRelatedPostsIdsForTimeframe( int $postId ): array {
 		$timeframe = new Timeframe( $postId );
 		$ids       = [ $postId ];
 		return array_merge( $ids, $timeframe->getItemIDs(), $timeframe->getLocationIDs() );
@@ -159,12 +159,12 @@ class Wordpress {
 	/**
 	 * Returns all post ids in relation to $postId.
 	 *
-	 * @param $postId
+	 * @param int $postId
 	 *
-	 * @return array
+	 * @return int[]
 	 * @throws \Exception
 	 */
-	public static function getRelatedPostsIdsForBooking( $postId ): array {
+	public static function getRelatedPostsIdsForBooking( int $postId ): array {
 		$booking = new \CommonsBooking\Model\Booking( $postId );
 		$ids     = [ $postId ];
 

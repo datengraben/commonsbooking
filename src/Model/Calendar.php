@@ -34,7 +34,7 @@ class Calendar {
 	protected array $locations;
 
 	/**
-	 * @var array
+	 * @var array<int|string, mixed>
 	 */
 	protected $types;
 
@@ -48,11 +48,11 @@ class Calendar {
 	/**
 	 * Calendar constructor.
 	 *
-	 * @param Day   $startDate
-	 * @param Day   $endDate
-	 * @param int[] $locations
-	 * @param int[] $items
-	 * @param array $types
+	 * @param Day                      $startDate
+	 * @param Day                      $endDate
+	 * @param int[]                    $locations
+	 * @param int[]                    $items
+	 * @param array<int|string, mixed> $types
 	 */
 	public function __construct( Day $startDate, Day $endDate, array $locations = [], array $items = [], array $types = [] ) {
 		// check, that it spans at least two days
@@ -82,7 +82,7 @@ class Calendar {
 	 *
 	 * Uses cache and expires at midnight on a daily basis.
 	 *
-	 * @return array
+	 * @return array<int, Week>
 	 */
 	public function getWeeks(): array {
 		$startDate = strtotime( $this->startDate->getDate() ) + 1;
@@ -129,7 +129,7 @@ class Calendar {
 	 * Because we process the calendar by weeks, at least two days are needed to get a valid calendar.
 	 * The calendar does not consider the individual boundaries set by $startDate and $endDate but will always return a full week.
 	 *
-	 * @return array
+	 * @return array<int, \stdClass>
 	 * @throws \Exception
 	 */
 	public function getAvailabilitySlots(): array {
