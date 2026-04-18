@@ -18,6 +18,7 @@ export default defineConfig({
         returnToTopLabel: 'An den Anfang',
         nav: [
           { text: 'Merkmale & Funktionen', link: '/de/features/' }
+        , { text: 'Plugin-Vergleich', link: '/de/plugin-comparison/' }
         , { text: 'Dokumentation', link: '/de/documentation/', activeMatch: '/de/documentation/' }
         , { text: 'Unterstützende', link: '/de/supported-by/' }
         , { text: 'Support und Kontakt', link: '/de/contact/' }
@@ -67,6 +68,7 @@ export default defineConfig({
       themeConfig: {
         nav: [
           { text: 'Functions & Features', link: '/en/features/' },
+          { text: 'Plugin Comparison', link: '/en/plugin-comparison/' },
           { text: 'Documentation', link: '/en/documentation/', activeMatch: '/en/documentation/' },
           { text: 'Our Supporters', link: '/en/supported-by/' },
           { text: 'Support & Contact', link: '/en/contact/' },
