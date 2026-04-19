@@ -73,12 +73,12 @@ class Booking extends Timeframe {
 	 * Adds and modifies some booking CPT fields in order to make admin boookings
 	 * compatible to user made bookings via frontend.
 	 *
-	 * @param  mixed $post_id
-	 * @param  mixed $post
-	 * @param  mixed $update
+	 * @param  int $post_id
+	 * @param  \WP_Post|null $post
+	 * @param  bool|null $update
 	 * @return void
 	 */
-	public function savePost( $post_id, $post = null, $update = null ) {
+	public function savePost( int $post_id, ?\WP_Post $post = null, ?bool $update = null ): void {
 		global $pagenow;
 
 		$post            = $post ?? get_post( $post_id );
@@ -171,7 +171,7 @@ class Booking extends Timeframe {
 	 *
 	 * @throws BookingDeniedException - if booking is not allowed, contains translated error message for the user
 	 */
-	public static function handleFormRequest() {
+	public static function handleFormRequest(): void {
 		if (
 			function_exists( 'wp_verify_nonce' ) &&
 			isset( $_REQUEST[ static::getWPNonceId() ] ) &&
@@ -287,7 +287,7 @@ class Booking extends Timeframe {
 		);
 
 		// Reject if the slot is already booked by another user (getExistingBookings excludes this booking by ID)
-		if ( $booking && ! commonsbooking_isCurrentUserAllowedToEdit( $booking ) ) {
+		if ( $booking && ! commonsbooking_isCurrentUserAllowedToEdit( $booking->ID ) ) {
 			throw new BookingDeniedException( __( 'There is already a booking in this time-range. This notice may also appear if there is an unconfirmed booking in the requested period. Unconfirmed bookings are deleted after about 10 minutes. Please try again in a few minutes.', 'commonsbooking' ) );
 		}
 
@@ -402,12 +402,13 @@ class Booking extends Timeframe {
 	 * We need to save the grid size for timeframes with full slot grid.
 	 *
 	 * @param $postId
-	 * @param $locationId
-	 * @param $itemId
-	 * @param $startDate
-	 * @param $endDate
+	 * @param int $postId
+	 * @param int $locationId
+	 * @param int $itemId
+	 * @param int $startDate
+	 * @param int $endDate
 	 */
-	private static function saveGridSizes( $postId, $locationId, $itemId, $startDate, $endDate ): void {
+	private static function saveGridSizes( int $postId, int $locationId, int $itemId, int $startDate, int $endDate ): void {
 		$startTimeFrame = \CommonsBooking\Repository\Timeframe::getByLocationItemTimestamp( $locationId, $itemId, $startDate );
 		if ( $startTimeFrame && ! $startTimeFrame->isFullDay() && $startTimeFrame->getGrid() == 0 ) {
 			update_post_meta(
@@ -433,7 +434,7 @@ class Booking extends Timeframe {
 		return new \CommonsBooking\View\Booking();
 	}
 
-	public function initListView() {
+	public function initListView(): void {
 		if ( array_key_exists( 'post_type', $_GET ) && static::$postType !== $_GET['post_type'] ) {
 			return;
 		}
@@ -484,11 +485,11 @@ class Booking extends Timeframe {
 	/**
 	 * Is triggered when post gets updated. Currently used to send notifications regarding bookings.
 	 *
-	 * @param $post_ID
-	 * @param $post_after
-	 * @param $post_before
+	 * @param int $post_ID
+	 * @param \WP_Post $post_after
+	 * @param \WP_Post $post_before
 	 */
-	public function postUpdated( $post_ID, $post_after, $post_before ) {
+	public function postUpdated( int $post_ID, \WP_Post $post_after, \WP_Post $post_before ): void {
 
 		if ( ! $this->hasRunBefore( __FUNCTION__ ) ) {
 			$isBooking = get_post_meta( $post_ID, 'type', true ) == Timeframe::BOOKING_ID;
@@ -516,9 +517,9 @@ class Booking extends Timeframe {
 	/**
 	 * Returns CPT arguments.
 	 *
-	 * @return array
+	 * @return array<string, mixed>
 	 */
-	public function getArgs() {
+	public function getArgs(): array {
 		$labels = array(
 			'name'                  => esc_html__( 'Bookings', 'commonsbooking' ),
 			'singular_name'         => esc_html__( 'Booking', 'commonsbooking' ),
@@ -598,10 +599,10 @@ class Booking extends Timeframe {
 	/**
 	 * Adds data to custom columns
 	 *
-	 * @param $column
-	 * @param $post_id
+	 * @param string $column
+	 * @param int $post_id
 	 */
-	public function setCustomColumnsData( $column, $post_id ) {
+	public function setCustomColumnsData( string $column, int $post_id ): void {
 		global $pagenow;
 
 		if ( $pagenow !== 'edit.php' || empty( esc_html( $_GET['post_type'] ) ) || esc_html( $_GET['post_type'] ) !== $this::$postType ) {
@@ -701,7 +702,7 @@ class Booking extends Timeframe {
 	/**
 	 * Registers metaboxes for cpt.
 	 */
-	public function registerMetabox() {
+	public function registerMetabox(): void {
 		// do not render the metabox if the user is on the login page (not yet logged in)
 		if ( ! is_user_logged_in() ) {
 			return;
@@ -722,9 +723,9 @@ class Booking extends Timeframe {
 	/**
 	 * Returns custom (meta) fields for Costum Post Type Timeframe.
 	 *
-	 * @return array
+	 * @return array<int, array<string, mixed>>
 	 */
-	protected function getCustomFields() {
+	protected function getCustomFields(): array {
 		// We need static types, because german month names dont't work for datepicker
 		$dateFormat = 'd/m/Y';
 		if ( str_starts_with( get_locale(), 'de_' ) ) {
@@ -910,9 +911,10 @@ class Booking extends Timeframe {
 	/**
 	 * Displays a permanent admin-notice if booking overlaps
 	 *
+	 * @param \WP_Post $post
 	 * @return void
 	 */
-	public function displayOverlappingBookingNotice( $post ) {
+	public function displayOverlappingBookingNotice( \WP_Post $post ): void {
 
 		if ( get_transient( 'commonsbooking_booking_validation_failed_' . $post->ID ) ) {
 			echo commonsbooking_sanitizeHTML( get_transient( 'commonsbooking_booking_validation_failed_' . $post->ID ) );
@@ -923,11 +925,11 @@ class Booking extends Timeframe {
 	 * Export user bookings using the supplied email. This is for integration with the WordPress personal data exporter.
 	 *
 	 * @param string $emailAddress
-	 * @param $page
+	 * @param int $page
 	 *
-	 * @return array
+	 * @return array<string, mixed>
 	 */
-	public static function exportUserBookingsByEmail( string $emailAddress, $page = 1 ): array {
+	public static function exportUserBookingsByEmail( string $emailAddress, int $page = 1 ): array {
 		$page         = intval( $page );
 		$itemsPerPage = 10;
 		$exportItems  = array();
@@ -1017,11 +1019,11 @@ class Booking extends Timeframe {
 	 * Remove user bookings using the supplied email. This is for integration with the WordPress personal data eraser.
 	 *
 	 * @param string $emailAddress The email address
-	 * @param $page This parameter has no real use in this function, we just use it to stick to WordPress expected parameters.
+	 * @param int $page This parameter has no real use in this function, we just use it to stick to WordPress expected parameters.
 	 *
-	 * @return array
+	 * @return array<string, mixed>
 	 */
-	public static function removeUserBookingsByEmail( string $emailAddress, $page = 1 ): array {
+	public static function removeUserBookingsByEmail( string $emailAddress, int $page = 1 ): array {
 		// we reset the page to 1, because we are deleting our results as we go. Therefore, increasing the page number would skip some results.
 		$page         = 1;
 		$itemsPerPage = 10;

@@ -43,11 +43,11 @@ class BookingCode {
 	/**
 	 * BookingCode constructor.
 	 *
-	 * @param $date
-	 * @param $item
-	 * @param $code
+	 * @param string $date
+	 * @param int $item
+	 * @param string $code
 	 */
-	public function __construct( $date, $item, $code ) {
+	public function __construct( string $date, int $item, string $code ) {
 		$this->date = $date;
 		$this->item = $item;
 		$this->code = $code;
@@ -67,7 +67,7 @@ class BookingCode {
 		return $this->item;
 	}
 
-	public function getItemName() {
+	public function getItemName(): string {
 		$post = get_post( $this->getItem() );
 
 		return $post->post_title;

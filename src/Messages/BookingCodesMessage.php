@@ -20,7 +20,8 @@ use WP_User;
  */
 class BookingCodesMessage extends Message {
 
-	protected $validActions = [ 'codes' ];
+	/** @var string[] */
+	protected array $validActions = [ 'codes' ];
 	protected $to;
 	private ?int $tsFrom;
 	private ?int $tsTo;
@@ -44,22 +45,22 @@ class BookingCodesMessage extends Message {
 
 	/**
 	 * prepares Message and sends by E-mail
-	 *
-	 * @return bool    true if message was sent, false otherwise. If the message is not sent, an error is raised.
 	 */
-	public function sendMessage(): bool {
+	public function sendMessage(): void {
 		$timeframeId = (int) $this->getPostId();
 		$timeframe   = new Timeframe( $timeframeId );
 
 		if ( ! $this->prepareReceivers( $timeframe ) ) {
-			return $this->raiseError(
+			$this->raiseError(
 				__( 'Unable to send Emails. No location email(s) configured, check location', 'commonsbooking' )
 			);
+			return;
 		}
 
 		$bookingCodes = BookingCodes::getCodes( $timeframeId, $this->tsFrom, $this->tsTo );
 		if ( empty( $bookingCodes ) ) {
-			return $this->raiseError( __( 'Could not find booking codes for this timeframe/period', 'commonsbooking' ) );
+			$this->raiseError( __( 'Could not find booking codes for this timeframe/period', 'commonsbooking' ) );
+			return;
 		}
 
 		$bookingTable = \CommonsBooking\View\BookingCodes::renderTableFor( 'email', $bookingCodes );
@@ -136,8 +137,6 @@ class BookingCodesMessage extends Message {
 		}
 
 		remove_action( 'commonsbooking_mail_sent', array( $this, 'updateEmailSent' ), 5 );
-
-		return true;
 	}
 
 	/**
@@ -149,7 +148,7 @@ class BookingCodesMessage extends Message {
 	 *
 	 * @return void
 	 */
-	public function updateEmailSent( $action, $result ) {
+	public function updateEmailSent( string $action, mixed $result ): void {
 		if ( $this->action != $action ) {
 			return;
 		}
@@ -162,7 +161,7 @@ class BookingCodesMessage extends Message {
 	/**
 	 * filter commonsbooking_mail_to for adding multiple to email addresses
 	 *
-	 * @return array
+	 * @return array<int, string>
 	 */
 	public function addMultiTo(): array {
 		$to = array();
@@ -201,7 +200,7 @@ class BookingCodesMessage extends Message {
 	 *
 	 * @param BookingCode[] $bookingCodes   List of BookingCode objects
 	 *
-	 * @return array
+	 * @return array<string, mixed>
 	 */
 	protected function getIcalAttachment( array $bookingCodes ): array {
 		$calendar = new iCalendar();

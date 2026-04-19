@@ -435,11 +435,11 @@ class TimeframeExport {
 	/**
 	 * Return user defined export fields.
 	 *
-	 * @param $inputName
+	 * @param string $inputName
 	 *
-	 * @return false|string[]
+	 * @return string[]
 	 */
-	protected static function getInputFields( $inputName ) {
+	protected static function getInputFields( string $inputName ): array {
 		$inputFieldsString =
 			array_key_exists( $inputName, $_REQUEST ) ? sanitize_text_field( $_REQUEST[ $inputName ] ) :
 				Settings::getOption( 'commonsbooking_options_export', '$inputName' );
@@ -535,7 +535,7 @@ class TimeframeExport {
 	 *
 	 * @return DatePeriod
 	 */
-	protected static function getPeriod( $start, $end ) {
+	protected static function getPeriod( string $start, string $end ): \DatePeriod {
 		// Timerange
 		$begin = Wordpress::getUTCDateTime( $start );
 		$end   = Wordpress::getUTCDateTime( $end );
@@ -572,7 +572,7 @@ class TimeframeExport {
 	 *
 	 * @param int[] $timeframeIDs Array of timeframe post IDs
 	 *
-	 * @return array
+	 * @return array<int, array<string, mixed>>
 	 */
 	public static function getTimeframeData( array $timeframeIDs ): array {
 
@@ -670,7 +670,7 @@ class TimeframeExport {
 	 *
 	 * @param \CommonsBooking\Model\Timeframe $timeframe The timeframe object to process
 	 *
-	 * @return array
+	 * @return array<string, mixed>
 	 */
 	protected static function getRelevantTimeframeFields( \CommonsBooking\Model\Timeframe $timeframe ): array {
 		$postArray               = get_object_vars( $timeframe->getPost() );

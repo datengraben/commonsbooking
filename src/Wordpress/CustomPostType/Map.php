@@ -29,7 +29,7 @@ class Map extends CustomPostType {
 	/**
 	 * Initiates needed hooks.
 	 */
-	public function initHooks() {
+	public function initHooks(): void {
 		// Add shortcodes
 		add_shortcode( 'cb_map', array( MapShortcode::class, 'execute' ) );
 

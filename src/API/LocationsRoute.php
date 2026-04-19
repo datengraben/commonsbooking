@@ -37,29 +37,33 @@ class LocationsRoute extends BaseRoute {
 	/**
 	 * Get one item from the collection
 	 *
-	 * @param WP_REST_Request $request Full data about the request.
+	 * @param WP_REST_Request<array<string, mixed>> $request Full data about the request.
 	 *
 	 * @return WP_Error|WP_REST_Response
 	 */
-	public function get_item( $request ) {
+	public function get_item( WP_REST_Request $request ) {
 		return $this->get_items( $request );
 	}
 
 	/**
 	 * Get a collection of items
 	 *
-	 * @param WP_REST_Request $request Full data about the request.
+	 * @param WP_REST_Request<array<string, mixed>> $request Full data about the request.
 	 *
 	 * @return WP_Error|WP_REST_Response
 	 */
-	public function get_items( $request ) {
+	public function get_items( WP_REST_Request $request ) {
 		$data            = new stdClass();
 		$data->locations = $this->getItemData( $request );
 
 		return $this->respond_with_validation( $data );
 	}
 
-	public function getItemData( $request ) {
+	/**
+	 * @param WP_REST_Request<array<string, mixed>> $request
+	 * @return stdClass
+	 */
+	public function getItemData( WP_REST_Request $request ): stdClass {
 		$data       = new stdClass();
 		$data->type = 'FeatureCollection';
 
@@ -91,13 +95,13 @@ class LocationsRoute extends BaseRoute {
 	}
 
 	/**
-	 * @param $item Location
-	 * @param $request
+	 * @param Location $item
+	 * @param WP_REST_Request<array<string, mixed>> $request
 	 *
 	 * @return WP_REST_Response
 	 * @throws \CommonsBooking\Geocoder\Exception\Exception
 	 */
-	public function prepare_item_for_response( $item, $request ): WP_REST_Response {
+	public function prepare_item_for_response( $item, WP_REST_Request $request ): WP_REST_Response {
 		$preparedItem             = new stdClass();
 		$preparedItem->type       = 'Feature';
 		$preparedItem->properties = new stdClass();

@@ -29,7 +29,7 @@ class StationStatus extends BaseRoute {
 
 	/**
 	 * @param Location $item
-	 * @param $request
+	 * @param WP_REST_Request<array<string, mixed>> $request
 	 *
 	 * @return WP_REST_Response
 	 * @throws \Exception
@@ -58,7 +58,7 @@ class StationStatus extends BaseRoute {
 	 * @return int
 	 * @throws \Exception
 	 */
-	private function getItemCountAtLocation( $locationId ): int {
+	private function getItemCountAtLocation( int $locationId ): int {
 		$items            = Item::getByLocation( $locationId, true );
 		$nowDT            = Wordpress::getUTCDateTimeByTimestamp( current_time( 'timestamp' ) );
 		$availableCounter = 0;

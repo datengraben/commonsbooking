@@ -102,8 +102,8 @@ class Calendar {
 		} else {
 			$weeks = array();
 			while ( $startDate <= $endDate ) {
-				$dayOfYear = date( 'z', $startDate );
-				$year      = date( 'Y', $startDate );
+				$dayOfYear = (int) date( 'z', $startDate );
+				$year      = (int) date( 'Y', $startDate );
 				$weeks[]   = new Week(
 					$year,
 					$dayOfYear,

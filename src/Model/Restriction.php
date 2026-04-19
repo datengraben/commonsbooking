@@ -379,7 +379,7 @@ class Restriction extends CustomPost {
 	 *
 	 * @param Booking[] $bookings booking post objects.
 	 */
-	protected function cancelBookings( $bookings ) {
+	protected function cancelBookings( array $bookings ): void {
 		foreach ( $bookings as $booking ) {
 			$booking->cancel();
 		}
@@ -393,7 +393,7 @@ class Restriction extends CustomPost {
 	 *
 	 * @param Booking[] $bookings booking post objects.
 	 */
-	protected function sendRestrictionMails( $bookings ) {
+	protected function sendRestrictionMails( array $bookings ): void {
 		foreach ( $bookings as $key => $booking ) {
 			// get User ID from booking
 			$userId = $booking->getUserData()->ID;

@@ -14,10 +14,10 @@ class Migration {
 	/**
 	 * Render Migration Form.
 	 *
-	 * @param array      $field_args Array of field arguments.
+	 * @param array<string, mixed> $field_args Array of field arguments.
 	 * @param CMB2_Field $field The field object
 	 */
-	public static function renderMigrationForm( array $field_args, CMB2_Field $field ) {
+	public static function renderMigrationForm( array $field_args, CMB2_Field $field ): void {
 		$cb1Installed = CB1::isInstalled();
 
 		?>
@@ -86,10 +86,10 @@ class Migration {
 	/**
 	 * Renders booking migration (timeframe to booking cpt) form.
 	 *
-	 * @param array      $field_args
+	 * @param array<string, mixed> $field_args
 	 * @param CMB2_Field $field
 	 */
-	public static function renderBookingMigrationForm( array $field_args, CMB2_Field $field ) {
+	public static function renderBookingMigrationForm( array $field_args, CMB2_Field $field ): void {
 
 		echo( '
             <div class="cmb-row cmb-type-text">
@@ -116,9 +116,13 @@ class Migration {
 		);
 	}
 
-	public static function renderUpgradeForm( array $field_args, CMB2_Field $field ) {
+	/**
+	 * @param array<string, mixed> $field_args
+	 * @param CMB2_Field $field
+	 */
+	public static function renderUpgradeForm( array $field_args, CMB2_Field $field ): void {
 		if ( ! Upgrade::isAJAXUpgrade() ) {
-			return false;
+			return;
 		}
 		?>
 		<div class="cmb-row cmb-type-text" id="upgrade-fields">

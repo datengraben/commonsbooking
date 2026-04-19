@@ -12,7 +12,7 @@ class API {
 	/**
 	 * Triggers requests to all shares with push url.
 	 */
-	public static function triggerPushUrls() {
+	public static function triggerPushUrls(): void {
 		$apiShares = ApiShares::getAll();
 
 		foreach ( $apiShares as $apiShare ) {
@@ -27,7 +27,7 @@ class API {
 	 *
 	 * @param Share $share
 	 */
-	public static function triggerPushUrl( Share $share ) {
+	public static function triggerPushUrl( Share $share ): void {
 		$requestData = [
 			'API_KEY' => $share->getKey(),
 			'OWNER' => $share->getOwner(),

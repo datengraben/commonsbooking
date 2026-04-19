@@ -30,15 +30,19 @@ class ProjectsRoute extends BaseRoute {
 
 	/**
 	 * Get one item from the collection
+	 *
+	 * @param WP_REST_Request<array<string, mixed>> $request
 	 */
-	public function get_item( $request ) {
+	public function get_item( \WP_REST_Request $request ) {
 		return $this->get_items( $request );
 	}
 
 	/**
 	 * Get a collection of projects
+	 *
+	 * @param WP_REST_Request<array<string, mixed>> $request
 	 */
-	public function get_items( $request ): WP_REST_Response {
+	public function get_items( \WP_REST_Request $request ): WP_REST_Response {
 		$data           = new stdClass();
 		$data->projects = $this->getItemData();
 

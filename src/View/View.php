@@ -53,7 +53,7 @@ abstract class View {
 	 *
 	 * @param \CommonsBooking\Model\Item|\CommonsBooking\Model\Location $cpt location or item model object to retrieve timeframe data from.
 	 * @param string                                                    $type 'Item' or 'Location'.
-	 * @return array
+	 * @return array<string, mixed>
 	 * @throws Exception
 	 */
 	public static function getShortcodeData( $cpt, string $type ): array {

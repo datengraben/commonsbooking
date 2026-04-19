@@ -38,9 +38,9 @@ class AvailabilityRoute extends BaseRoute {
 	/**
 	 * This retrieves bookable timeframes and the different items assigned, with their respective availability.
 	 *
-	 * @param bool $id The id of a {@see \CommonsBooking\Wordpress\CustomPostType\Item::post_type} post to search for
+	 * @param bool|int $id The id of a {@see \CommonsBooking\Wordpress\CustomPostType\Item::post_type} post to search for
 	 *
-	 * @return array
+	 * @return array<int, mixed>
 	 * @throws Exception
 	 */
 	public function getItemData( $id = false ): array {
@@ -57,11 +57,11 @@ class AvailabilityRoute extends BaseRoute {
 	/**
 	 * Get one item from the collection
 	 *
-	 * @param $request WP_REST_Request
+	 * @param WP_REST_Request<array<string, mixed>> $request
 	 *
 	 * @return WP_REST_Response|WP_Error
 	 */
-	public function get_item( $request ) {
+	public function get_item( WP_REST_Request $request ) {
 		// get parameters from request
 		$params = $request->get_params();
 		$data   = new stdClass();
@@ -76,11 +76,11 @@ class AvailabilityRoute extends BaseRoute {
 	/**
 	 * Get a collection of items
 	 *
-	 * @param $request WP_REST_Request full data about the request.
+	 * @param WP_REST_Request<array<string, mixed>> $request Full data about the request.
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function get_items( $request ) {
+	public function get_items( WP_REST_Request $request ) {
 		$data               = new stdClass();
 		$data->availability = [];
 

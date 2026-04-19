@@ -27,7 +27,7 @@ class Dashboard extends View {
 			$beginningBookings = array_filter(
 				$beginningBookings,
 				function ( $beginningBooking ) {
-					return commonsbooking_isCurrentUserAllowedToEdit( $beginningBooking );
+					return commonsbooking_isCurrentUserAllowedToEdit( $beginningBooking->ID );
 				}
 			);
 		}
@@ -72,7 +72,7 @@ class Dashboard extends View {
 			$endingBookings = array_filter(
 				$endingBookings,
 				function ( $endingBooking ) {
-					return commonsbooking_isCurrentUserAllowedToEdit( $endingBooking );
+					return commonsbooking_isCurrentUserAllowedToEdit( $endingBooking->ID );
 				}
 			);
 		}

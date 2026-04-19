@@ -162,8 +162,8 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 * @throws Exception
 	 */
 	public function getBookableTimeFrame(): ?\CommonsBooking\Model\Timeframe {
-		$locationId = $this->getMeta( \CommonsBooking\Model\Timeframe::META_LOCATION_ID );
-		$itemId     = $this->getMeta( \CommonsBooking\Model\Timeframe::META_ITEM_ID );
+		$locationId = (int) $this->getMeta( \CommonsBooking\Model\Timeframe::META_LOCATION_ID );
+		$itemId     = (int) $this->getMeta( \CommonsBooking\Model\Timeframe::META_ITEM_ID );
 
 		$response = Timeframe::getBookable(
 			[ $locationId ],

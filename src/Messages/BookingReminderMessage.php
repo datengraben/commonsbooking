@@ -14,17 +14,15 @@ use CommonsBooking\Settings\Settings;
  */
 class BookingReminderMessage extends Message {
 
-	/**
-	 * @var array|string[]
-	 */
-	protected $validActions = [ 'pre-booking-reminder', 'post-booking-notice' ];
+	/** @var string[] */
+	protected array $validActions = [ 'pre-booking-reminder', 'post-booking-notice' ];
 
 	/**
 	 * Sends reminder message.
 	 *
 	 * @throws \Exception
 	 */
-	public function sendMessage() {
+	public function sendMessage(): void {
 		/** @var \CommonsBooking\Model\Booking $booking */
 		$booking      = Booking::getPostById( $this->getPostId() );
 		$booking_user = get_userdata( (int) $this->getPost()->post_author );

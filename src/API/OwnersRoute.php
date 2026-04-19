@@ -38,11 +38,11 @@ class OwnersRoute extends BaseRoute {
 	/**
 	 * Returns raw data collection.
 	 *
-	 * @param $request
+	 * @param WP_REST_Request<array<string, mixed>> $request
 	 *
-	 * @return array
+	 * @return array<int, WP_REST_Response>
 	 */
-	public function getItemData( $request ): array {
+	public function getItemData( WP_REST_Request $request ): array {
 		$data = [];
 
 		foreach ( UserRepository::getOwners() as $owner ) {
@@ -53,12 +53,12 @@ class OwnersRoute extends BaseRoute {
 	}
 
 	/**
-	 * @param WP_User         $owner
-	 * @param WP_REST_Request $request
+	 * @param WP_User $owner
+	 * @param WP_REST_Request<array<string, mixed>> $request
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function prepare_item_for_response( $owner, $request ): WP_REST_Response {
+	public function prepare_item_for_response( $owner, WP_REST_Request $request ): WP_REST_Response {
 		$ownerObject       = new stdClass();
 		$ownerObject->id   = '' . $owner->ID;
 		$ownerObject->name = get_user_meta( $owner->ID, 'first_name', true ) . ' ' . get_user_meta( $owner->ID, 'last_name', true );
@@ -85,8 +85,10 @@ class OwnersRoute extends BaseRoute {
 
 	/**
 	 * Get a single item
+	 *
+	 * @param WP_REST_Request<array<string, mixed>> $request
 	 */
-	public function get_item( $request ): WP_REST_Response {
+	public function get_item( WP_REST_Request $request ): WP_REST_Response {
 		// get parameters from request
 		$params         = $request->get_params();
 		$owner          = get_user_by( 'id', $params['id'] );
@@ -99,11 +101,11 @@ class OwnersRoute extends BaseRoute {
 	/**
 	 * Get a collection of items
 	 *
-	 * @param WP_REST_Request $request Full data about the request.
+	 * @param WP_REST_Request<array<string, mixed>> $request Full data about the request.
 	 *
 	 * @return WP_Error|WP_REST_Response
 	 */
-	public function get_items( $request ) {
+	public function get_items( WP_REST_Request $request ) {
 		$data         = new stdClass();
 		$data->owners = $this->getItemData( $request );
 
@@ -112,8 +114,11 @@ class OwnersRoute extends BaseRoute {
 
 	/**
 	 * TODO investigate why we overwrite this method
+	 *
+	 * @param WP_REST_Response $itemdata
+	 * @return WP_REST_Response
 	 */
-	public function prepare_response_for_collection( $itemdata ) {
-		return $itemdata; // @phpstan-ignore return.type
+	public function prepare_response_for_collection( $itemdata ): WP_REST_Response {
+		return $itemdata;
 	}
 }

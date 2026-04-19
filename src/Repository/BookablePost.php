@@ -316,13 +316,13 @@ abstract class BookablePost extends PostRepository {
 	 * Returns array with related posts for post with post id and origin type.
 	 * Works only for locations and items!
 	 *
-	 * @param $postId
-	 * @param $originType
-	 * @param $relatedType
+	 * @param int|WP_Post $postId
+	 * @param string $originType
+	 * @param string $relatedType
 	 *
-	 * @return array
+	 * @return array<int, mixed>
 	 */
-	protected static function getRelatedPosts( $postId, $originType, $relatedType ): array {
+	protected static function getRelatedPosts( $postId, string $originType, string $relatedType ): array {
 		if ( $postId instanceof WP_Post ) {
 			$postId = $postId->ID;
 		}

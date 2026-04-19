@@ -15,7 +15,7 @@ class Item extends CustomPostType {
 	/**
 	 * Initiates needed hooks.
 	 */
-	public function initHooks() {
+	public function initHooks(): void {
 		add_filter( 'the_content', array( $this, 'getTemplate' ) );
 		add_action( 'cmb2_admin_init', array( $this, 'registerMetabox' ) );
 
@@ -35,13 +35,13 @@ class Item extends CustomPostType {
 	/**
 	 * Handles the creation and editing of the terms in the taxonomy for the location post type
 	 *
-	 * @param $term_id
-	 * @param $tt_id
-	 * @param $taxonomy
+	 * @param int $term_id
+	 * @param int $tt_id
+	 * @param string $taxonomy
 	 *
 	 * @return void
 	 */
-	public static function termChange( $term_id, $tt_id, $taxonomy ) {
+	public static function termChange( int $term_id, int $tt_id, string $taxonomy ): void {
 		if ( $taxonomy == self::getTaxonomyName() ) {
 			// update all dynamic timeframes
 			Timeframe::updateAllTimeframes();
@@ -51,7 +51,7 @@ class Item extends CustomPostType {
 	/**
 	 * Handles save-Request for items.
 	 */
-	public function savePost( $post_id, \WP_Post $post ) {
+	public function savePost( int $post_id, \WP_Post $post ): void {
 		if ( $post->post_type == self::$postType && $post_id ) {
 			// update all dynamic timeframes
 			Timeframe::updateAllTimeframes();
@@ -109,7 +109,7 @@ class Item extends CustomPostType {
 	/**
 	 * Returns CPT args.
 	 *
-	 * @return array
+	 * @return array<string, mixed>
 	 */
 	public function getArgs(): array {
 		$labels = array(
@@ -312,14 +312,15 @@ class Item extends CustomPostType {
 		Settings::updateOption( 'commonsbooking_settings_metaboxfields', static::getPostType(), $metabox_fields );
 	}
 
-	public static function registerPostTypeTaxonomy() {
+	public static function registerPostTypeTaxonomy(): void {
 		parent::registerPostTypeTaxonomy();
 
 		// hook this for later, if we run it now, it would fail
 		add_action( 'cmb2_admin_init', array( self::class, 'registerTaxonomyMetaboxes' ) );
 	}
 
-	protected static function getTaxonomyArgs() {
+	/** @return array<string, mixed> */
+	protected static function getTaxonomyArgs(): array {
 		return array(
 			'label'             => esc_html__( 'Item Category', 'commonsbooking' ),
 			'rewrite'           => array( 'slug' => static::getPostType() . '-cat' ),
