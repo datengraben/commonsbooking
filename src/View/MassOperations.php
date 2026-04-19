@@ -3,7 +3,7 @@
 namespace CommonsBooking\View;
 
 class MassOperations {
-	public static function index() {
+	public static function index(): void {
 		global $templateData;
 		$templateData                     = [];
 		$templateData['orphanedBookings'] = \CommonsBooking\Repository\Booking::getOrphaned();

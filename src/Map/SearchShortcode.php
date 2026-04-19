@@ -6,9 +6,11 @@ namespace CommonsBooking\Map;
  * Short code for a multi-widget with map, search and table capabilities.
  */
 class SearchShortcode extends BaseShortcode {
-	protected $processed_map_ids = [];
+	/** @var int[] */
+	protected array $processed_map_ids = [];
 
-	protected function parse_attributes( $atts ) {
+	/** @return array<string, mixed> */
+	protected function parse_attributes( array $atts ): array {
 		return shortcode_atts(
 			[
 				'id' => null,
@@ -18,12 +20,16 @@ class SearchShortcode extends BaseShortcode {
 		);
 	}
 
-	protected function inject_script( $cb_map_id ) {
+	protected function inject_script( int $cb_map_id ): void {
 		wp_enqueue_style( 'cb-commons-search' );
 		wp_enqueue_script( 'cb-commons-search' );
 	}
 
-	protected function create_container( $cb_map_id, $attrs, $options, $content ) {
+	/**
+	 * @param array<string, mixed> $attrs
+	 * @param array<int, mixed> $options
+	 */
+	protected function create_container( int $cb_map_id, array $attrs, array $options, string $content ): string {
 		// Ensure that the api and config object are only created once per page and per map
 		if ( ! in_array( $cb_map_id, $this->processed_map_ids ) ) {
 			$settings                  = MapData::get_settings( $cb_map_id );
@@ -73,7 +79,12 @@ class SearchShortcode extends BaseShortcode {
 	}
 }
 
-function pop_key( &$array, $key ) {
+/**
+ * @param array<string, mixed> $array
+ * @param string $key
+ * @return mixed
+ */
+function pop_key( array &$array, string $key ): mixed {
 	$value = $array[ $key ];
 	unset( $array[ $key ] );
 	return $value;

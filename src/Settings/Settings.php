@@ -72,7 +72,7 @@ class Settings {
 	}
 
 
-	public static function returnFormattedMetaboxFields( $postType ) {
+	public static function returnFormattedMetaboxFields( string $postType ): string {
 		$metabox_array = self::getOption( 'commonsbooking_settings_metaboxfields', $postType );
 
 		$result = '<br>';

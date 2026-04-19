@@ -117,7 +117,7 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	/**
 	 * Send mail to booking user, that it was canceled.
 	 */
-	protected function sendCancellationMail() {
+	protected function sendCancellationMail(): void {
 		$booking_msg = new BookingMessage( $this->getPost()->ID, 'canceled' );
 		$booking_msg->triggerMail();
 	}
@@ -162,8 +162,8 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 * @throws Exception
 	 */
 	public function getBookableTimeFrame(): ?\CommonsBooking\Model\Timeframe {
-		$locationId = $this->getMeta( \CommonsBooking\Model\Timeframe::META_LOCATION_ID );
-		$itemId     = $this->getMeta( \CommonsBooking\Model\Timeframe::META_ITEM_ID );
+		$locationId = (int) $this->getMeta( \CommonsBooking\Model\Timeframe::META_LOCATION_ID );
+		$itemId     = (int) $this->getMeta( \CommonsBooking\Model\Timeframe::META_ITEM_ID );
 
 		$response = Timeframe::getBookable(
 			[ $locationId ],
@@ -186,7 +186,7 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 *
 	 * @throws Exception
 	 */
-	public function assignBookableTimeframeFields() {
+	public function assignBookableTimeframeFields(): void {
 		$timeframe = $this->getBookableTimeFrame();
 		if ( $timeframe ) {
 			$neededMetaFields = [
@@ -273,7 +273,7 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 *
 	 * @since 2.9.0
 	 *
-	 * @return array|null
+	 * @return array<int, Booking>|null
 	 * @throws Exception
 	 */
 	public function getAdjacentBookings(): ?array {
@@ -288,7 +288,7 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 * @since 2.9.0
 	 *
 	 * @param WP_User $user
-	 * @return array
+	 * @return array<int, Booking>
 	 */
 	public function getBookingChain( WP_User $user ): array {
 		$bookingChain    = [];
@@ -321,11 +321,11 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 * Returns time from repetition-[start/end] field in format H:i.
 	 * We need this meta-field in order to display the pick-up and return time to the user.
 	 *
-	 * @param $fieldName
+	 * @param string $fieldName
 	 *
 	 * @return string
 	 */
-	private function sanitizeTimeField( $fieldName ): string {
+	private function sanitizeTimeField( string $fieldName ): string {
 		$time       = Wordpress::getUTCDateTime();
 		$fieldValue = $this->getStartDate();
 		if ( $fieldName === 'end-time' ) {
@@ -747,7 +747,7 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 *
 	 * @since 2.9.0
 	 *
-	 * @param int|array|string $term
+	 * @param int|array<int, int|string>|string $term
 	 * @return bool
 	 */
 	public function termsApply( $term ): bool {
@@ -974,9 +974,9 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 *
 	 * @since 2.9.0
 	 *
-	 * @param Booking[]   $bookings The booking to check
-	 * @param array|false $terms The terms that the bookings are filtered against
-	 * @return array|null
+	 * @param Booking[]                        $bookings The booking to check
+	 * @param array<int, int|string>|false     $terms The terms that the bookings are filtered against
+	 * @return array<int, Booking>|null
 	 */
 	public static function filterTermsApply( array $bookings, $terms ): ?array {
 		if ( ! empty( $terms ) ) {
@@ -1000,9 +1000,9 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 *
 	 * @since 2.9.0
 	 *
-	 * @param   array   $bookings
-	 * @param WP_User $user
-	 * @return array|null
+	 * @param array<int, Booking> $bookings
+	 * @param WP_User             $user
+	 * @return array<int, Booking>|null
 	 */
 	public static function filterForUser( array $bookings, WP_User $user ): ?array {
 		return array_filter(

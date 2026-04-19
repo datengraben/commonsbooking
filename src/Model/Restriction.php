@@ -81,8 +81,10 @@ class Restriction extends CustomPost {
 
 	const NO_END_TIMESTAMP = 3000000000;
 
+	/** @var bool|null */
 	protected $active;
 
+	/** @var bool|null */
 	protected $canceled;
 
 	/**
@@ -287,7 +289,7 @@ class Restriction extends CustomPost {
 	 * Apply restriction workflow.
 	 * Will cancel the bookings if restriction is active and type is total breakdown.
 	 */
-	public function apply() {
+	public function apply(): void {
 		// Check if this is an active restriction
 		if ( $this->isActive() ) {
 			$bookings = \CommonsBooking\Repository\Booking::getByRestriction( $this );
@@ -334,7 +336,7 @@ class Restriction extends CustomPost {
 	 * TODO:
 	 *      Duplicated implementation in Model/Timeframe.php
 	 *
-	 * @return array
+	 * @return array<int, int>
 	 */
 	public function getAdmins() {
 
@@ -377,7 +379,7 @@ class Restriction extends CustomPost {
 	 *
 	 * @param Booking[] $bookings booking post objects.
 	 */
-	protected function cancelBookings( $bookings ) {
+	protected function cancelBookings( array $bookings ): void {
 		foreach ( $bookings as $booking ) {
 			$booking->cancel();
 		}
@@ -391,7 +393,7 @@ class Restriction extends CustomPost {
 	 *
 	 * @param Booking[] $bookings booking post objects.
 	 */
-	protected function sendRestrictionMails( $bookings ) {
+	protected function sendRestrictionMails( array $bookings ): void {
 		foreach ( $bookings as $key => $booking ) {
 			// get User ID from booking
 			$userId = $booking->getUserData()->ID;

@@ -40,7 +40,7 @@ class Booking {
 		}
 	}
 
-	private static function sendMessagesForDay( int $tsDate, bool $onStartDate, Message $message ) {
+	private static function sendMessagesForDay( int $tsDate, bool $onStartDate, Message $message ): void {
 		if ( $onStartDate ) {
 			$bookings = \CommonsBooking\Repository\Booking::getBeginningBookingsByDate( $tsDate );
 		} else {
@@ -63,7 +63,7 @@ class Booking {
 	 *
 	 * @throws \Exception
 	 */
-	public static function sendReminderMessage() {
+	public static function sendReminderMessage(): void {
 
 		if ( Settings::getOption( 'commonsbooking_options_reminder', 'pre-booking-reminder-activate' ) != 'on' ) {
 			return;
@@ -80,7 +80,7 @@ class Booking {
 	 *
 	 * @throws \Exception
 	 */
-	public static function sendFeedbackMessage() {
+	public static function sendFeedbackMessage(): void {
 
 		if ( Settings::getOption( 'commonsbooking_options_reminder', 'post-booking-notice-activate' ) != 'on' ) {
 			return;
@@ -92,15 +92,15 @@ class Booking {
 		self::sendMessagesForDay( $endDate, false, $message );
 	}
 
-	public static function sendBookingStartLocationReminderMessage() {
+	public static function sendBookingStartLocationReminderMessage(): void {
 		self::sendLocationBookingReminderMessage( 'start' );
 	}
 
-	public static function sendBookingEndLocationReminderMessage() {
+	public static function sendBookingEndLocationReminderMessage(): void {
 		self::sendLocationBookingReminderMessage( 'end' );
 	}
 
-	protected static function sendLocationBookingReminderMessage( string $type ) {
+	protected static function sendLocationBookingReminderMessage( string $type ): void {
 
 		if ( Settings::getOption( 'commonsbooking_options_reminder', 'booking-' . $type . '-location-reminder-activate' ) != 'on' ) {
 			return;

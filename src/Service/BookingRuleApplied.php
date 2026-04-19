@@ -20,12 +20,15 @@ use Exception;
 class BookingRuleApplied extends BookingRule {
 
 	private bool $appliesToAll;
+	/** @var array<mixed> */
 	private array $appliedTerms;
+	/** @var array<int, mixed> */
 	private array $appliedParams;
 	/**
 	 * @var int|string
 	 */
 	private $appliedSelectParam;
+	/** @var string[] */
 	private array $excludedRoles;
 
 	/**
@@ -51,8 +54,8 @@ class BookingRuleApplied extends BookingRule {
 	/**
 	 * Will set what this Booking Rule applies to, either needs to be all or at least one category
 	 *
-	 * @param   bool  $appliesToAll
-	 * @param   array $appliedTerms
+	 * @param   bool          $appliesToAll
+	 * @param   array<mixed>  $appliedTerms
 	 *
 	 * @throws BookingRuleException
 	 */
@@ -67,8 +70,8 @@ class BookingRuleApplied extends BookingRule {
 	/**
 	 * Will set the necessary params for the BookingRule to work
 	 *
-	 * @param   array      $paramsToSet needs to be numeric
-	 * @param   int|string $selectParam needs to be numeric
+	 * @param   array<int, mixed>  $paramsToSet needs to be numeric
+	 * @param   int|string|null    $selectParam needs to be numeric
 	 *
 	 * @throws BookingRuleException - if not enough params were specified for the BookingRule
 	 */
@@ -96,7 +99,7 @@ class BookingRuleApplied extends BookingRule {
 	/**
 	 * Sets the roles that the rule will not apply to
 	 *
-	 * @param   array $excludedRoles
+	 * @param   string[] $excludedRoles
 	 */
 	public function setExcludedRoles( array $excludedRoles ): void {
 		$this->excludedRoles = $excludedRoles;
@@ -109,7 +112,7 @@ class BookingRuleApplied extends BookingRule {
 	 *
 	 * @param Booking $booking - The booking object to check for rule compliance
 	 *
-	 * @return array|null - An array of conflicting bookings or an empty array if the booking complies with all rules
+	 * @return Booking[]|null - An array of conflicting bookings or null if the booking complies with all rules
 	 */
 	public function checkBookingCompliance( Booking $booking ): ?array {
 		if ( $booking->isBookingOwnerPrivileged() ) {

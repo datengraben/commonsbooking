@@ -14,17 +14,16 @@ use CommonsBooking\Wordpress\CustomPostType\Item;
  */
 class RestrictionMessage extends Message {
 
-	protected $user;
+	protected \WP_User $user;
 
-	protected $restriction;
+	protected Restriction $restriction;
 
-	protected $action;
-
-	protected $booking;
+	protected Booking $booking;
 
 	protected bool $firstMessage;
 
-	protected $validActions = [
+	/** @var string[] */
+	protected array $validActions = [
 		Restriction::TYPE_REPAIR,
 		Restriction::TYPE_HINT,
 	];
@@ -35,7 +34,7 @@ class RestrictionMessage extends Message {
 	 * @param $booking Booking
 	 * @param $action
 	 */
-	public function __construct( $restriction, $user, Booking $booking, $action, bool $firstMessage = false ) {
+	public function __construct( Restriction $restriction, \WP_User $user, Booking $booking, string $action, bool $firstMessage = false ) {
 		$this->restriction  = $restriction;
 		$this->user         = $user;
 		$this->booking      = $booking;
@@ -46,7 +45,7 @@ class RestrictionMessage extends Message {
 	/**
 	 * Sends mails related to restriction type and state.
 	 */
-	public function sendMessage() {
+	public function sendMessage(): void {
 		if ( $this->getRestriction()->isActive() ) {
 			if ( $this->getRestriction()->getType() == Restriction::TYPE_HINT ) {
 				// send hint mail
@@ -66,7 +65,7 @@ class RestrictionMessage extends Message {
 	/**
 	 * Sends hint mail.
 	 */
-	protected function sendHintMail() {
+	protected function sendHintMail(): void {
 		$body    = Settings::getOption( 'commonsbooking_options_restrictions', 'restrictions-hint-body' );
 		$subject = Settings::getOption( 'commonsbooking_options_restrictions', 'restrictions-hint-subject', 'sanitize_text_field' );
 
@@ -81,7 +80,7 @@ class RestrictionMessage extends Message {
 	/**
 	 * Sends repair mail.
 	 */
-	protected function sendRepairMail() {
+	protected function sendRepairMail(): void {
 		$body    = Settings::getOption( 'commonsbooking_options_restrictions', 'restrictions-repair-body' );
 		$subject = Settings::getOption( 'commonsbooking_options_restrictions', 'restrictions-repair-subject', 'sanitize_text_field' );
 
@@ -96,7 +95,7 @@ class RestrictionMessage extends Message {
 	/**
 	 * Sends mail, when restriction is canceled (not active).
 	 */
-	protected function sendRestrictionCancelationMail() {
+	protected function sendRestrictionCancelationMail(): void {
 		$body    = Settings::getOption( 'commonsbooking_options_restrictions', 'restrictions-restriction-cancelled-body' );
 		$subject = Settings::getOption( 'commonsbooking_options_restrictions', 'restrictions-restriction-cancelled-subject', 'sanitize_text_field' );
 
@@ -116,7 +115,7 @@ class RestrictionMessage extends Message {
 	 *
 	 * @throws \Exception
 	 */
-	protected function prepareRestrictionMail( $body, $subject ) {
+	protected function prepareRestrictionMail( string $body, string $subject ): void {
 		$fromHeader  = 'From: ' . Settings::getOption( 'commonsbooking_options_restrictions', 'restrictions-from-name', 'sanitize_text_field' ) .
 						' <' . Settings::getOption( 'commonsbooking_options_restrictions', 'restrictions-from-email' ) . '>';
 		$restriction = $this->getRestriction();

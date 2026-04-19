@@ -12,7 +12,7 @@ use function get_user_by;
 
 class CB {
 
-	protected static $INTERNAL_DATE_FORMAT = 'd.m.Y';
+	protected static string $INTERNAL_DATE_FORMAT = 'd.m.Y';
 
 	public static function getInternalDateFormat(): string {
 		return static::$INTERNAL_DATE_FORMAT;
@@ -123,7 +123,7 @@ class CB {
 	 * @return string|null
 	 * @throws Exception
 	 */
-	public static function lookUp( string $key, string $property, $post, $args, $sanitizeFunction ): ?string {
+	public static function lookUp( string $key, string $property, mixed $post, mixed $args, callable $sanitizeFunction ): ?string {
 		// in any case we need the post object, otherwise we cannot return anything
 		if ( ! $post ) {
 			return null;
@@ -152,7 +152,7 @@ class CB {
 	 *
 	 * @return mixed|null
 	 */
-	private static function getPostProperty( $post, $property, $args ) {
+	private static function getPostProperty( mixed $post, string $property, mixed $args ): mixed {
 		$result = null;
 
 		$postId = is_int( $post ) ? $post : $post->ID;
@@ -187,7 +187,7 @@ class CB {
 	 * @return int|mixed|null
 	 * @throws Exception
 	 */
-	private static function getUserProperty( $post, string $property, $args ) {
+	private static function getUserProperty( \WP_Post|\WP_User $post, string $property, mixed $args ): mixed {
 		$result = null;
 
 		$cb_user = self::getUserFromObject( $post );
@@ -213,7 +213,7 @@ class CB {
 	 * @return false|WP_User
 	 * @throws Exception
 	 */
-	private static function getUserFromObject( $object ) {
+	private static function getUserFromObject( mixed $object ): \WP_User|false {
 		// Check if $post is of type WP_Post, then we're using Author as User
 		if ( $object instanceof WP_Post ) {
 			$userID = intval( $object->post_author );

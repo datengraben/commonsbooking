@@ -6,12 +6,12 @@ use CommonsBooking\CB\CB;
  * Parses templates and extracts the template tags used in e-mail templates: {{xxx:yyyy}}
  *
  * @param string   $template
- * @param array    $objects
+ * @param array<string, mixed> $objects
  * @param callable $sanitizeFunction The callable used to remove unwanted tags/characters (use default 'commonsbooking_sanitizeHTML' or 'sanitize_text_field')
  *
  * @return mixed
  */
-function commonsbooking_parse_template( string $template = '', $objects = [], $sanitizeFunction = 'commonsbooking_sanitizeHTML' ) {
+function commonsbooking_parse_template( string $template = '', array $objects = [], $sanitizeFunction = 'commonsbooking_sanitizeHTML' ) {
 	$template = preg_replace_callback(
 		'/\{{.*?\}}/',
 		function ( $match ) use ( $objects, $sanitizeFunction ) {
@@ -40,7 +40,13 @@ function commonsbooking_parse_template( string $template = '', $objects = [], $s
 	}
 }
 
-function commonsbooking_parse_shortcode( $tag ) {
+/**
+ * Parses a single shortcode tag.
+ *
+ * @param string $tag
+ * @return mixed
+ */
+function commonsbooking_parse_shortcode( string $tag ) {
 	$tag = (array) $tag;
 	return commonsbooking_parse_template_callback( $tag );
 }
@@ -52,7 +58,7 @@ function commonsbooking_parse_shortcode( $tag ) {
  * Example: {{[this comes before: ]item:post_title[this comes after]}}
  *
  * @param mixed    $match
- * @param array    $objects
+ * @param array<string, mixed> $objects
  * @param callable $sanitizeFunction The callable used to remove unwanted tags/characters
  *
  * @return false|mixed

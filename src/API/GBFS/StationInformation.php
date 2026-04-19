@@ -26,8 +26,8 @@ class StationInformation extends BaseRoute {
 	protected $schemaUrl = COMMONSBOOKING_PLUGIN_DIR . 'includes/gbfs-json-schema/station_information.json';
 
 	/**
-	 * @param $item Location
-	 * @param $request
+	 * @param Location $item
+	 * @param WP_REST_Request<array<string, mixed>> $request
 	 *
 	 * @return WP_REST_Response
 	 * @throws \CommonsBooking\Geocoder\Exception\Exception

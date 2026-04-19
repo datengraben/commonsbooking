@@ -14,7 +14,7 @@ abstract class BaseShortcode {
 	/**
 	 * The shortcode handler - load all the needed assets and render the map container
 	 *
-	 * @param array  $atts attributes for parametrization.
+	 * @param array<string|int, mixed> $atts attributes for parametrization.
 	 * @param string $content content to display, if shortcode implementation allows to.
 	 **/
 	public static function execute( array $atts, string $content = '' ): string {
@@ -40,7 +40,15 @@ abstract class BaseShortcode {
 		$instance->inject_script( $cb_map_id );
 		return $instance->create_container( $cb_map_id, $attrs, $options, $content );
 	}
-	abstract protected function parse_attributes( $atts );
-	abstract protected function inject_script( $cb_map_id );
-	abstract protected function create_container( $cb_map_id, $attrs, $options, $content );
+	/**
+	 * @param array<string|int, mixed> $atts
+	 * @return array<string, mixed>
+	 */
+	abstract protected function parse_attributes( array $atts ): array;
+	abstract protected function inject_script( int $cb_map_id ): void;
+	/**
+	 * @param array<string, mixed> $attrs
+	 * @param array<int, mixed> $options
+	 */
+	abstract protected function create_container( int $cb_map_id, array $attrs, array $options, string $content ): string;
 }

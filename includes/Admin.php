@@ -1,6 +1,11 @@
 <?php
 
-function commonsbooking_admin() {
+/**
+ * Enqueue scripts and styles for admin pages.
+ *
+ * @return void
+ */
+function commonsbooking_admin(): void {
 	// jQuery
 	wp_enqueue_script( 'jquery' );
 
@@ -213,14 +218,14 @@ function commonsbooking_sanitizeHTML( $string ): string {
 /**
  * Create filter hooks for cmb2 fields
  *
- * @param array $field_args  Array of field args.
+ * @param array<string, mixed> $field_args  Array of field args.
  *
  *
  * : https://cmb2.io/docs/field-parameters#-default_cb
  *
  * @return mixed
  */
-function commonsbooking_filter_from_cmb2( $field_args ) {
+function commonsbooking_filter_from_cmb2( array $field_args ) {
 	// Only return default value if we don't have a post ID (in the 'post' query variable)
 	if ( isset( $_GET['post'] ) ) {
 		// No default value.
@@ -260,14 +265,14 @@ function cmb2_set_checkbox_default_for_new_post() {
 /**
  * Recursive sanitation for text or array
  *
- * @param array|string $data
+ * @param array<mixed>|string $data
  * @param string       $sanitizeFunction name of the sanitziation function, default = sanitize_text_field. You can use any method that accepts a string as parameter
  *
  *       See more wordpress sanitization functions: https://developer.wordpress.org/themes/theme-security/data-sanitization-escaping/
  *
- * @return array|string
+ * @return array<mixed>|string
  */
-function commonsbooking_sanitizeArrayorString( $data, $sanitizeFunction = 'sanitize_text_field' ) {
+function commonsbooking_sanitizeArrayorString( array|string $data, string $sanitizeFunction = 'sanitize_text_field' ): array|string {
 	if ( is_array( $data ) ) {
 		foreach ( $data as $key => $value ) {
 			$data[ $key ] = commonsbooking_sanitizeArrayorString( $value, $sanitizeFunction );

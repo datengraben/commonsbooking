@@ -11,8 +11,16 @@ class Map extends View {
 
 	/**
 	 * load needed assets for the map that provides fine tuning of the location's position
+	 *
+	 * @param \CMB2_Field $field
+	 * @param mixed       $escaped_value
+	 * @param int|string  $object_id
+	 * @param string      $object_type
+	 * @param \CMB2_Types $field_type_object
+	 *
+	 * @return void
 	 **/
-	public static function render_cb_map( $field, $escaped_value, $object_id, $object_type, $field_type_object ) {
+	public static function render_cb_map( \CMB2_Field $field, $escaped_value, $object_id, string $object_type, \CMB2_Types $field_type_object ): void {
 		// map
 		wp_enqueue_style( 'cb-leaflet' );
 		wp_enqueue_script( 'cb-leaflet' );
@@ -28,7 +36,7 @@ class Map extends View {
 		wp_add_inline_script( 'cb-map-positioning_js', 'cb_map_positioning.defaults =' . wp_json_encode( $defaults ) );
 	}
 
-	public static function renderGeoRefreshButton() {
+	public static function renderGeoRefreshButton(): void {
 		echo '<div class="cmb-row cmb-type-text ">
 			<div class="cmb-th">
 				<label>' . esc_html__( 'Set / Update GPS Coordinates', 'commonsbooking' ) . '</label>

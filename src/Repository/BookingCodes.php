@@ -41,7 +41,7 @@ class BookingCodes {
 	 * @param int|null $endDate - Where to get booking codes to (timestamp)
 	 * @param int      $advanceGenerationDays - Open-ended timeframes: If 0, generate code(s) until today. If >0, generate additional codes after today
 	 *
-	 * @return array
+	 * @return array<int, BookingCode>
 	 * @throws BookingCodeException
 	 */
 	public static function getCodes( int $timeframeId, ?int $startDate = null, ?int $endDate = null, int $advanceGenerationDays = self::ADVANCE_GENERATION_DAYS ): array {
@@ -142,7 +142,7 @@ class BookingCodes {
 	 *
 	 * @return void works by reference on param $bookingCodes
 	 */
-	private static function backwardCompatibilityFilter( &$bookingCodes, $preferredTimeframeId, $preferredLocationId ) {
+	private static function backwardCompatibilityFilter( mixed &$bookingCodes, int $preferredTimeframeId, int $preferredLocationId ): void {
 		$filteredCodes = [];
 		$codesByDate   = [];
 
@@ -415,7 +415,7 @@ class BookingCodes {
 	/**
 	 * Will get the configured booking codes from the settings and return them as an array.
 	 *
-	 * @return array - Array of booking codes, empty array if no booking codes are configured.
+	 * @return array<int, string> Array of booking codes, empty array if no booking codes are configured.
 	 */
 	private static function getCodesArray(): array {
 		$bookingCodes = Settings::getOption( 'commonsbooking_options_bookingcodes', 'bookingcodes' );

@@ -6,7 +6,7 @@ use CommonsBooking\Helper\Wordpress;
 use CommonsBooking\Model\Map;
 
 class MapData {
-	public static function geo_search() {
+	public static function geo_search(): void {
 		if ( isset( $_POST['query'] ) && $_POST['cb_map_id'] ) {
 			$map = new Map( $_POST['cb_map_id'] );
 
@@ -74,7 +74,7 @@ class MapData {
 	/**
 	 * the ajax request handler for locations
 	 **/
-	public static function get_locations() {
+	public static function get_locations(): void {
 		// handle local/import map
 		if ( isset( $_POST['cb_map_id'] ) ) {
 			check_ajax_referer( 'cb_map_locations', 'nonce' );
@@ -126,9 +126,10 @@ class MapData {
 	/**
 	 * Returns configured item terms
 	 *
-	 * @return array
+	 * @param array<string, mixed> $settings
+	 * @return array<int, mixed>
 	 */
-	public static function getItemCategoryTerms( $settings ): array {
+	public static function getItemCategoryTerms( array $settings ): array {
 		$terms = [];
 
 		foreach ( $settings['filter_cb_item_categories'] as $categoryGroup ) {
@@ -144,8 +145,10 @@ class MapData {
 
 	/**
 	 * get the settings for the frontend of the map with given id
+	 *
+	 * @return array<string, mixed>
 	 **/
-	public static function get_settings( $cb_map_id ): array {
+	public static function get_settings( int $cb_map_id ): array {
 		$map                = new Map( $cb_map_id );
 		$date_min           = Wordpress::getUTCDateTime();
 		$date_min           = $date_min->format( 'Y-m-d' );

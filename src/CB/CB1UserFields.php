@@ -19,7 +19,7 @@ class CB1UserFields {
 	 */
 	private array $registration_fields;
 	/**
-	 * @var array|array[]
+	 * @var array<string, array<string, string>>
 	 */
 	private array $extra_profile_fields;
 	/**
@@ -27,7 +27,7 @@ class CB1UserFields {
 	 */
 	private array $registration_fields_required; // @phpstan-ignore property.onlyWritten
 	/**
-	 * @var array|array[]
+	 * @var array<string, array<string, string>>
 	 */
 	private array $user_fields;
 	/**
@@ -116,7 +116,7 @@ class CB1UserFields {
 	/**
 	 * Get the additional User fields
 	 *
-	 * @return array
+	 * @return array<string, array<string, string>>
 	 * @since    0.6.
 	 */
 	public function get_extra_profile_fields(): array {
@@ -131,7 +131,7 @@ class CB1UserFields {
 	* @return    object
 	*/
 
-	public function registration_add_fields() {
+	public function registration_add_fields(): void {
 
 		foreach ( $this->user_fields as $field ) {
 			$row = ( ! empty( $_POST[ $field['field_name'] ] ) ) ? sanitize_text_field( trim( $_POST[ $field['field_name'] ] ) ) : '';
@@ -195,7 +195,7 @@ class CB1UserFields {
 		return $string;
 	}
 
-	public function registration_set_errors( $errors, $username, $email ) {
+	public function registration_set_errors( \WP_Error $errors, string $username, string $email ): \WP_Error {
 
 		foreach ( $this->user_fields as $field ) {
 			if ( $field['type'] == 'checkbox' ) {
@@ -212,7 +212,7 @@ class CB1UserFields {
 		return $errors;
 	}
 
-	public function registration_add_meta( $user_id ) {
+	public function registration_add_meta( int $user_id ): void {
 
 		foreach ( $this->user_fields as $field ) {
 			if ( ! empty( $_POST[ $field['field_name'] ] ) ) {
@@ -229,7 +229,7 @@ class CB1UserFields {
 	 * @since    2.10 deprecated (cb_object_to_array is unspecified)
 	 * @since    0.6
 	 */
-	public function set_basic_user_vars( $user_id ) {
+	public function set_basic_user_vars( int $user_id ): void {
 		$user_basic = get_user_by( 'id', $user_id );
 		$user_meta  = get_user_meta( $user_id );
 
@@ -250,7 +250,7 @@ class CB1UserFields {
 	 *
 	 * @since    0.5.3
 	 */
-	public function add_user_vars( $key, $value ) {
+	public function add_user_vars( string $key, mixed $value ): void {
 
 		$this->user_vars[ $key ] = $value;
 	}
@@ -260,7 +260,7 @@ class CB1UserFields {
 	 *
 	 * @since    0.2
 	 */
-	public function show_extra_profile_fields( $user ) {
+	public function show_extra_profile_fields( \WP_User $user ): void {
 
 		?>
 
@@ -306,7 +306,7 @@ class CB1UserFields {
 	 *
 	 * @since    0.2
 	 */
-	public function save_extra_profile_fields( $user_id ) {
+	public function save_extra_profile_fields( int $user_id ): void {
 		if ( current_user_can( 'edit_user', $user_id ) ) {
 			$phone   = sanitize_text_field( $_POST['phone'] );
 			$address = sanitize_text_field( $_POST['address'] );

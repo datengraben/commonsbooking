@@ -12,26 +12,31 @@ namespace CommonsBooking\API;
  */
 class Share {
 
+	/** @var string */
 	private $name;
 
+	/** @var bool */
 	private $enabled;
 
+	/** @var string */
 	private $pushUrl;
 
+	/** @var string */
 	private $key;
 
+	/** @var string */
 	private $owner;
 
 	/**
 	 * Shares constructor.
 	 *
-	 * @param $name
-	 * @param $enabled
-	 * @param $pushUrl
-	 * @param $key
-	 * @param $owner
+	 * @param string $name
+	 * @param string $enabled
+	 * @param string $pushUrl
+	 * @param string $key
+	 * @param string $owner
 	 */
-	public function __construct( $name, $enabled, $pushUrl, $key, $owner ) {
+	public function __construct( string $name, string $enabled, string $pushUrl, string $key, string $owner ) {
 		$this->name    = $name;
 		$this->enabled = $enabled === 'on';
 		$this->pushUrl = $pushUrl;

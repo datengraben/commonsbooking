@@ -8,18 +8,23 @@ use CommonsBooking\Model\Map;
  * Shortcode for the legacy map with the old non-responsive standard leaflet style.
  */
 class MapShortcode extends BaseShortcode {
-	protected function create_container( $cb_map_id, $attrs, $options, $content ) {
+	/**
+	 * @param array<string, mixed> $attrs
+	 * @param array<int, mixed> $options
+	 */
+	protected function create_container( int $cb_map_id, array $attrs, array $options, string $content ): string {
 		$map        = new Map( $cb_map_id );
 		$map_height = $map->getMeta( 'map_height' );
 
-		return '<div id="cb-map-' . esc_attr( $cb_map_id ) . '" class="cb-wrapper cb-leaflet-map" style="width: 100%; height: ' . esc_attr( $map_height ) . 'px;"></div>';
+		return '<div id="cb-map-' . esc_attr( (string) $cb_map_id ) . '" class="cb-wrapper cb-leaflet-map" style="width: 100%; height: ' . esc_attr( (string) $map_height ) . 'px;"></div>';
 	}
 
-	protected function parse_attributes( $atts ) {
+	/** @return array<string, mixed> */
+	protected function parse_attributes( array $atts ): array {
 		return shortcode_atts( array( 'id' => 0 ), $atts );
 	}
 
-	protected function inject_script( $cb_map_id ) {
+	protected function inject_script( int $cb_map_id ): void {
 		wp_add_inline_script(
 			'cb-map-shortcode',
 			'jQuery(document).ready(function ($) {
@@ -37,7 +42,8 @@ class MapShortcode extends BaseShortcode {
 	/**
 	 * get the translations for the frontend
 	 **/
-	private function get_translation( $cb_map_id ): array {
+	/** @return array<string, string> */
+	private function get_translation( int $cb_map_id ): array {
 		$map                            = new Map( $cb_map_id );
 		$label_location_opening_hours   = $map->getMeta( 'label_location_opening_hours' );
 		$label_location_contact         = $map->getMeta( 'label_location_contact' );

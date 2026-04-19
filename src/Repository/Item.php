@@ -9,14 +9,13 @@ class Item extends BookablePost {
 	/**
 	 * Returns array with items at location based on bookable timeframes.
 	 *
-	 * @param $locationId
-	 *
+	 * @param int $locationId
 	 * @param bool $bookable
 	 *
-	 * @return array
+	 * @return array<int, mixed>
 	 * @throws Exception
 	 */
-	public static function getByLocation( $locationId, bool $bookable = false ): array {
+	public static function getByLocation( int $locationId, bool $bookable = false ): array {
 		return self::getByRelatedPost( $locationId, 'location', 'item', $bookable );
 	}
 

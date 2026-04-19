@@ -22,7 +22,10 @@ class SystemInformation extends \CommonsBooking\API\BaseRoute {
 	 */
 	protected $schemaUrl = COMMONSBOOKING_PLUGIN_DIR . 'includes/gbfs-json-schema/system_information.json';
 
-	public function get_items( $request ): WP_REST_Response {
+	/**
+	 * @param WP_REST_Request<array<string, mixed>> $request
+	 */
+	public function get_items( \WP_REST_Request $request ): WP_REST_Response {
 		$tz = timezone_name_get( wp_timezone() );
 		if ( preg_match( '/^(\+|\-)0?(\d+)/', $tz, $matches ) ) {
 			$tz = 'Etc/GMT' . $matches[1] . $matches[2];

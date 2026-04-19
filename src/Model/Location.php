@@ -25,7 +25,7 @@ class Location extends BookablePost {
 	 * @param mixed $itemId
 	 * @param bool  $asModel
 	 *
-	 * @return array
+	 * @return array<int, \CommonsBooking\Model\Timeframe>|\WP_Post[]
 	 * @throws \Exception
 	 */
 	public function getBookableTimeframesByItem( $itemId, bool $asModel = false ): array {
@@ -187,7 +187,7 @@ class Location extends BookablePost {
 	 * Calls the geocoder to update the geo coordinates of the location.
 	 * Caution: Do not call this function without a one-second delay between calls. Do not overload the geocoder.
 	 */
-	public function updateGeoLocation() {
+	public function updateGeoLocation(): void {
 		$street        = $this->getMeta( COMMONSBOOKING_METABOX_PREFIX . 'location_street' );
 		$postCode      = $this->getMeta( COMMONSBOOKING_METABOX_PREFIX . 'location_postcode' );
 		$city          = $this->getMeta( COMMONSBOOKING_METABOX_PREFIX . 'location_city' );

@@ -33,11 +33,11 @@ class ItemsRoute extends BaseRoute {
 	/**
 	 * Returns raw data collection.
 	 *
-	 * @param $request
+	 * @param WP_REST_Request<array<string, mixed>> $request
 	 *
 	 * @return stdClass
 	 */
-	public function getItemData( $request ): stdClass {
+	public function getItemData( WP_REST_Request $request ): stdClass {
 		$data        = new stdClass();
 		$data->items = [];
 
@@ -61,11 +61,11 @@ class ItemsRoute extends BaseRoute {
 	/**
 	 * Get a collection of items
 	 *
-	 * @param $request - Full data about the request.
+	 * @param WP_REST_Request<array<string, mixed>> $request Full data about the request.
 	 *
 	 * @return WP_Error|WP_REST_Response
 	 */
-	public function get_items( $request ) {
+	public function get_items( WP_REST_Request $request ) {
 		// get parameters from request
 		$params = $request->get_params();
 
@@ -104,23 +104,23 @@ class ItemsRoute extends BaseRoute {
 	/**
 	 * Get one item from the collection
 	 *
-	 * @param WP_REST_Request $request Full data about the request.
+	 * @param WP_REST_Request<array<string, mixed>> $request Full data about the request.
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function get_item( $request ): WP_REST_Response {
+	public function get_item( WP_REST_Request $request ): WP_REST_Response {
 		$data = $this->getItemData( $request );
 
 		return $this->respond_with_validation( $data );
 	}
 
 	/**
-	 * @param mixed           $item
-	 * @param WP_REST_Request $request
+	 * @param mixed $item
+	 * @param WP_REST_Request<array<string, mixed>> $request
 	 *
 	 * @return WP_REST_Response
 	 */
-	public function prepare_item_for_response( $item, $request ): WP_REST_Response {
+	public function prepare_item_for_response( $item, WP_REST_Request $request ): WP_REST_Response {
 		$preparedItem              = new stdClass();
 		$preparedItem->id          = $item->ID . '';
 		$preparedItem->name        = $item->post_title;

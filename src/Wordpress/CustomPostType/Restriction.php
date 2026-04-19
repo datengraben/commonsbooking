@@ -28,7 +28,7 @@ class Restriction extends CustomPostType {
 	/**
 	 * Initiates needed hooks.
 	 */
-	public function initHooks() {
+	public function initHooks(): void {
 		// Add Meta Boxes
 		add_action( 'cmb2_admin_init', array( $this, 'registerMetabox' ) );
 		add_action( 'restrict_manage_posts', array( self::class, 'addAdminTypeFilter' ) );
@@ -73,7 +73,7 @@ class Restriction extends CustomPostType {
 	/**
 	 * Adds filter dropdown // filter by item in restrictions List
 	 */
-	public static function addAdminItemFilter() {
+	public static function addAdminItemFilter(): void {
 		$items = \CommonsBooking\Repository\Item::get(
 			[
 				'post_status' => 'any',
@@ -100,7 +100,7 @@ class Restriction extends CustomPostType {
 	/**
 	 * Adds filter dropdown // filter by location in restrictions List
 	 */
-	public static function addAdminLocationFilter() {
+	public static function addAdminLocationFilter(): void {
 		$locations = \CommonsBooking\Repository\Location::get(
 			[
 				'post_status' => 'any',
@@ -127,7 +127,7 @@ class Restriction extends CustomPostType {
 	/**
 	 * Adds filter dropdown // filter by status in restrictions list
 	 */
-	public static function addAdminStatusFilter() {
+	public static function addAdminStatusFilter(): void {
 		Filter::renderFilter(
 			static::$postType,
 			esc_html__( 'Filter By Status ', 'commonsbooking' ),
@@ -142,7 +142,7 @@ class Restriction extends CustomPostType {
 	 * @param $column
 	 * @param $post_id
 	 */
-	public function setCustomColumnsData( $column, $post_id ) {
+	public function setCustomColumnsData( string $column, int $post_id ): void {
 
 		if ( $value = get_post_meta( $post_id, $column, true ) ) {
 			switch ( $column ) {
@@ -380,7 +380,7 @@ class Restriction extends CustomPostType {
 	/**
 	 * Registers metaboxes for cpt.
 	 */
-	public function registerMetabox() {
+	public function registerMetabox(): void {
 		$cmb = new_cmb2_box(
 			[
 				'id'           => static::getPostType() . '-custom-fields',
@@ -397,7 +397,7 @@ class Restriction extends CustomPostType {
 	/**
 	 * Returns custom (meta) fields for Costum Post Type Timeframe.
 	 *
-	 * @return array
+	 * @return array<int, array<string, mixed>>
 	 */
 	protected function getCustomFields(): array {
 		// We need static types, because german month names dont't work for datepicker
@@ -531,7 +531,7 @@ Select the desired status and then click the "Send" button to send the e-mail.<b
 	/**
 	 * Handles save-Request for location.
 	 */
-	public function savePost( $post_id, $post ) {
+	public function savePost( int $post_id, \WP_Post $post ): void {
 		if ( $post->post_type == self::$postType && $post_id ) {
 			if ( $this->hasRunBefore( __METHOD__ ) ) {
 				return;

@@ -47,7 +47,7 @@ class Plugin {
 	/**
 	 * Plugin activation tasks.
 	 */
-	public static function activation() {
+	public static function activation(): void {
 		// Register custom user roles (e.g. cb_manager)
 		self::addCustomUserRoles();
 
@@ -63,7 +63,7 @@ class Plugin {
 	/**
 	 * Plugin deactivation tasks.
 	 */
-	public static function deactivation() {
+	public static function deactivation(): void {
 		do_action( Scheduler::UNSCHEDULER_HOOK );
 	}
 
@@ -108,7 +108,7 @@ class Plugin {
 	 *
 	 * @return bool[][]
 	 */
-	public static function getRoleCapMapping( $roleName = null ) {
+	public static function getRoleCapMapping( ?string $roleName = null ) {
 		if ( $roleName === null ) {
 			return [
 				// We deliberately don't use the getManagerRoles from the UserRepository here, because the custom roles should be able to define their own permissions
@@ -133,7 +133,7 @@ class Plugin {
 	/**
 	 * Adds cb user roles to WordPress.
 	 */
-	public static function addCustomUserRoles() {
+	public static function addCustomUserRoles(): void {
 		foreach ( self::getRoleCapMapping() as $roleName => $caps ) {
 			$role = get_role( $roleName );
 			if ( ! $role ) {
@@ -250,7 +250,7 @@ class Plugin {
 	 *
 	 * @return bool
 	 */
-	public static function isPostCustomPostType( $post ): bool {
+	public static function isPostCustomPostType( int|\WP_Post $post ): bool {
 		if ( is_int( $post ) ) {
 			$post = get_post( $post );
 		}
@@ -281,9 +281,10 @@ class Plugin {
 	/**
 	 * Adds permissions to edit custom post types for specified role.
 	 *
-	 * @param $postType
+	 * @param string $postType
+	 * @param string $roleName
 	 */
-	protected static function addRoleCaps( $postType, $roleName ) {
+	protected static function addRoleCaps( string $postType, string $roleName ): void {
 		// Add the roles you'd like to administer the custom post types
 		$roles = array_keys( self::getRoleCapMapping( $roleName ) );
 
@@ -322,7 +323,7 @@ class Plugin {
 		}
 	}
 
-	public static function admin_init() {
+	public static function admin_init(): void {
 		// check if we have a new version and run tasks
 		Upgrade::runTasksAfterUpdate();
 
@@ -341,7 +342,7 @@ class Plugin {
 	/**
 	 * Adds menu pages.
 	 */
-	public static function addMenuPages() {
+	public static function addMenuPages(): void {
 		// Dashboard
 		add_menu_page(
 			'Commons Booking',
@@ -470,7 +471,7 @@ class Plugin {
 	/**
 	 * Registers custom post types.
 	 */
-	public static function registerCustomPostTypes() {
+	public static function registerCustomPostTypes(): void {
 		foreach ( self::getCustomPostTypeObjects() as $customPostType ) {
 			$cptArgs = $customPostType->getArgs();
 			// make export possible when using WP_DEBUG, this allows us to use the export feature for creating new E2E tests
@@ -486,7 +487,7 @@ class Plugin {
 	/**
 	 * Registers additional post statuses.
 	 */
-	public static function registerPostStates() {
+	public static function registerPostStates(): void {
 		foreach ( Booking::$bookingStates as $bookingState ) {
 			new PostStatus( $bookingState, __( ucfirst( $bookingState ), 'commonsbooking' ) );
 		}
@@ -496,7 +497,7 @@ class Plugin {
 	 * Renders error for backend_notice.
 	 * TODO refactor this using the AdminMessage type
 	 */
-	public static function renderError() {
+	public static function renderError(): void {
 		$errorTypes = [
 			Model\Timeframe::ERROR_TYPE,
 			Model\Timeframe::ORPHANED_TYPE,
@@ -537,7 +538,7 @@ class Plugin {
 	/**
 	 * Enable Legacy CB1 profile fields.
 	 */
-	public static function maybeEnableCB1UserFields() {
+	public static function maybeEnableCB1UserFields(): void {
 		$enabled = Settings::getOption( 'commonsbooking_options_migration', 'enable-cb1-user-fields' );
 		if ( $enabled == 'on' ) {
 			new CB1UserFields();
@@ -547,7 +548,7 @@ class Plugin {
 	/**
 	 * Register Admin-Options
 	 */
-	public static function registerAdminOptions() {
+	public static function registerAdminOptions(): void {
 		$options_array = include COMMONSBOOKING_PLUGIN_DIR . '/includes/OptionsArray.php';
 		foreach ( $options_array as $tab_id => $tab ) {
 			new OptionsTab( $tab_id, $tab );
@@ -567,7 +568,7 @@ class Plugin {
 		return $versions[ $key ] ?? '0';
 	}
 
-	public static function registerScriptsAndStyles() {
+	public static function registerScriptsAndStyles(): void {
 		$base = COMMONSBOOKING_PLUGIN_ASSETS_URL . 'packaged/';
 
 		// spin.js
@@ -704,18 +705,18 @@ class Plugin {
 		);
 	}
 
-	public function registerShortcodes() {
+	public function registerShortcodes(): void {
 		add_shortcode( 'cb_search', array( SearchShortcode::class, 'execute' ) );
 	}
 
 	/**
 	 * Registers all user data exporters ({@link https://developer.wordpress.org/plugins/privacy/adding-the-personal-data-exporter-to-your-plugin/}).
 	 *
-	 * @param array $exporters
+	 * @param array<string, array<string, mixed>> $exporters
 	 *
-	 * @return mixed
+	 * @return array<string, array<string, mixed>>
 	 */
-	public static function registerUserDataExporters( $exporters ) {
+	public static function registerUserDataExporters( array $exporters ): array {
 		$exporters[ COMMONSBOOKING_PLUGIN_SLUG ] = array(
 			'exporter_friendly_name' => __( 'CommonsBooking Bookings', 'commonsbooking' ),
 			'callback'               => array( \CommonsBooking\Wordpress\CustomPostType\Booking::class, 'exportUserBookingsByEmail' ),
@@ -726,11 +727,11 @@ class Plugin {
 	/**
 	 * Registers all user data erasers ({@link https://developer.wordpress.org/plugins/privacy/adding-the-personal-data-eraser-to-your-plugin/}).
 	 *
-	 * @param $erasers
+	 * @param array<string, array<string, mixed>> $erasers
 	 *
-	 * @return mixed
+	 * @return array<string, array<string, mixed>>
 	 */
-	public static function registerUserDataErasers( $erasers ) {
+	public static function registerUserDataErasers( array $erasers ): array {
 		$erasers[ COMMONSBOOKING_PLUGIN_SLUG ] = array(
 			'eraser_friendly_name' => __( 'CommonsBooking Bookings', 'commonsbooking' ),
 			'callback'             => array( \CommonsBooking\Wordpress\CustomPostType\Booking::class, 'removeUserBookingsByEmail' ),
@@ -741,7 +742,7 @@ class Plugin {
 	/**
 	 *  Init hooks.
 	 */
-	public function init() {
+	public function init(): void {
 		do_action( 'cmb2_init' );
 
 		// Enable CB1 User Fields (needed in case of migration from cb 0.9.x)
@@ -860,13 +861,13 @@ class Plugin {
 	 *
 	 * @TODO: Add test if cache is cleared correctly.
 	 *
-	 * @param $post_id
-	 * @param $post
-	 * @param $update
+	 * @param int      $post_id
+	 * @param \WP_Post $post
+	 * @param bool     $update
 	 *
 	 * @throws \CommonsBooking\Psr\Cache\InvalidArgumentException
 	 */
-	public function savePostActions( $post_id, $post, $update ) {
+	public function savePostActions( int $post_id, \WP_Post $post, bool $update ): void {
 		if ( ! self::isPostCustomPostType( $post ) ) {
 			return;
 		}
@@ -880,7 +881,7 @@ class Plugin {
 	}
 
 	/**
-	 * @return array
+	 * @return string[]
 	 */
 	public static function getCustomPostTypesLabels(): array {
 		return [
@@ -899,11 +900,11 @@ class Plugin {
 	/**
 	 * Function to register our new routes from the controller.
 	 */
-	public function initRoutes() {
+	public function initRoutes(): void {
 		// Check if API is activated in settings
 		$api_activated = Settings::getOption( 'commonsbooking_options_api', 'api-activated' );
 		if ( $api_activated != 'on' ) {
-			return false;
+			return;
 		}
 
 		add_action(
@@ -937,7 +938,7 @@ class Plugin {
 	 * - Hook appropriate function to button that sends out emails with booking codes to the station.
 	 *   @see \CommonsBooking\View\BookingCodes::renderDirectEmailRow()
 	 */
-	public function initBookingcodes() {
+	public function initBookingcodes(): void {
 		add_action( 'admin_action_cb_download-bookingscodes-csv', array( View\BookingCodes::class, 'renderCSV' ), 10, 0 );
 		add_action( 'admin_action_cb_email-bookingcodes', array( View\BookingCodes::class, 'emailCodes' ), 10, 0 );
 	}
@@ -949,7 +950,7 @@ class Plugin {
 	 *
 	 * @return string
 	 */
-	public function setParentFile( $parent_file ): string {
+	public function setParentFile( string $parent_file ): string {
 		global $current_screen;
 
 		// Set 'cb-dashboard' as parent for cb post types
@@ -986,7 +987,7 @@ class Plugin {
 	 *
 	 * @return string
 	 */
-	public function getTheContent( $content ): string {
+	public function getTheContent( string $content ): string {
 		// Check if we're inside the main loop in a single post page.
 		if ( is_single() && in_the_loop() && is_main_query() ) {
 			global $post;
@@ -1000,12 +1001,12 @@ class Plugin {
 		return $content;
 	}
 
-	public function registerUserWidget() {
+	public function registerUserWidget(): void {
 		register_widget( '\CommonsBooking\Wordpress\Widget\UserWidget' );
 	}
 
 
-	function AddImageSizes() {
+	function AddImageSizes(): void {
 
 		$crop = Settings::getOption( 'commonsbooking_options_templates', 'image_listing_crop' ) == 'on' ? true : false;
 

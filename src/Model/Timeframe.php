@@ -206,8 +206,10 @@ class Timeframe extends CustomPost {
 			return true;
 		}
 
-		$itemAdmin     = commonsbooking_isUserAllowedToEdit( $this->getItem(), $user );
-		$locationAdmin = commonsbooking_isUserAllowedToEdit( $this->getLocation(), $user );
+		$item          = $this->getItem();
+		$location      = $this->getLocation();
+		$itemAdmin     = $item ? commonsbooking_isUserAllowedToEdit( $item->ID, $user ) : false;
+		$locationAdmin = $location ? commonsbooking_isUserAllowedToEdit( $location->ID, $user ) : false;
 		return ( $itemAdmin || $locationAdmin );
 	}
 
@@ -855,12 +857,12 @@ class Timeframe extends CustomPost {
 	/**
 	 * Checks if timeframes are overlapping in weekly slot and slot with manual repetition.
 	 *
-	 * @param $weeklyTimeframe
-	 * @param $manualTimeframe
+	 * @param Timeframe $weeklyTimeframe
+	 * @param Timeframe $manualTimeframe
 	 *
 	 * @return bool
 	 */
-	private static function hasWeeklyManualOverlap( $weeklyTimeframe, $manualTimeframe ): bool {
+	private static function hasWeeklyManualOverlap( Timeframe $weeklyTimeframe, Timeframe $manualTimeframe ): bool {
 		$manualSelectionWeekdays = array_unique(
 			array_map(
 				fn ( $date ) => date( 'w', strtotime( $date ) ),

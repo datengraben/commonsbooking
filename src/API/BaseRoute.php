@@ -35,12 +35,13 @@ class BaseRoute extends WP_REST_Controller {
 	// the location of the .schema.json files locally
 	const SCHEMA_PATH = COMMONSBOOKING_PLUGIN_DIR . 'includes/commons-api-json-schema/';
 
+	/** @var string */
 	protected $schemaUrl;
 
 	/**
 	 * Register the routes for the objects of the controller.
 	 */
-	public function register_routes() {
+	public function register_routes(): void {
 		$version   = '1';
 		$namespace = COMMONSBOOKING_PLUGIN_SLUG . '/v' . $version;
 		register_rest_route(
@@ -96,7 +97,7 @@ class BaseRoute extends WP_REST_Controller {
 	 *
 	 * @param object $data instance of stdclass or object to validate.
 	 */
-	public function validateData( $data ) {
+	public function validateData( $data ): void {
 		$validator = new Validator();
 
 		// Opis does not fetch remote $ref targets in getSchemaJson() main schema.
@@ -158,8 +159,8 @@ class BaseRoute extends WP_REST_Controller {
 	/**
 	 * Adds schema-fields for output to current route (needed for /.../schema endpoint)
 	 *
-	 * @param array $schema Assoc array of schema json object.
-	 * @return array
+	 * @param array<string, mixed> $schema Assoc array of schema json object.
+	 * @return array<string, mixed>
 	 */
 	public function add_additional_fields_schema( $schema ): array {
 		$schemaArray = json_decode( $this->getSchemaJson(), true );
@@ -170,11 +171,11 @@ class BaseRoute extends WP_REST_Controller {
 	/**
 	 * Escapes JSON String for output.
 	 *
-	 * @param $string
+	 * @param string $string
 	 *
-	 * @return false|string
+	 * @return string
 	 */
-	public function escapeJsonString( $string ) {
+	public function escapeJsonString( string $string ): string {
 		return substr( wp_json_encode( $string ), 1, - 1 ) ? : '';
 	}
 

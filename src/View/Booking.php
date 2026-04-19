@@ -442,12 +442,12 @@ class Booking extends View {
 	 *
 	 * A list of items with timeframes.
 	 *
-	 * @param $atts
+	 * @param array<string, mixed> $atts
 	 *
 	 * @return false|string
 	 * @throws Exception
 	 */
-	public static function shortcode( $atts ) {
+	public static function shortcode( array $atts ) {
 		global $templateData;
 		$templateData = [];
 		$templateData = self::getBookingListData();
@@ -497,7 +497,7 @@ class Booking extends View {
 	 *
 	 * This only includes confirmed bookings in the future.
 	 *
-	 * @param $user
+	 * @param int|\WP_User|null $user
 	 *
 	 * @return string|false
 	 * @throws Exception
@@ -556,10 +556,12 @@ class Booking extends View {
 	/**
 	 * Callback function to render the button that submits the backend booking.
 	 *
-	 * @param $field_args
-	 * @param $field
+	 * @param array<string, mixed> $field_args
+	 * @param \CMB2_Field          $field
+	 *
+	 * @return void
 	 */
-	public static function renderSubmitButton( $field_args, $field ) {
+	public static function renderSubmitButton( array $field_args, \CMB2_Field $field ): void {
 		$id     = $field->args( 'id' );
 		$label  = $field->args( 'name' );
 		$desc   = $field->args( 'desc' );

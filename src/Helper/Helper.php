@@ -80,11 +80,11 @@ class Helper {
 	/**
 	 * Returns timestamp of last full day, needed to get more cache hits.
 	 *
-	 * @param $timestamp
+	 * @param int|null $timestamp
 	 *
-	 * @return int|mixed|null
+	 * @return int
 	 */
-	public static function getLastFullDayTimestamp( $timestamp = null ) {
+	public static function getLastFullDayTimestamp( ?int $timestamp = null ): int {
 		if ( $timestamp === null ) {
 			$timestamp = current_time( 'timestamp' );
 		}
@@ -95,13 +95,13 @@ class Helper {
 	/**
 	 * Returns CB custom post type if possible.
 	 *
-	 * @param $post
-	 * @param $type
+	 * @param mixed $post
+	 * @param string $type
 	 *
 	 * @return Booking|Item|Location|mixed
 	 * @throws \Exception
 	 */
-	public static function castToCBCustomType( $post, $type ) {
+	public static function castToCBCustomType( mixed $post, string $type ): mixed {
 		if ( $type == \CommonsBooking\Wordpress\CustomPostType\Booking::$postType ) {
 			$post = new Booking( $post->ID );
 		}
@@ -121,9 +121,9 @@ class Helper {
 	 * NOTE: When performance issues arise, this operation can be implemented
 	 * faster with an interval tree data structure
 	 *
-	 * @param array $array_of_ranges Array of one or more ranges.
+	 * @param array<int, array<string, mixed>> $array_of_ranges Array of one or more ranges.
 	 *
-	 * @return array - Array of overlapping ranges.
+	 * @return array<int, array<string, mixed>> Array of overlapping ranges.
 	 */
 	public static function mergeRangesToBookableDates( array $array_of_ranges ): array {
 		$interval_open = function ( $interval_value ): bool {

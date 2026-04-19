@@ -7,7 +7,7 @@ namespace CommonsBooking\View;
  */
 class Dashboard extends View {
 
-	public static function index() {
+	public static function index(): void {
 		ob_start();
 		commonsbooking_sanitizeHTML( commonsbooking_get_template_part( 'dashboard', 'index' ) );
 		echo ob_get_clean();
@@ -27,7 +27,7 @@ class Dashboard extends View {
 			$beginningBookings = array_filter(
 				$beginningBookings,
 				function ( $beginningBooking ) {
-					return commonsbooking_isCurrentUserAllowedToEdit( $beginningBooking );
+					return commonsbooking_isCurrentUserAllowedToEdit( $beginningBooking->ID );
 				}
 			);
 		}
@@ -72,7 +72,7 @@ class Dashboard extends View {
 			$endingBookings = array_filter(
 				$endingBookings,
 				function ( $endingBooking ) {
-					return commonsbooking_isCurrentUserAllowedToEdit( $endingBooking );
+					return commonsbooking_isCurrentUserAllowedToEdit( $endingBooking->ID );
 				}
 			);
 		}

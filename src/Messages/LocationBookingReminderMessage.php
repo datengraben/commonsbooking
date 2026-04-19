@@ -16,15 +16,13 @@ use CommonsBooking\Wordpress\CustomPostType\Location;
  */
 class LocationBookingReminderMessage extends Message {
 
-	/**
-	 * @var array|string[]
-	 */
-	protected $validActions = [ 'booking-start-location-reminder', 'booking-end-location-reminder' ];
+	/** @var string[] */
+	protected array $validActions = [ 'booking-start-location-reminder', 'booking-end-location-reminder' ];
 
 	/**
 	 * Sends reminder message.
 	 */
-	public function sendMessage() {
+	public function sendMessage(): void {
 		/** @var \CommonsBooking\Model\Booking $booking */
 		$booking      = Booking::getPostById( $this->getPostId() );
 		$booking_user = get_userdata( (int) $this->getPost()->post_author );

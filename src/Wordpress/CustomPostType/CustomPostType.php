@@ -34,7 +34,7 @@ abstract class CustomPostType {
 	protected $listColumns = null;
 
 	/**
-	 * @var array|null
+	 * @var array<int|string, string>|null
 	 */
 	protected $types = null;
 
@@ -69,13 +69,16 @@ abstract class CustomPostType {
 	}
 
 	/**
-	 * @return array
+	 * @return array<string, mixed>
 	 */
-	protected static function getTaxonomyArgs() {
+	protected static function getTaxonomyArgs(): array {
 		throw new BadMethodCallException( 'Not implemented' );
 	}
 
-	public static function registerPostTypeTaxonomy() {
+	/**
+	 * @return void
+	 */
+	public static function registerPostTypeTaxonomy(): void {
 
 		$customPostType = static::getPostType();
 		$taxonomy       = static::getTaxonomyName();
@@ -99,11 +102,11 @@ abstract class CustomPostType {
 	/**
 	 * Replaces WP_Posts by their title for options array.
 	 *
-	 * @param $data
+	 * @param mixed $data
 	 *
-	 * @return array
+	 * @return array<int|string, string>
 	 */
-	public static function sanitizeOptions( $data ) {
+	public static function sanitizeOptions( $data ): array {
 		$options = [];
 		if ( $data && is_array( $data ) ) {
 			foreach ( $data as $key => $item ) {
@@ -136,7 +139,7 @@ abstract class CustomPostType {
 	 *
 	 * @param mixed $type (item or location)
 	 *
-	 * @return array
+	 * @return array<int, array<string, mixed>>|null
 	 */
 	public static function getCMB2FieldsArrayFromCustomMetadata( $type ): ?array {
 
@@ -177,11 +180,12 @@ abstract class CustomPostType {
 	/**
 	 * Modifies Row Actions (like quick edit, trash etc) in CPT listings
 	 *
-	 * @param mixed $actions
+	 * @param array<string, string> $actions
+	 * @param \WP_Post $post
 	 *
-	 * @return mixed
+	 * @return array<string, string>
 	 */
-	public static function modifyRowActions( $actions, $post ) {
+	public static function modifyRowActions( array $actions, WP_Post $post ): array {
 
 		// remove quick edit for timeframes, restrictions and bookings
 		if ( $post->post_type == Timeframe::getPostType()
@@ -208,9 +212,9 @@ abstract class CustomPostType {
 	/**
 	 * Returns param for backend menu.
 	 *
-	 * @return array
+	 * @return array<int, mixed>
 	 */
-	public function getMenuParams() {
+	public function getMenuParams(): array {
 		return [
 			'cb-dashboard',
 			$this->getArgs()['labels']['name'],
@@ -230,11 +234,11 @@ abstract class CustomPostType {
 	/**
 	 * Manages custom columns for list view.
 	 *
-	 * @param $columns
+	 * @param array<string, string> $columns
 	 *
-	 * @return mixed
+	 * @return array<string, string>
 	 */
-	public function setCustomColumns( $columns ) {
+	public function setCustomColumns( array $columns ): array {
 		if ( isset( $this->listColumns ) ) {
 			foreach ( $this->listColumns as $key => $label ) {
 				$columns[ $key ] = $label;
@@ -245,11 +249,11 @@ abstract class CustomPostType {
 	}
 
 	/**
-	 * @param $columns
+	 * @param array<string, string> $columns
 	 *
-	 * @return mixed
+	 * @return array<string, string>
 	 */
-	public function setSortableColumns( $columns ) {
+	public function setSortableColumns( array $columns ): array {
 		if ( isset( $this->listColumns ) ) {
 			foreach ( $this->listColumns as $key => $label ) {
 				$columns[ $key ] = $key;
@@ -261,8 +265,10 @@ abstract class CustomPostType {
 
 	/**
 	 * Removes title column from backend listing.
+	 *
+	 * @return void
 	 */
-	public function removeListTitleColumn() {
+	public function removeListTitleColumn(): void {
 		add_filter(
 			'manage_' . static::getPostType() . '_posts_columns',
 			function ( $columns ) {
@@ -275,8 +281,10 @@ abstract class CustomPostType {
 
 	/**
 	 * Removes date column from backend listing.
+	 *
+	 * @return void
 	 */
-	public function removeListDateColumn() {
+	public function removeListDateColumn(): void {
 		add_filter(
 			'manage_' . static::getPostType() . '_posts_columns',
 			function ( $columns ) {
@@ -290,13 +298,17 @@ abstract class CustomPostType {
 
 	/**
 	 * Initiates needed hooks.
+	 *
+	 * @return void
 	 */
-	abstract public function initHooks();
+	abstract public function initHooks(): void;
 
 	/**
 	 * Configures list-view
+	 *
+	 * @return void
 	 */
-	public function initListView() {
+	public function initListView(): void {
 		if ( array_key_exists( 'post_type', $_GET ) && static::$postType !== $_GET['post_type'] ) {
 			return;
 		}
@@ -345,10 +357,11 @@ abstract class CustomPostType {
 	/**
 	 * Adds data to custom columns
 	 *
-	 * @param $column
-	 * @param $post_id
+	 * @param string $column
+	 * @param int $post_id
+	 * @return void
 	 */
-	public function setCustomColumnsData( $column, $post_id ) {
+	public function setCustomColumnsData( string $column, int $post_id ): void {
 
 		if ( $value = get_post_meta( $post_id, $column, true ) ) {
 			echo commonsbooking_sanitizeHTML( $value );
@@ -361,8 +374,10 @@ abstract class CustomPostType {
 
 	/**
 	 * Adds Category filter to backend list view
+	 *
+	 * @return void
 	 */
-	public static function addAdminCategoryFilter() {
+	public static function addAdminCategoryFilter(): void {
 		$values = [];
 		$terms  = get_terms(
 			array(
@@ -370,7 +385,7 @@ abstract class CustomPostType {
 			)
 		);
 		foreach ( $terms as $term ) {
-			$values[ $term->term_id ] = $term->name;
+			$values[ (string) $term->term_id ] = $term->name;
 		}
 		Filter::renderFilter(
 			static::$postType,
@@ -383,11 +398,11 @@ abstract class CustomPostType {
 	/**
 	 * Checks if method has been called before in current request.
 	 *
-	 * @param $methodName
+	 * @param string $methodName
 	 *
 	 * @return bool
 	 */
-	protected function hasRunBefore( $methodName ): bool {
+	protected function hasRunBefore( string $methodName ): bool {
 		if ( array_key_exists( $methodName, $_REQUEST ) ) {
 			return true;
 		}
