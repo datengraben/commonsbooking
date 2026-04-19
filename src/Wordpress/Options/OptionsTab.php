@@ -12,11 +12,13 @@ use Exception;
  */
 class OptionsTab {
 
-	public $option_key = COMMONSBOOKING_PLUGIN_SLUG . '_options';
-	public $id;
-	public $tab_title;
-	public $content;
-	public $groups;
+	public string $option_key = COMMONSBOOKING_PLUGIN_SLUG . '_options';
+	public string $id;
+	public string $tab_title;
+	/** @var array<string, mixed> */
+	public array $content;
+	/** @var array<string, mixed> */
+	public array $groups;
 
 	// Error type for backend error output
 	public const ERROR_TYPE = 'commonsbooking-options-error';
@@ -27,6 +29,7 @@ class OptionsTab {
 	 */
 	private $metabox;
 
+	/** @param array<string, mixed> $content */
 	public function __construct( string $id, array $content ) {
 		$this->id        = $id;
 		$this->content   = $content;
@@ -38,7 +41,7 @@ class OptionsTab {
 		add_action( 'cmb2_save_options-page_fields', array( self::class, 'savePostOptions' ), 10 );
 	}
 
-	public function register() {
+	public function register(): void {
 		$this->registerOptionsTab();
 		$this->registerOptionsGroups();
 	}
@@ -46,7 +49,7 @@ class OptionsTab {
 	/**
 	 * Register Tab
 	 */
-	public function registerOptionsTab() {
+	public function registerOptionsTab(): void {
 
 		$default_args = array(
 			'id'           => $this->id,
@@ -76,7 +79,7 @@ class OptionsTab {
 	/**
 	 * Register Tab Contents (Groups + Fields)
 	 */
-	public function registerOptionsGroups() {
+	public function registerOptionsGroups(): void {
 
 		foreach ( $this->groups as $group ) {
 			$group = static::prependTitle( $group ); /* prepend title + description html */
@@ -93,9 +96,9 @@ class OptionsTab {
 	/**
 	 * If array contains title or description, create a new row containing this text
 	 *
-	 * @param array $metabox_group
+	 * @param array<string, mixed> $metabox_group
 	 *
-	 * @return array $metabox_group with title + description added as row
+	 * @return array<string, mixed> $metabox_group with title + description added as row
 	 */
 	public static function prependTitle( array $metabox_group ): array {
 

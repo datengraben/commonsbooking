@@ -27,19 +27,19 @@ class Week {
 	protected $dayOfYear;
 
 	/**
-	 * @var array
+	 * @var int[]
 	 */
-	protected $locations;
+	protected array $locations;
 
 	/**
-	 * @var array
+	 * @var int[]
 	 */
-	protected $items;
+	protected array $items;
 
 	/**
-	 * @var array
+	 * @var string[]
 	 */
-	protected $types;
+	protected array $types;
 
 	/**
 	 * @var Timeframe[]
@@ -49,14 +49,14 @@ class Week {
 	/**
 	 * Week constructor.
 	 *
-	 * @param $year
-	 * @param $dayOfYear
-	 * @param array       $locations
-	 * @param array       $items
-	 * @param array       $types
+	 * @param int $year
+	 * @param int $dayOfYear
+	 * @param int[] $locations
+	 * @param int[] $items
+	 * @param string[] $types
 	 * @param Timeframe[] $possibleTimeframes Timeframes that might be relevant for this week, need to be filtered.
 	 */
-	public function __construct( $year, $dayOfYear, array $locations = [], array $items = [], array $types = [], array $possibleTimeframes = [] ) {
+	public function __construct( int $year, int $dayOfYear, array $locations = [], array $items = [], array $types = [], array $possibleTimeframes = [] ) {
 		if ( $year === null ) {
 			$year = date( 'Y' );
 		}
@@ -76,7 +76,7 @@ class Week {
 	 *
 	 * Uses the cache and expires at midnight on a daily basis.
 	 *
-	 * @return array
+	 * @return \CommonsBooking\Model\Day[]
 	 * @throws Exception
 	 */
 	public function getDays() {

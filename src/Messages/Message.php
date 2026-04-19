@@ -15,16 +15,16 @@ abstract class Message {
 	/**
 	 * The actions that are valid for this message. Usually a string.
 	 *
-	 * @var array
+	 * @var string[]
 	 */
-	protected $validActions = [];
+	protected array $validActions = [];
 
 	/**
 	 * The action that is used for this message. Needs to be contained in $validActions
 	 *
 	 * @var string
 	 */
-	protected $action;
+	protected string $action;
 
 	/**
 	 * The post that this message is about
@@ -69,9 +69,9 @@ abstract class Message {
 	 *    'type' => File MIME type (if left unspecified, PHPMailer will try to work it out from the file name)
 	 *    'disposition' => Disposition to use (defaults to 'attachment')
 	 *
-	 * @var array
+	 * @var array<string, mixed>
 	 */
-	protected $attachment = [];
+	protected array $attachment = [];
 	/**
 	 * @var int
 	 */
@@ -81,7 +81,7 @@ abstract class Message {
 	 * @param $postId
 	 * @param $action
 	 */
-	public function __construct( $postId, $action ) {
+	public function __construct( int $postId, string $action ) {
 		$this->postId = $postId;
 
 		global $post;
@@ -90,7 +90,7 @@ abstract class Message {
 		$this->action = $action;
 	}
 
-	public function getAction() {
+	public function getAction(): string {
 		return $this->action;
 	}
 
@@ -114,7 +114,8 @@ abstract class Message {
 		return apply_filters( 'commonsbooking_mail_to', $recipient, $messageAction );
 	}
 
-	public function getHeaders() {
+	/** @return string[]|null */
+	public function getHeaders(): ?array {
 		return $this->headers;
 	}
 
@@ -161,7 +162,7 @@ abstract class Message {
 	/**
 	 * Return array of attachment
 	 *
-	 * @return array
+	 * @return array<string, mixed>
 	 */
 	public function getAttachment(): array {
 		$attachment    = $this->attachment;
@@ -186,7 +187,7 @@ abstract class Message {
 	 * @param string           $from_headers From-Header (From:xxx)
 	 * @param string|null      $bcc_adresses comma separated string with e-mail adresses
 	 * @param object[]         $objects objects used in parse template function
-	 * @param array|null       $attachment
+	 * @param array<string, mixed>|null $attachment
 	 */
 	protected function prepareMail(
 		MessageRecipient $recipientUser,
@@ -260,7 +261,7 @@ abstract class Message {
 		do_action( 'commonsbooking_mail_sent', $this->getAction(), $result );
 	}
 
-	abstract public function sendMessage();
+	abstract public function sendMessage(): void;
 
 	/**
 	 * Only send mail if action is valid
@@ -292,18 +293,18 @@ abstract class Message {
 	}
 
 	/**
-	 * @param array $address_array
+	 * @param string[] $address_array
 	 *
 	 * @return void
 	 */
-	protected function add_bcc( array $address_array ) {
+	protected function add_bcc( array $address_array ): void {
 		// sanitize emails
 		$address_array   = array_filter( array_map( 'sanitize_email', $address_array ) );
 		$this->headers[] = sprintf( 'BCC:%s', implode( ',', $address_array ) );
 	}
 
 	/**
-	 * @return array
+	 * @return string[]
 	 */
 	public function getValidActions(): array {
 		return $this->validActions;
@@ -323,7 +324,11 @@ abstract class Message {
 	 *
 	 * @see https://gist.github.com/thomasfw/5df1a041fd8f9c939ef9d88d887ce023/
 	 */
-	public function addStringAttachments( $atts ) {
+	/**
+	 * @param array<string, mixed> $atts
+	 * @return array<string, mixed>
+	 */
+	public function addStringAttachments( array $atts ): array {
 		$attachment_arrays = [];
 		if ( ! empty( $atts['attachments'] ) ) {
 			$attachments = $atts['attachments'];

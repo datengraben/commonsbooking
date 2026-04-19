@@ -264,7 +264,7 @@ class Migration {
 	 *
 	 * @param mixed $text
 	 *
-	 * @return array
+	 * @return array<int, string>
 	 */
 	public static function fetchEmails( $text ): array {
 		$words = str_word_count( $text, 1, '.@-_' );
@@ -278,11 +278,11 @@ class Migration {
 	}
 
 	/**
-	 * @param $meta
+	 * @param array<string, array<int, mixed>> $meta
 	 *
-	 * @return array
+	 * @return array<string, mixed>
 	 */
-	private static function getFlatPostMeta( $meta ): array {
+	private static function getFlatPostMeta( array $meta ): array {
 		return array_map(
 			function ( $item ) {
 				return $item[0];
@@ -291,7 +291,12 @@ class Migration {
 		);
 	}
 
-	private static function removeArrayItemsByKeys( $array, $keys ) {
+	/**
+	 * @param array<string, mixed> $array
+	 * @param string[] $keys
+	 * @return array<string, mixed>
+	 */
+	private static function removeArrayItemsByKeys( array $array, array $keys ): array {
 		foreach ( $keys as $ignoredMetaField ) {
 			if ( array_key_exists( $ignoredMetaField, $array ) ) {
 				unset( $array[ $ignoredMetaField ] );
@@ -302,15 +307,14 @@ class Migration {
 	}
 
 	/**
-	 * @param $id
-	 * @param $type
+	 * @param int $id
+	 * @param string $type
+	 * @param int|null $timeframe_type
 	 *
-	 * @param null $timeframe_type
-	 *
-	 * @return mixed
+	 * @return \WP_Post|null
 	 * @throws Exception
 	 */
-	public static function getExistingPost( $id, $type, $timeframe_type = null ) {
+	public static function getExistingPost( int $id, string $type, ?int $timeframe_type = null ): ?\WP_Post {
 		$args = array(
 			'meta_key'     => COMMONSBOOKING_METABOX_PREFIX . 'cb1_post_post_ID',
 			'meta_value'   => $id,
@@ -356,14 +360,14 @@ class Migration {
 	}
 
 	/**
-	 * @param $existingPost
-	 * @param $postData array Post data
-	 * @param $postMeta array Post meta
+	 * @param \WP_Post|null $existingPost
+	 * @param array<string, mixed> $postData Post data
+	 * @param array<string, mixed> $postMeta Post meta
 	 *
 	 * @return bool
 	 * @throws \CommonsBooking\Geocoder\Exception\Exception
 	 */
-	protected static function savePostData( $existingPost, array $postData, array $postMeta ): bool {
+	protected static function savePostData( ?\WP_Post $existingPost, array $postData, array $postMeta ): bool {
 
 		$includeGeoData = array_key_exists( 'geodata', $_POST ) && sanitize_text_field( $_POST['geodata'] ) == 'true';
 
@@ -470,12 +474,12 @@ class Migration {
 	}
 
 	/**
-	 * @param $timeframe
+	 * @param array<string, mixed> $timeframe
 	 *
 	 * @return bool
 	 * @throws \CommonsBooking\Geocoder\Exception\Exception
 	 */
-	public static function migrateTimeframe( $timeframe ): bool {
+	public static function migrateTimeframe( array $timeframe ): bool {
 		$cbItem     = self::getExistingPost( $timeframe['item_id'], Item::$postType );
 		$cbLocation = self::getExistingPost( $timeframe['location_id'], Location::$postType );
 		$weekdays   = '';
@@ -522,13 +526,13 @@ class Migration {
 	}
 
 	/**
-	 * @param $booking
+	 * @param array<string, mixed> $booking
 	 *
 	 * @return bool
 	 * @throws \CommonsBooking\Geocoder\Exception\Exception
 	 * @throws Exception
 	 */
-	public static function migrateBooking( $booking ): bool {
+	public static function migrateBooking( array $booking ): bool {
 		$user       = get_user_by( 'id', $booking['user_id'] );
 		$cbItem     = self::getExistingPost( $booking['item_id'], Item::$postType );
 		$cbLocation = self::getExistingPost( $booking['location_id'], Location::$postType );
@@ -573,11 +577,11 @@ class Migration {
 	/**
 	 * Migrates CB1 Booking Code to CB2.
 	 *
-	 * @param $bookingCode
+	 * @param array<string, mixed> $bookingCode
 	 *
 	 * @return mixed
 	 */
-	public static function migrateBookingCode( $bookingCode ) {
+	public static function migrateBookingCode( array $bookingCode ) {
 		$cb2ItemId = CB1::getCB2ItemId( $bookingCode['item_id'] );
 		$date      = $bookingCode['booking_date'];
 		$code      = $bookingCode['bookingcode'];
@@ -606,7 +610,7 @@ class Migration {
 	/**
 	 * Migrates some of the CB1 Options that can be transfered to CB2
 	 */
-	public static function migrateCB1Options() {
+	public static function migrateCB1Options(): void {
 		// migrate Booking-Codes
 		$cb1_bookingcodes = Settings::getOption( 'commons-booking-settings-codes', 'commons-booking_codes_pool' );
 		Settings::updateOption( 'commonsbooking_options_bookingcodes', 'bookingcodes', $cb1_bookingcodes );
@@ -627,7 +631,7 @@ class Migration {
 	 *
 	 * @return void
 	 */
-	public static function migrateTaxonomy( $cb1Taxonomy ) {
+	public static function migrateTaxonomy( object $cb1Taxonomy ): void {
 		if ( $cb2PostId = CB1::getCB2PostIdByCB1Id( $cb1Taxonomy->object_id ) ) {
 			$terms = wp_get_object_terms( $cb1Taxonomy->object_id, $cb1Taxonomy->taxonomy );
 			$term  = array();

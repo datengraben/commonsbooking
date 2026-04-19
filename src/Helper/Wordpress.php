@@ -184,12 +184,12 @@ class Wordpress {
 	/**
 	 * Returns all post ids in relation to $postId.
 	 *
-	 * @param $postId
+	 * @param int $postId
 	 *
-	 * @return array
+	 * @return int[]
 	 * @throws \CommonsBooking\Psr\Cache\InvalidArgumentException
 	 */
-	public static function getRelatedPostsIdsForRestriction( $postId ): array {
+	public static function getRelatedPostsIdsForRestriction( int $postId ): array {
 		$restriction = new \CommonsBooking\Model\Restriction( $postId );
 
 		// Restriction itself
@@ -217,13 +217,13 @@ class Wordpress {
 	/**
 	 * Returns a list of cache tags related to $posts, $items and $locations.
 	 *
-	 * @param $posts
-	 * @param array $items
-	 * @param array $locations
+	 * @param array<int, \WP_Post|Timeframe|\CommonsBooking\Model\Booking> $posts
+	 * @param array<int, int|string> $items
+	 * @param array<int, int|string> $locations
 	 *
-	 * @return array
+	 * @return array<int, int|string>
 	 */
-	public static function getTags( $posts, array $items = [], array $locations = [] ): array {
+	public static function getTags( array $posts, array $items = [], array $locations = [] ): array {
 		$itemsAndLocations = self::getLocationAndItemIdsFromPosts( $posts );
 
 		if ( ! count( $items ) && ! count( $locations ) ) {
@@ -247,9 +247,9 @@ class Wordpress {
 	 * The only posts that have items / locations assinged are timeframes and bookings.
 	 * Any other posts are skipped.
 	 *
-	 * @param $posts
+	 * @param array<int, \WP_Post|Timeframe|\CommonsBooking\Model\Booking> $posts
 	 *
-	 * @return array
+	 * @return int[]
 	 */
 	public static function getLocationAndItemIdsFromPosts( array $posts ): array {
 		$itemsAndLocations = [];
@@ -313,14 +313,14 @@ class Wordpress {
 		return $dto;
 	}
 
-	public static function getUTCDateTime( $datetime = 'now' ): DateTime {
+	public static function getUTCDateTime( string $datetime = 'now' ): DateTime {
 		$dto = new DateTime( $datetime );
 		$dto->setTimezone( new \DateTimeZone( 'UTC' ) );
 
 		return $dto;
 	}
 
-	public static function getLocalDateTime( $timestamp ): DateTime {
+	public static function getLocalDateTime( int $timestamp ): DateTime {
 		$dto = new DateTime();
 		$dto->setTimestamp(
 			$timestamp
