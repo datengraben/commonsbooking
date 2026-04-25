@@ -23,3 +23,28 @@
         }
     }
 }
+
+/* Funding links rendered as buttons on the booking confirmation page */
+.cb-booking-funding {
+    .cb-button-funding-local,
+    .cb-button-funding-plugin {
+        @extend .cb-button;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--commonsbooking-spacer-small);
+    }
+
+    .cb-button-funding-local {
+        background-color: var(--commonsbooking-color-secondary); /* CB blue */
+    }
+
+    .cb-button-funding-plugin {
+        background-color: var(--commonsbooking-color-primary); /* CB light green */
+    }
+
+    .cb-funding-logo {
+        height: 1.2em;
+        width: auto;
+        vertical-align: middle;
+    }
+}

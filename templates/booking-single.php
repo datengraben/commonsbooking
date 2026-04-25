@@ -24,6 +24,22 @@ $admin_booking_id             = $booking->getMeta( 'admin_booking_id' );
 $current_status               = $booking->post_status;
 $internal_comment             = $booking->getMeta( 'internal-comment' );
 
+$contact_phone      = Settings::getOption( 'commonsbooking_options_general', 'contact_phone' );
+$contact_email      = Settings::getOption( 'commonsbooking_options_general', 'contact_email' );
+$contact_form_url   = Settings::getOption( 'commonsbooking_options_general', 'contact_form_url', 'esc_url' );
+$service_rating_url = Settings::getOption( 'commonsbooking_options_general', 'service_rating_url', 'esc_url' );
+$booking_terms_url  = Settings::getOption( 'commonsbooking_options_general', 'booking_terms_url', 'esc_url' );
+
+$fund_local_enable  = Settings::getOption( 'commonsbooking_options_general', 'fund_local_enable' );
+$fund_local_label   = Settings::getOption( 'commonsbooking_options_general', 'fund_local_label' );
+$fund_local_url     = Settings::getOption( 'commonsbooking_options_general', 'fund_local_url', 'esc_url' );
+$fund_plugin_enable = Settings::getOption( 'commonsbooking_options_general', 'fund_plugin_enable' );
+$fund_plugin_label  = Settings::getOption( 'commonsbooking_options_general', 'fund_plugin_label' );
+$fund_plugin_url    = Settings::getOption( 'commonsbooking_options_general', 'fund_plugin_url', 'esc_url' );
+
+$show_fund_local  = ( $fund_local_enable === 'on' ) && ! empty( $fund_local_url );
+$show_fund_plugin = ( $fund_plugin_enable === 'on' ) && ! empty( $fund_plugin_url );
+
 
 do_action( 'commonsbooking_before_booking-single', $booking->ID, $booking );
 
@@ -187,6 +203,92 @@ if ( $bookingCommentActive ) {
 			<?php
 	}
 }
+
+if ( ! empty( $contact_phone ) || ! empty( $contact_email ) || ! empty( $contact_form_url ) ) {
+	?>
+	<div class="cb-wrapper cb-booking-help">
+		<div class="cb-list-header">
+			<h3><?php echo esc_html__( 'Need help?', 'commonsbooking' ); ?></h3>
+		</div>
+		<?php if ( ! empty( $contact_phone ) ) { ?>
+			<div class="cb-list-content cb-help-phone cb-col-30-70">
+				<div><?php echo esc_html__( 'Phone', 'commonsbooking' ); ?></div>
+				<div><a href="tel:<?php echo esc_attr( preg_replace( '/[^0-9+]/', '', $contact_phone ) ); ?>"><?php echo esc_html( $contact_phone ); ?></a></div>
+			</div>
+			<?php
+		}
+		if ( ! empty( $contact_email ) ) {
+			?>
+			<div class="cb-list-content cb-help-email cb-col-30-70">
+				<div><?php echo esc_html__( 'Email', 'commonsbooking' ); ?></div>
+				<div><a href="mailto:<?php echo esc_attr( sanitize_email( $contact_email ) ); ?>"><?php echo esc_html( $contact_email ); ?></a></div>
+			</div>
+			<?php
+		}
+		if ( ! empty( $contact_form_url ) ) {
+			?>
+			<div class="cb-list-content cb-help-form cb-col-30-70">
+				<div><?php echo esc_html__( 'Contact form', 'commonsbooking' ); ?></div>
+				<div><a href="<?php echo esc_url( $contact_form_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html__( 'Open contact form', 'commonsbooking' ); ?></a></div>
+			</div>
+			<?php
+		}
+		?>
+	</div><!-- cb-booking-help -->
+	<?php
+}
+
+if ( ! empty( $service_rating_url ) ) {
+	?>
+	<div class="cb-wrapper cb-booking-rating">
+		<div class="cb-list-header">
+			<h3><?php echo esc_html__( 'Rate our service', 'commonsbooking' ); ?></h3>
+		</div>
+		<div class="cb-list-content cb-rating cb-col-30-70">
+			<div><?php echo esc_html__( 'Your feedback', 'commonsbooking' ); ?></div>
+			<div><a href="<?php echo esc_url( $service_rating_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html__( 'Leave a rating', 'commonsbooking' ); ?></a></div>
+		</div>
+	</div><!-- cb-booking-rating -->
+	<?php
+}
+
+if ( $show_fund_local || $show_fund_plugin ) {
+	?>
+	<div class="cb-wrapper cb-booking-funding">
+		<div class="cb-list-header">
+			<h3><?php echo esc_html__( 'Support us', 'commonsbooking' ); ?></h3>
+		</div>
+		<?php if ( $show_fund_local ) { ?>
+			<div class="cb-list-content cb-funding-local cb-col-30-70">
+				<div><?php echo esc_html__( 'Local initiative', 'commonsbooking' ); ?></div>
+				<div><a class="cb-button cb-button-funding-local" href="<?php echo esc_url( $fund_local_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( ! empty( $fund_local_label ) ? $fund_local_label : __( 'Support our initiative', 'commonsbooking' ) ); ?></a></div>
+			</div>
+			<?php
+		}
+		if ( $show_fund_plugin ) {
+			?>
+			<div class="cb-list-content cb-funding-plugin cb-col-30-70">
+				<div><?php echo esc_html__( 'Plugin development', 'commonsbooking' ); ?></div>
+				<div><a class="cb-button cb-button-funding-plugin" href="<?php echo esc_url( $fund_plugin_url ); ?>" target="_blank" rel="noopener"><img class="cb-funding-logo" src="<?php echo esc_url( COMMONSBOOKING_PLUGIN_ASSETS_URL . 'global/cb-ci/logo.png' ); ?>" alt="" aria-hidden="true" /><?php echo esc_html( ! empty( $fund_plugin_label ) ? $fund_plugin_label : __( 'Support CommonsBooking development', 'commonsbooking' ) ); ?></a></div>
+			</div>
+			<?php
+		}
+		?>
+	</div><!-- cb-booking-funding -->
+	<?php
+}
+
+if ( ! empty( $booking_terms_url ) ) {
+	?>
+	<div class="cb-wrapper cb-booking-terms">
+		<div class="cb-list-content cb-terms cb-col-30-70">
+			<div><?php echo esc_html__( 'Booking terms', 'commonsbooking' ); ?></div>
+			<div><a href="<?php echo esc_url( $booking_terms_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html__( 'Read booking terms', 'commonsbooking' ); ?></a></div>
+		</div>
+	</div><!-- cb-booking-terms -->
+	<?php
+}
+
 if ( $current_status && $current_status !== 'draft' ) {
 
 	?>
