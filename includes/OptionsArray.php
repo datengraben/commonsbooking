@@ -179,6 +179,48 @@ return array(
 				'id'     => 'globalLocationSettings',
 				'fields' => Location::getOverbookingSettingsMetaboxes(),
 			),
+			'contactSupport'         => array(
+				'title'  => __( 'Contact, support & legal', 'commonsbooking' ),
+				'id'     => 'contactSupport',
+				'desc'   => commonsbooking_sanitizeHTML( __( 'These details are shown on the booking confirmation page in the "Need help?", "Rate our service" and "Booking terms" sections. Leave any field empty to hide that line.', 'commonsbooking' ) ),
+				'fields' => array(
+					array(
+						'name'    => esc_html__( 'Support phone number', 'commonsbooking' ),
+						'desc'    => esc_html__( 'Phone number rendered as a clickable tel: link in the "Need help?" section.', 'commonsbooking' ),
+						'id'      => 'contact_phone',
+						'type'    => 'text',
+						'default' => '',
+					),
+					array(
+						'name'    => esc_html__( 'Support email', 'commonsbooking' ),
+						'desc'    => esc_html__( 'Email address rendered as a mailto: link in the "Need help?" section.', 'commonsbooking' ),
+						'id'      => 'contact_email',
+						'type'    => 'text',
+						'default' => '',
+					),
+					array(
+						'name'    => esc_html__( 'Contact form URL', 'commonsbooking' ),
+						'desc'    => esc_html__( 'Full URL to a contact form page. Shown as a link in the "Need help?" section.', 'commonsbooking' ),
+						'id'      => 'contact_form_url',
+						'type'    => 'text_url',
+						'default' => '',
+					),
+					array(
+						'name'    => esc_html__( 'Service rating URL', 'commonsbooking' ),
+						'desc'    => esc_html__( 'External rating or review URL (e.g. a Google review link or feedback form). Shown in the "Rate our service" section.', 'commonsbooking' ),
+						'id'      => 'service_rating_url',
+						'type'    => 'text_url',
+						'default' => '',
+					),
+					array(
+						'name'    => esc_html__( 'Booking terms (AGB) URL', 'commonsbooking' ),
+						'desc'    => esc_html__( 'Link to your booking terms or AGB page. Shown as a "Booking terms" link.', 'commonsbooking' ),
+						'id'      => 'booking_terms_url',
+						'type'    => 'text_url',
+						'default' => '',
+					),
+				),
+			),
 		),
 	),
 	/* Tab: general end*/
