@@ -261,7 +261,7 @@ if ( $show_fund_local || $show_fund_plugin ) {
 		<?php if ( $show_fund_local ) { ?>
 			<div class="cb-list-content cb-funding-local cb-col-30-70">
 				<div><?php echo esc_html__( 'Local initiative', 'commonsbooking' ); ?></div>
-				<div><a href="<?php echo esc_url( $fund_local_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( ! empty( $fund_local_label ) ? $fund_local_label : __( 'Support our initiative', 'commonsbooking' ) ); ?></a></div>
+				<div><a class="cb-button cb-button-funding-local" href="<?php echo esc_url( $fund_local_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( ! empty( $fund_local_label ) ? $fund_local_label : __( 'Support our initiative', 'commonsbooking' ) ); ?></a></div>
 			</div>
 			<?php
 		}
@@ -269,7 +269,7 @@ if ( $show_fund_local || $show_fund_plugin ) {
 			?>
 			<div class="cb-list-content cb-funding-plugin cb-col-30-70">
 				<div><?php echo esc_html__( 'Plugin development', 'commonsbooking' ); ?></div>
-				<div><a href="<?php echo esc_url( $fund_plugin_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( ! empty( $fund_plugin_label ) ? $fund_plugin_label : __( 'Support CommonsBooking development', 'commonsbooking' ) ); ?></a></div>
+				<div><a class="cb-button cb-button-funding-plugin" href="<?php echo esc_url( $fund_plugin_url ); ?>" target="_blank" rel="noopener"><img class="cb-funding-logo" src="<?php echo esc_url( COMMONSBOOKING_PLUGIN_ASSETS_URL . 'global/cb-ci/logo.png' ); ?>" alt="" aria-hidden="true" /><?php echo esc_html( ! empty( $fund_plugin_label ) ? $fund_plugin_label : __( 'Support CommonsBooking development', 'commonsbooking' ) ); ?></a></div>
 			</div>
 			<?php
 		}
