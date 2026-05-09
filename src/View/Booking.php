@@ -253,12 +253,10 @@ class Booking extends View {
 
 					// Only includes non-null array row data objects
 					if ( isset( $filteredRowData ) && is_array( $filteredRowData ) ) {
-						if ( WP_DEBUG ) {
-							// Logs absent keys, relative to the original row data keys, could cause problems
-							$absentKeys = array_diff_key( $filteredRowData, $rowData );
-							if ( count( $absentKeys ) > 0 ) {
-								error_log( 'After commonsbooking_booking_filter: Filtered rows have missing keys: ' . join( ',', array_keys( $absentKeys ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-							}
+						// Logs absent keys, relative to the original row data keys, could cause problems
+						$absentKeys = array_diff_key( $filteredRowData, $rowData );
+						if ( count( $absentKeys ) > 0 ) {
+							commonsbooking_write_log( 'After commonsbooking_booking_filter: Filtered rows have missing keys: ' . join( ',', array_keys( $absentKeys ) ), false );
 						}
 					} else {
 						continue;

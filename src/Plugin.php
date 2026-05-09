@@ -17,8 +17,10 @@ use CommonsBooking\Service\iCalendar;
 use CommonsBooking\Service\Upgrade;
 use CommonsBooking\Settings\Settings;
 use CommonsBooking\Repository\BookingCodes;
+use CommonsBooking\Service\ErrorMonitor;
 use CommonsBooking\View\Dashboard;
 use CommonsBooking\View\MassOperations;
+use CommonsBooking\View\SystemHealth;
 use CommonsBooking\Wordpress\CustomPostType\CustomPostType;
 use CommonsBooking\Wordpress\CustomPostType\Item;
 use CommonsBooking\Wordpress\CustomPostType\Location;
@@ -323,6 +325,13 @@ class Plugin {
 	}
 
 	public static function admin_init() {
+		// Handle "clear error log" form submission from System Health page
+		if ( isset( $_POST['cb_clear_error_log'] ) && check_admin_referer( 'cb_clear_error_log' ) ) {
+			ErrorMonitor::clear();
+			wp_safe_redirect( admin_url( 'admin.php?page=cb-system-health&cleared=1' ) );
+			exit;
+		}
+
 		// check if we have a new version and run tasks
 		Upgrade::runTasksAfterUpdate();
 
@@ -408,6 +417,16 @@ class Plugin {
 				array( MassOperations::class, 'index' )
 			);
 		}
+
+		// System Health — available to all CB users (not just admins)
+		add_submenu_page(
+			'cb-dashboard',
+			esc_html__( 'System Health', 'commonsbooking' ),
+			esc_html__( 'System Health', 'commonsbooking' ),
+			'manage_' . COMMONSBOOKING_PLUGIN_SLUG,
+			'cb-system-health',
+			array( SystemHealth::class, 'index' )
+		);
 	}
 
 	/**
@@ -424,6 +443,11 @@ class Plugin {
 				\CommonsBooking\Wordpress\CustomPostType\Booking::ERROR_TYPE . '-' . get_current_user_id(),
 				$e->getMessage(),
 				30 // Expires very quickly, so that outdated messsages will not be shown to the user
+			);
+			ErrorMonitor::record(
+				$e->getMessage(),
+				ErrorMonitor::SEVERITY_WARNING,
+				[ 'type' => 'BookingDeniedException' ]
 			);
 			$targetUrl = $e->getRedirectUrl();
 			if ( $targetUrl ) {
@@ -507,6 +531,11 @@ class Plugin {
 
 		foreach ( $errorTypes as $errorType ) {
 			if ( $error = get_transient( $errorType ) ) {
+				ErrorMonitor::record(
+					$error,
+					ErrorMonitor::SEVERITY_ERROR,
+					[ 'type' => $errorType, 'source' => 'admin_notice' ]
+				);
 				$class = 'notice notice-error';
 				printf(
 					'<div class="%1$s"><p>%2$s</p></div>',

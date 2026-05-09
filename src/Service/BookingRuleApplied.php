@@ -203,13 +203,11 @@ class BookingRuleApplied extends BookingRule {
 			);
 			if ( $json ) {
 				return $json;
-			} elseif ( WP_DEBUG ) {
-				error_log( 'Could not encode rules object.' ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			} else {
+				commonsbooking_write_log( 'Could not encode rules object.', false );
 			}
 		} catch ( Exception $e ) {
-			if ( WP_DEBUG ) {
-				error_log( $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			}
+			commonsbooking_write_log( $e->getMessage(), false );
 		}
 		return ''; // Return an empty string if initialization or encoding fails
 	}

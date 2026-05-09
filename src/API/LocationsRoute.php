@@ -79,9 +79,7 @@ class LocationsRoute extends BaseRoute {
 				$itemdata   = $this->prepare_item_for_response( $location, $request );
 				$features[] = $itemdata->get_data();
 			} catch ( Exception $exception ) {
-				if ( WP_DEBUG ) {
-					error_log( $exception->getMessage() );
-				}
+				commonsbooking_write_log( $exception->getMessage(), false );
 			}
 		}
 
