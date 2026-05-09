@@ -18,6 +18,7 @@ use CommonsBooking\Service\Upgrade;
 use CommonsBooking\Settings\Settings;
 use CommonsBooking\Repository\BookingCodes;
 use CommonsBooking\Service\ErrorMonitor;
+use CommonsBooking\Service\TroubleshootingReport;
 use CommonsBooking\View\Dashboard;
 use CommonsBooking\View\MassOperations;
 use CommonsBooking\View\SystemHealth;
@@ -800,6 +801,9 @@ class Plugin {
 
 		// Add menu pages
 		add_action( 'admin_menu', array( self::class, 'addMenuPages' ) );
+
+		// Troubleshooting report download (admin_post_ = logged-in users only)
+		add_action( 'admin_post_' . TroubleshootingReport::AJAX_ACTION, array( TroubleshootingReport::class, 'handleDownload' ) );
 
 		// Filter body classes of admin pages
 		add_filter( 'admin_body_class', array( self::class, 'filterAdminBodyClass' ), 10, 1 );

@@ -32,6 +32,17 @@ $severityStyle = [
 		</div>
 	<?php endif; ?>
 
+	<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" style="margin-bottom:1.5em;">
+		<?php wp_nonce_field( \CommonsBooking\Service\TroubleshootingReport::NONCE_ACTION ); ?>
+		<input type="hidden" name="action" value="<?php echo esc_attr( \CommonsBooking\Service\TroubleshootingReport::AJAX_ACTION ); ?>">
+		<button type="submit" class="button button-primary">
+			&#x2B07; <?php esc_html_e( 'Download Troubleshooting Report', 'commonsbooking' ); ?>
+		</button>
+		<span style="color:#646970;margin-left:10px;font-size:12px;">
+			<?php esc_html_e( 'Downloads a local JSON file — no data is sent anywhere.', 'commonsbooking' ); ?>
+		</span>
+	</form>
+
 	<nav class="nav-tab-wrapper" id="cb-health-tabs">
 		<a href="#cb-system-status" class="nav-tab nav-tab-active" data-tab="cb-system-status">
 			<?php esc_html_e( 'System Status', 'commonsbooking' ); ?>
