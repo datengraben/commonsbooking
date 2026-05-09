@@ -290,23 +290,19 @@ function commonsbooking_sanitizeArrayorString( $data, $sanitizeFunction = 'sanit
  * @return void
  */
 function commonsbooking_write_log( $log, $backtrace = true ) {
+	$logmessage = is_array( $log ) || is_object( $log ) ? print_r( $log, true ) : (string) $log;
+
+	if ( $backtrace ) {
+		$bt         = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS, 2 );
+		$logmessage = ( $bt[0]['file'] ?? '' ) . ':' . ( $bt[0]['line'] ?? 0 ) . ' ' . $logmessage;
+	}
+
+	// Always persist to the error monitor — works even without WP_DEBUG_LOG
+	\CommonsBooking\Service\ErrorMonitor::record( $logmessage, \CommonsBooking\Service\ErrorMonitor::SEVERITY_WARNING, [], 1 );
 
 	if ( ! WP_DEBUG_LOG ) {
 		return;
 	}
 
-	if ( is_array( $log ) || is_object( $log ) ) {
-		$logmessage = ( print_r( $log, true ) );
-	} else {
-		$logmessage = $log;
-	}
-
-	if ( $backtrace ) {
-		$bt         = debug_backtrace();
-		$file       = $bt[0]['file'];
-		$line       = $bt[0]['line'];
-		$logmessage = $file . ':' . $line . ' ' . $logmessage;
-	}
-
-	error_log( $logmessage );
+	error_log( $logmessage ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
 }

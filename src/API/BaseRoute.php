@@ -131,13 +131,11 @@ class BaseRoute extends WP_REST_Controller {
 				}
 			}
 		} catch ( Exception $e ) {
-			// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_error_log
+			commonsbooking_write_log( 'Problem while trying to access wp rest endpoint url for schema ' . $this->schemaUrl, false );
+			commonsbooking_write_log( (string) $e, false );
 			if ( WP_DEBUG ) {
-				error_log( 'Problem while trying to access wp rest endpoint url for schema ' . $this->schemaUrl );
-				error_log( $e );
 				die;
 			}
-			// phpcs:enable
 		}
 	}
 

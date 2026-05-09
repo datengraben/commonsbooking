@@ -695,7 +695,7 @@ class Timeframe extends PostRepository {
 
 						return $timeframe->isBookable();
 					} catch ( Exception $e ) {
-						error_log( $e->getMessage() );
+						commonsbooking_write_log( $e->getMessage(), false );
 
 						return false;
 					}
@@ -721,7 +721,7 @@ class Timeframe extends PostRepository {
 				try {
 					return commonsbooking_isCurrentUserAllowedToBook( $post->ID );
 				} catch ( Exception $e ) {
-					error_log( $e->getMessage() );
+					commonsbooking_write_log( $e->getMessage(), false );
 
 					return false;
 				}

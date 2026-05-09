@@ -501,8 +501,7 @@ trait Cache {
 				try {
 					$class::$function( $attributes, $shortcodeBody );
 				} catch ( Exception $e ) {
-					// Writes error to log anyway
-					error_log( (string) $e ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+					commonsbooking_write_log( (string) $e, false );
 				}
 			}
 		}

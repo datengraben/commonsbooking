@@ -165,9 +165,7 @@ class OptionsTab {
 						45
 					);
 				} catch ( Exception $e ) {
-					if ( WP_DEBUG ) {
-						error_log( $e->getMessage() ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-					}
+					commonsbooking_write_log( $e->getMessage(), false );
 					set_transient(
 						self::ERROR_TYPE,
 						commonsbooking_sanitizeHTML( __( 'Error while clearing the cache.', 'commonsbooking' ) ),
