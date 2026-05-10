@@ -16,6 +16,7 @@ use CommonsBooking\Service\Scheduler;
 use CommonsBooking\Service\iCalendar;
 use CommonsBooking\Service\Upgrade;
 use CommonsBooking\Settings\Settings;
+use CommonsBooking\Repository\AvailabilityIndex;
 use CommonsBooking\Repository\BookingCodes;
 use CommonsBooking\View\Dashboard;
 use CommonsBooking\View\MassOperations;
@@ -56,6 +57,9 @@ class Plugin {
 
 		// Init booking codes table
 		BookingCodes::initBookingCodesTable();
+
+		// Init availability index tables
+		AvailabilityIndex::initTables();
 
 		self::clearCache();
 	}
@@ -786,6 +790,14 @@ class Plugin {
 
 		// Remove cache items on save.
 		add_action( 'wp_insert_post', array( $this, 'savePostActions' ), 10, 3 );
+
+		// Sync availability index — priority 12 runs after Timeframe/Item/Location::savePost (priority 11)
+		add_action( 'wp_insert_post',     [ self::class, 'syncAvailabilityIndexOnSave' ],          12, 3 );
+		add_action( 'before_delete_post', [ self::class, 'deleteAvailabilityIndexOnDelete' ],       10, 1 );
+		add_action( 'wp_trash_post',      [ self::class, 'deleteAvailabilityIndexOnDelete' ],       10, 1 );
+		add_action( 'untrash_post',       [ self::class, 'syncAvailabilityIndexOnUntrash' ],        10, 1 );
+		add_action( 'before_delete_post', [ self::class, 'removeLocationFromAvailabilityIndex' ],   10, 1 );
+		add_action( 'before_delete_post', [ self::class, 'removeItemFromAvailabilityIndex' ],       10, 1 );
 		add_action( 'wp_enqueue_scripts', array( self::class, 'addWarmupAjaxToOutput' ) );
 		add_action( 'admin_enqueue_scripts', array( self::class, 'addWarmupAjaxToOutput' ) );
 
@@ -877,6 +889,56 @@ class Plugin {
 			$tags[] = 'misc';
 			self::clearCache( $tags );
 		}
+	}
+
+	public static function syncAvailabilityIndexOnSave( int $postId, \WP_Post $post, bool $update ): void {
+		$indexedTypes = [ Timeframe::getPostType(), \CommonsBooking\Wordpress\CustomPostType\Booking::getPostType() ];
+		if ( ! in_array( $post->post_type, $indexedTypes, true ) ) {
+			return;
+		}
+		try {
+			AvailabilityIndex::upsertTimeframe( new \CommonsBooking\Model\Timeframe( $post ) );
+		} catch ( \Throwable $e ) {
+			// ignore upsert failures silently
+		}
+	}
+
+	public static function deleteAvailabilityIndexOnDelete( int $postId ): void {
+		$post         = get_post( $postId );
+		$indexedTypes = [ Timeframe::getPostType(), \CommonsBooking\Wordpress\CustomPostType\Booking::getPostType() ];
+		if ( ! $post || ! in_array( $post->post_type, $indexedTypes, true ) ) {
+			return;
+		}
+		AvailabilityIndex::deleteByTimeframeId( $postId );
+	}
+
+	public static function syncAvailabilityIndexOnUntrash( int $postId ): void {
+		$post         = get_post( $postId );
+		$indexedTypes = [ Timeframe::getPostType(), \CommonsBooking\Wordpress\CustomPostType\Booking::getPostType() ];
+		if ( ! $post || ! in_array( $post->post_type, $indexedTypes, true ) ) {
+			return;
+		}
+		try {
+			AvailabilityIndex::upsertTimeframe( new \CommonsBooking\Model\Timeframe( $post ) );
+		} catch ( \Throwable $e ) {
+			// ignore upsert failures silently
+		}
+	}
+
+	public static function removeLocationFromAvailabilityIndex( int $postId ): void {
+		$post = get_post( $postId );
+		if ( ! $post || $post->post_type !== \CommonsBooking\Wordpress\CustomPostType\Location::getPostType() ) {
+			return;
+		}
+		AvailabilityIndex::removeLocation( $postId );
+	}
+
+	public static function removeItemFromAvailabilityIndex( int $postId ): void {
+		$post = get_post( $postId );
+		if ( ! $post || $post->post_type !== \CommonsBooking\Wordpress\CustomPostType\Item::getPostType() ) {
+			return;
+		}
+		AvailabilityIndex::removeItem( $postId );
 	}
 
 	/**

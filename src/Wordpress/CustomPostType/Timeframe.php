@@ -995,6 +995,13 @@ class Timeframe extends CustomPostType {
 		);
 		foreach ( $timeframes as $timeframe ) {
 			static::manageTimeframeMeta( $timeframe->ID );
+			try {
+				\CommonsBooking\Repository\AvailabilityIndex::upsertTimeframe(
+					new \CommonsBooking\Model\Timeframe( $timeframe->ID )
+				);
+			} catch ( \Throwable $e ) {
+				// ignore upsert failures silently
+			}
 		}
 	}
 
