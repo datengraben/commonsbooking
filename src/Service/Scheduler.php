@@ -202,6 +202,13 @@ class Scheduler {
 			'update_option_commonsbooking_options_export'
 		);
 
+		// Init ICS feed sync job
+		new Scheduler(
+			'ics_sync',
+			[ \CommonsBooking\Service\ICSImport::class, 'syncAllFeeds' ],
+			'hourly'
+		);
+
 		// Init cache warmup job
 		$cacheWarmupSetting = Settings::getOption( COMMONSBOOKING_PLUGIN_SLUG . '_options_advanced-options', 'warmup_cron' );
 		if ( $cacheWarmupSetting ) {

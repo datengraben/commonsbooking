@@ -184,6 +184,7 @@ class Plugin {
 			\CommonsBooking\Wordpress\CustomPostType\Map::class,
 			\CommonsBooking\Wordpress\CustomPostType\Booking::class,
 			\CommonsBooking\Wordpress\CustomPostType\Restriction::class,
+			\CommonsBooking\Wordpress\CustomPostType\ICSFeed::class,
 		];
 	}
 
@@ -455,6 +456,7 @@ class Plugin {
 			case Map::$postType:
 			case Restriction::$postType:
 			case Timeframe::$postType:
+			case \CommonsBooking\Wordpress\CustomPostType\ICSFeed::$postType:
 				return $classes . ' ' . $cssClass;
 		}
 
