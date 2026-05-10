@@ -17,8 +17,12 @@ use CommonsBooking\Service\iCalendar;
 use CommonsBooking\Service\Upgrade;
 use CommonsBooking\Settings\Settings;
 use CommonsBooking\Repository\BookingCodes;
+use CommonsBooking\Repository\BookingStats as BookingStatsRepo;
+use CommonsBooking\Service\BookingStats as BookingStatsService;
 use CommonsBooking\View\Dashboard;
 use CommonsBooking\View\MassOperations;
+use CommonsBooking\View\Stats;
+use CommonsBooking\Wordpress\Shortcode\BookingStats as BookingStatsShortcode;
 use CommonsBooking\Wordpress\CustomPostType\CustomPostType;
 use CommonsBooking\Wordpress\CustomPostType\Item;
 use CommonsBooking\Wordpress\CustomPostType\Location;
@@ -56,6 +60,9 @@ class Plugin {
 
 		// Init booking codes table
 		BookingCodes::initBookingCodesTable();
+
+		// Init booking stats table
+		BookingStatsRepo::initTable();
 
 		self::clearCache();
 	}
@@ -323,6 +330,9 @@ class Plugin {
 	}
 
 	public static function admin_init() {
+		// Ensure stats table exists on existing installs (dbDelta is idempotent).
+		BookingStatsRepo::initTable();
+
 		// check if we have a new version and run tasks
 		Upgrade::runTasksAfterUpdate();
 
@@ -408,6 +418,16 @@ class Plugin {
 				array( MassOperations::class, 'index' )
 			);
 		}
+
+		// Statistics – visible to all CB managers
+		add_submenu_page(
+			'cb-dashboard',
+			esc_html__( 'Statistics', 'commonsbooking' ),
+			esc_html__( 'Statistics', 'commonsbooking' ),
+			'manage_' . COMMONSBOOKING_PLUGIN_SLUG,
+			'cb-stats',
+			array( Stats::class, 'index' )
+		);
 	}
 
 	/**
@@ -706,6 +726,7 @@ class Plugin {
 
 	public function registerShortcodes() {
 		add_shortcode( 'cb_search', array( SearchShortcode::class, 'execute' ) );
+		add_shortcode( 'cb_booking_stats', array( BookingStatsShortcode::class, 'render' ) );
 	}
 
 	/**
@@ -783,6 +804,12 @@ class Plugin {
 
 		// register shortcodes
 		add_action( 'init', array( $this, 'registerShortcodes' ) );
+
+		// Keep booking stats table in sync when booking status changes.
+		add_action( 'transition_post_status', array( BookingStatsService::class, 'handleStatusTransition' ), 10, 3 );
+
+		// Handle "Recompute Statistics" admin POST.
+		add_action( 'admin_post_cb_recompute_stats', array( Stats::class, 'handleRecompute' ) );
 
 		// Remove cache items on save.
 		add_action( 'wp_insert_post', array( $this, 'savePostActions' ), 10, 3 );
