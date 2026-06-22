@@ -11,12 +11,12 @@ deferred to keep the initial fix scope small. Pick them up as separate tasks.
 Transient `cb_color_css` caches the compiled output. Invalidated in
 `OptionsTab::savePostOptions()` whenever template settings are saved.
 
-### 2. All public CSS/JS loaded on every page
-`includes/Public.php` enqueues all plugin styles and scripts globally via
-`wp_enqueue_scripts`. Only the map/search shortcodes conditionally enqueue
-their assets. Best practice is to check for plugin content (e.g.
-`has_shortcode()`, post type checks) before enqueueing, or move enqueuing into
-the shortcode callbacks themselves.
+### ~~2. All public CSS/JS loaded on every page~~ ✓ Done
+`commonsbooking_is_cb_page()` helper added to `includes/Public.php`. Guards
+`commonsbooking_public()` with an early return; checks `is_singular()` for CB
+CPTs and `has_shortcode()` for all CB shortcode tags. The
+`commonsbooking_load_public_assets` filter allows site owners to opt in on
+other pages (widget-embedded shortcodes etc.).
 
 ### 3. Heavy `!important` usage in theme-compatibility CSS
 46 `!important` declarations across SCSS files; 18 in `kasimir.scss` alone.

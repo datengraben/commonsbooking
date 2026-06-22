@@ -6,8 +6,44 @@ use CommonsBooking\View\Booking;
 use CommonsBooking\View\Calendar;
 use CommonsBooking\View\View;
 
+/**
+ * Returns true when the current page contains or is a CB post type or shortcode,
+ * so assets are only loaded where the plugin actually renders something.
+ * Use the commonsbooking_load_public_assets filter to force-enable on other pages
+ * (e.g. when a CB shortcode is embedded in a widget or page builder block).
+ */
+function commonsbooking_is_cb_page() {
+	$cb_post_types = [
+		\CommonsBooking\Wordpress\CustomPostType\Item::getPostType(),
+		\CommonsBooking\Wordpress\CustomPostType\Location::getPostType(),
+		\CommonsBooking\Wordpress\CustomPostType\Booking::getPostType(),
+	];
+
+	if ( is_singular( $cb_post_types ) ) {
+		return true;
+	}
+
+	global $post;
+	if ( $post instanceof WP_Post ) {
+		$cb_shortcodes = [
+			'cb', 'cb_map', 'cb_search',
+			'cb_locations', 'cb_items', 'cb_items_table', 'cb_bookings',
+		];
+		foreach ( $cb_shortcodes as $tag ) {
+			if ( has_shortcode( $post->post_content, $tag ) ) {
+				return true;
+			}
+		}
+	}
+
+	return (bool) apply_filters( 'commonsbooking_load_public_assets', false );
+}
 
 function commonsbooking_public() {
+
+	if ( ! commonsbooking_is_cb_page() ) {
+		return;
+	}
 
 	wp_enqueue_style(
 		'cb-styles-public',
