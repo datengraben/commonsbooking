@@ -448,9 +448,45 @@ class Booking extends View {
 	 * @throws Exception
 	 */
 	public static function shortcode( $atts ) {
+		return self::renderBookingList( 6, true );
+	}
+
+	/**
+	 * Renders the booking list for the [commonsbooking/bookings] block.
+	 *
+	 * Dynamic block render callback. Wraps the same rendering path as the
+	 * [cb_bookings] shortcode, but honours the block attributes.
+	 *
+	 * @param array $attributes Block attributes (postsPerPage, showFilters).
+	 *
+	 * @return string
+	 * @throws Exception
+	 */
+	public static function renderBlock( array $attributes ): string {
+		$postsPerPage = (int) ( $attributes['postsPerPage'] ?? 6 );
+		$showFilters  = (bool) ( $attributes['showFilters'] ?? true );
+
+		return self::renderBookingList( $postsPerPage, $showFilters );
+	}
+
+	/**
+	 * Shared render path for the booking list, used by both the [cb_bookings]
+	 * shortcode and the commonsbooking/bookings block.
+	 *
+	 * @param int  $postsPerPage Number of bookings rendered per page.
+	 * @param bool $showFilters  Whether the filter UI may be shown (still subject
+	 *                           to the current user not being a subscriber).
+	 *
+	 * @return false|string
+	 * @throws Exception
+	 */
+	private static function renderBookingList( int $postsPerPage, bool $showFilters ) {
 		global $templateData;
-		$templateData = [];
-		$templateData = self::getBookingListData();
+		$templateData = self::getBookingListData( $postsPerPage );
+		if ( is_array( $templateData ) ) {
+			$templateData['postsPerPage']     = $postsPerPage;
+			$templateData['blockShowFilters'] = $showFilters;
+		}
 
 		ob_start();
 		commonsbooking_get_template_part( 'shortcode', 'bookings', true, false, false );

@@ -75,6 +75,40 @@ final class BookingTest extends CustomPostTypeTest {
 	}
 	*/
 
+	/**
+	 * The commonsbooking/bookings block must render via the same path as the
+	 * [cb_bookings] shortcode and honour its postsPerPage / showFilters attributes.
+	 */
+	public function testRenderBlock() {
+		wp_set_current_user( self::USER_ID );
+
+		// Block at defaults renders the booking list and forwards postsPerPage.
+		$blockDefault = Booking::renderBlock(
+			array(
+				'postsPerPage' => 6,
+				'showFilters' => true,
+			)
+		);
+		$this->assertIsString( $blockDefault );
+		$this->assertStringContainsString( 'booking-list', $blockDefault );
+		$this->assertStringContainsString( 'data-posts-per-page="6"', $blockDefault );
+
+		// The shortcode now shares the same render path.
+		$this->assertStringContainsString( 'booking-list', Booking::shortcode( array() ) );
+
+		// postsPerPage attribute is forwarded to the frontend container.
+		$this->assertStringContainsString(
+			'data-posts-per-page="2"',
+			Booking::renderBlock( array( 'postsPerPage' => 2 ) )
+		);
+
+		// showFilters=false hides the filter UI.
+		$this->assertStringContainsString(
+			'cb-filter hide',
+			Booking::renderBlock( array( 'showFilters' => false ) )
+		);
+	}
+
 	public function testGetBookingListiCal() {
 		$otherTestItem     = $this->createItem( 'OtherTestItem' );
 		$otherTestLocation = $this->createLocation( 'OtherTestLocation' );
