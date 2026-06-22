@@ -27,7 +27,27 @@ class Helper {
 	}
 
 	/**
-	 * Returns formatted date default based on WP-settings and localized with datei_i18n
+	 * Formats a stored CommonsBooking timestamp for display.
+	 *
+	 * Stored timestamps are "local" (offset-baked) — the wall-clock time encoded as
+	 * if it were UTC. Formatting in UTC therefore reproduces the intended local
+	 * wall-clock time while wp_date() still applies translations. This is the
+	 * modern, DST-safe replacement for date_i18n() with such timestamps.
+	 *
+	 * @param string $format    Date format accepted by date().
+	 * @param mixed  $timestamp Offset-baked ("local") unix timestamp.
+	 *
+	 * @return string
+	 */
+	public static function formatLocalTimestamp( string $format, $timestamp ): string {
+		// Mirror date_i18n()'s "non-numeric ⇒ current time" behaviour.
+		$ts = is_numeric( $timestamp ) ? (int) $timestamp : null;
+
+		return wp_date( $format, $ts, new \DateTimeZone( 'UTC' ) );
+	}
+
+	/**
+	 * Returns formatted date default based on WP-settings and localized with wp_date().
 	 *
 	 * @param mixed $timestamp
 	 *
@@ -37,11 +57,11 @@ class Helper {
 
 		$date_format = commonsbooking_sanitizeHTML( get_option( 'date_format' ) );
 
-		return date_i18n( $date_format, $timestamp );
+		return self::formatLocalTimestamp( $date_format, $timestamp );
 	}
 
 	/**
-	 * Returns formatted time default based on WP-settings and localized with datei_i18n
+	 * Returns formatted time default based on WP-settings and localized with wp_date().
 	 *
 	 * @param mixed $timestamp
 	 *
@@ -51,7 +71,7 @@ class Helper {
 
 		$time_format = commonsbooking_sanitizeHTML( get_option( 'time_format' ) );
 
-		return date_i18n( $time_format, $timestamp );
+		return self::formatLocalTimestamp( $time_format, $timestamp );
 	}
 
 	/**

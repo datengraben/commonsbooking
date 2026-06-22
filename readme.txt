@@ -81,6 +81,10 @@ CommonsBooking was developed for the ["Commons Cargobike" movement](http://commo
 
 ## Changelog
 
+### Unreleased
+CHANGED: Caching is now disabled based on the site environment (WP_ENVIRONMENT_TYPE "local"/"development") instead of WP_DEBUG. This lets you enable WP_DEBUG on staging/production for debugging while keeping caching active. The commonsbooking_disableCache filter remains available as an override.
+CHANGED: Plugin translations are now loaded on the "init" hook (WordPress 6.7 guidance) instead of "plugins_loaded".
+
 ### 2.10.10 (23.03.2026)
 FIXED: Two users booking same item possible when two users tried to book the same time period (thx @nelarsen)
 FIXED: Location specific sending of booking start / end reminder (for location owners) always sent email, not only when it is checked at location (thx @poilu)

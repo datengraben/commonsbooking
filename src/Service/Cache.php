@@ -38,7 +38,7 @@ trait Cache {
 	 * @return mixed
 	 */
 	public static function getCacheItem( $custom_id = null ) {
-		if ( WP_DEBUG ) {
+		if ( self::isDisabled() ) {
 			return false;
 		}
 
@@ -557,9 +557,16 @@ trait Cache {
 
 	/**
 	 * Tells if the cache is disabled externally.
-	 * This is usually the case, when WP_DEBUG is enabled or the commonsbooking_disableCache filter is
-	 * used as an override. This is sometimes necessary when the filesystem adapter,
-	 * which is the default adapter, crashes upon initialization. (Causes fatal error).
+	 * This is usually the case, when the site runs in a local or development
+	 * environment (see wp_get_environment_type()) or the commonsbooking_disableCache
+	 * filter is used as an override. The latter is sometimes necessary when the
+	 * filesystem adapter, which is the default adapter, crashes upon initialization.
+	 * (Causes fatal error).
+	 *
+	 * Note: This is intentionally decoupled from WP_DEBUG so that WP_DEBUG can be
+	 * enabled on a staging/production site to debug an issue without losing the
+	 * caching behaviour. Define WP_ENVIRONMENT_TYPE (or the WP_ENVIRONMENT_TYPE
+	 * environment variable) to control this.
 	 *
 	 * When the user has selected "disabled" as cache adapter,
 	 * this will return false bc this function only considers external disablement.
@@ -567,7 +574,7 @@ trait Cache {
 	 * @return bool
 	 */
 	private static function isDisabled(): bool {
-		$isDisabled = WP_DEBUG;
+		$isDisabled = in_array( wp_get_environment_type(), array( 'local', 'development' ), true );
 
 		return apply_filters( 'commonsbooking_disableCache', $isDisabled );
 	}

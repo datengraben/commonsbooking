@@ -22,7 +22,7 @@ if ( ! is_user_logged_in() ) {
 $response = '';
 
 if ( $templateData && $templateData['total'] > 0 ) {
-	$showFilters = ! commonsbooking_isCurrentUserSubscriber();
+	$showFilters = ( $templateData['blockShowFilters'] ?? true ) && ! commonsbooking_isCurrentUserSubscriber();
 
 	$response .= '
 	<div class="booking-list">';
@@ -88,8 +88,12 @@ if ( $templateData && $templateData['total'] > 0 ) {
 	        </div>
 	    </div>';
 
+	$postsPerPageAttr = isset( $templateData['postsPerPage'] )
+		? ' data-posts-per-page="' . esc_attr( $templateData['postsPerPage'] ) . '"'
+		: '';
+
 	$response .= '
-        <div id="booking-list--results">
+        <div id="booking-list--results"' . $postsPerPageAttr . '>
             <div class="my-sizer-element"></div>
         </div>
         <div id="booking-list--pagination" style="display: none"></div>

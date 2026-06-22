@@ -5,6 +5,13 @@
  * @package Commonsbooking
  */
 
+// Keep the result cache disabled during tests. Cache::isDisabled() keys off
+// wp_get_environment_type(); without this the suite would run as 'production'
+// (the default when WP_ENVIRONMENT_TYPE is undefined) and enable caching,
+// causing cross-test pollution since tests do not flush the cache per test.
+if ( ! defined( 'WP_ENVIRONMENT_TYPE' ) ) {
+	define( 'WP_ENVIRONMENT_TYPE', 'local' ); // phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedConstantFound -- WordPress core constant.
+}
 
 $_tests_dir = getenv( 'WP_TESTS_DIR' );
 

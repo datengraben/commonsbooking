@@ -51,6 +51,12 @@ class BookingList {
         this.listParams.append('_ajax_nonce', cb_ajax_bookings.nonce);
         this.listParams.append('action', 'cb_bookings_data');
         this.listParams.append('page', 1);
+        // Honour the per-page count set on the block (data-posts-per-page).
+        // Absent on shortcode pages, so the server default is used as before.
+        const dataset = this.element ? this.element.dataset : null;
+        if (dataset && dataset.postsPerPage) {
+            this.listParams.append('posts_per_page', dataset.postsPerPage);
+        }
     }
 
     _bindEventListeners() {

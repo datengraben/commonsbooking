@@ -56,6 +56,9 @@ class Booking extends Timeframe {
 		// Listing of bookings for current user
 		add_shortcode( 'cb_bookings', array( \CommonsBooking\View\Booking::class, 'shortcode' ) );
 
+		// Gutenberg block wrapping the [cb_bookings] shortcode
+		add_action( 'init', array( $this, 'registerBookingsBlock' ) );
+
 		// Add type filter to backend list view
 		// add_action( 'restrict_manage_posts', array( static::class, 'addAdminTypeFilter' ) );
 		add_action( 'restrict_manage_posts', array( static::class, 'addAdminItemFilter' ) );
@@ -67,6 +70,37 @@ class Booking extends Timeframe {
 		// show admin notice
 		add_action( 'admin_notices', array( $this, 'displayBookingsAdminListNotice' ) );
 		add_action( 'edit_form_top', array( $this, 'displayOverlappingBookingNotice' ), 99 );
+	}
+
+	/**
+	 * Registers the commonsbooking/bookings block.
+	 *
+	 * Dynamic, server-rendered block that wraps the same render path as the
+	 * [cb_bookings] shortcode. The frontend behaviour is driven by the existing
+	 * (globally enqueued) booking-list script.
+	 *
+	 * @return void
+	 */
+	public function registerBookingsBlock() {
+		// Block.json's `render` field would require WP 6.1; we use a
+		// render_callback instead to keep the "Requires at least: 5.9" promise.
+		if ( ! function_exists( 'register_block_type' ) ) {
+			return;
+		}
+
+		wp_register_script(
+			'commonsbooking-bookings-block-editor',
+			COMMONSBOOKING_PLUGIN_ASSETS_URL . 'blocks/bookings/index.js',
+			array( 'wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components', 'wp-server-side-render', 'wp-i18n' ),
+			COMMONSBOOKING_VERSION,
+			true
+		);
+		wp_set_script_translations( 'commonsbooking-bookings-block-editor', 'commonsbooking', COMMONSBOOKING_PLUGIN_DIR . 'languages' );
+
+		register_block_type(
+			COMMONSBOOKING_PLUGIN_DIR . 'assets/blocks/bookings',
+			array( 'render_callback' => array( \CommonsBooking\View\Booking::class, 'renderBlock' ) )
+		);
 	}
 
 	/**
