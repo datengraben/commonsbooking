@@ -25,12 +25,12 @@ class Migration {
 		<?php
 
 		if ( ! $cb1Installed ) {
-			echo '<strong style="color:red">' . esc_html__(
+			echo '<strong class="cb-text-error">' . esc_html__(
 				'We could not detect a version of an older CommonsBooking Installation (Version 0.X).',
 				'commonsbooking'
 			) . '</strong>';
 		} else {
-			echo '<strong style="color: green">' . esc_html__(
+			echo '<strong class="cb-text-success">' . esc_html__(
 				'Found a version of an older CommonsBooking Installation (Version 0.X). You can migrate.',
 				'commonsbooking'
 			) . '</strong>';
@@ -48,12 +48,12 @@ class Migration {
                 <span id="options-count">0</span>' . esc_html__( ' Options updated/saved', 'commonsbooking' ) . '<br>
             </div>
             <div id="migration-in-progress">
-                <p class="blinking" style="border:solid; border-color:red; border-width:4px; padding:20px"><strong style="color: red">
+                <p class="blinking cb-border-error"><strong class="cb-text-error">
                 ' . commonsbooking_sanitizeHTML( __( 'migration in process .. please wait ... <br>This could take several minutes. Do not close this browser tab', 'commonsbooking' ) ) . '
                 </strong></p>
-            </div>            
+            </div>
             <div id="migration-done">
-                <strong style="color: green">
+                <strong class="cb-text-success">
                 ' . esc_html__( 'Migration finished', 'commonsbooking' ) . '
                 </strong>
             </div>
@@ -94,17 +94,17 @@ class Migration {
 		echo( '
             <div class="cmb-row cmb-type-text">
                 <div id="booking-migration-in-progress">
-                    <strong style="color: red">
+                    <strong class="cb-text-error">
                     ' . esc_html__( 'migration in process .. please wait ...', 'commonsbooking' ) . '
                     </strong>
-                </div>            
+                </div>
                 <div id="booking-migration-done">
-                    <strong style="color: green">
+                    <strong class="cb-text-success">
                     ' . esc_html__( 'Migration finished', 'commonsbooking' ) . '
                     </strong>
-                </div>    
+                </div>
                 <div id="booking-migration-failed">
-	                <strong style="color: red">
+	                <strong class="cb-text-error">
 	                ' . esc_html__( 'Migration failed', 'commonsbooking' ) . '
 	                </strong>
 	            </div>
@@ -123,12 +123,12 @@ class Migration {
 		?>
 		<div class="cmb-row cmb-type-text" id="upgrade-fields">
 			<div id="upgrade-in-progress" class="blinking">
-				<strong style="color: red">
+				<strong class="cb-text-error">
 				<?php echo esc_html__( 'upgrade in process .. please wait ...', 'commonsbooking' ); ?>
 				</strong>
 			</div>
 			<div id="upgrade-done">
-				<strong style="color: green">
+				<strong class="cb-text-success">
 				<?php echo esc_html__( 'Upgrade finished', 'commonsbooking' ); ?>
 				</strong>
 			</div>

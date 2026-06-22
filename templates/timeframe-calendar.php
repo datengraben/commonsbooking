@@ -53,7 +53,7 @@ if ( ! array_key_exists( 'backend', $templateData ) || $templateData['backend'] 
 					<div>
 						<span class="hint-selection"><?php echo esc_html__( 'Please select the pickup date in the calendar', 'commonsbooking' ); ?></span>
 						<span class="date"></span>
-						<select style="display: none" id="repetition-start" name="repetition-start"></select>
+						<select class="cb-hidden" id="repetition-start" name="repetition-start"></select>
 
 					</div>
 				</div>
@@ -64,7 +64,7 @@ if ( ! array_key_exists( 'backend', $templateData ) || $templateData['backend'] 
 					<div>
 						<span class="hint-selection"><?php echo esc_html__( 'Please select the return date in the calendar', 'commonsbooking' ); ?></span>
 						<span class="date"></span>
-						<select style="display: none" id="repetition-end" name="repetition-end"></select>
+						<select class="cb-hidden" id="repetition-end" name="repetition-end"></select>
 					</div>
 				</div>
 				<?php

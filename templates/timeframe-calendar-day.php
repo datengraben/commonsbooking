@@ -10,7 +10,7 @@
 		if ( array_key_exists( 'timeframe', $slot ) && $slot['timeframe'] ) {
 			if ( $slot['timeframe']['type'] == '2' ) {
 				?>
-				<div class="cb-timeframe cb-timeframe--type-<?php echo esc_attr( $slot['timeframe']->type ); ?>" data-type-label="{{ slot.timeframe|get_type_label }}" style="border-bottom: 1px solid gray;">
+				<div class="cb-timeframe cb-timeframe--type-<?php echo esc_attr( $slot['timeframe']->type ); ?>" data-type-label="{{ slot.timeframe|get_type_label }}">
 					<span>
 						{{ slot.timestart }} - {{ slot.timeend }}
 					</span>
@@ -24,7 +24,7 @@
 							<input type="hidden" name="post_status" value="unconfirmed" />
 							<input type="hidden" name="repetition-start" value="{{ slot.timestampstart }}">
 							<input type="hidden" name="repetition-end" value="{{ slot.timestampend }}">
-							<input type="submit" value="Buchen" style="font-size: 12px;padding:0;" />
+							<input type="submit" value="Buchen" class="cb-timeframe-book-btn" />
 						</form>
 						{% endif %}
 					</div>

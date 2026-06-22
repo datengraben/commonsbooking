@@ -271,7 +271,7 @@ class Booking extends View {
 			$bookingDataArray['total_pages'] = 0;
 
 			if ( ! empty( $menuitems ) ) {
-				$bookingDataArray['menu'] = ' <div class="cb-dropdown" style="float:right;"> <div id="cb-bookingdropbtn" class="cb-dropbtn"></div> <div class="cb-dropdown-content">' . $menuitems . '</div> </div>';
+				$bookingDataArray['menu'] = ' <div class="cb-dropdown"> <div id="cb-bookingdropbtn" class="cb-dropbtn"></div> <div class="cb-dropdown-content">' . $menuitems . '</div> </div>';
 			}
 
 			// TODO remove null values from $bookingDataArray['data'] to not break pagination logic

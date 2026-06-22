@@ -27,21 +27,21 @@ class TimeframeExport {
 			</div>
 			<div class="cmb-row cmb-type-text">
 				<div id="timeframe-export-in-progress">
-					<strong style="color: red">
+					<strong class="cb-text-error">
 						<span>
 							<?php echo esc_html__( 'preparing export .. please wait ...', 'commonsbooking' ); ?>
 						</span>
 					</strong>
 				</div>
 				<div id="timeframe-export-done">
-					<strong style="color: green">
+					<strong class="cb-text-success">
 						<span>
 							<?php echo esc_html__( 'Export finished', 'commonsbooking' ); ?>
 						</span>
 					</strong>
 				</div>
 				<div id="timeframe-export-failed">
-					<strong style="color: red">
+					<strong class="cb-text-error">
 						<span>
 							<?php echo esc_html__( 'Export failed', 'commonsbooking' ); ?>
 						</span>

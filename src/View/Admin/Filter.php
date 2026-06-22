@@ -45,21 +45,11 @@ class Filter {
 	 */
 	public static function renderDateFilter( $postType, $startDateInputName, $endDateInputName, $from, $to ) {
 		if ( isset( $_GET['post_type'] ) && $postType == sanitize_text_field( $_GET['post_type'] ) ) {
-			echo '<style>
-                input[name=' . commonsbooking_sanitizeHTML( $startDateInputName ) . '], 
-                input[name=' . commonsbooking_sanitizeHTML( $endDateInputName ) . ']{
-                    line-height: 28px;
-                    height: 28px;
-                    margin: 0;
-                    width:150px;
-                }
-            </style>
-     
-            <input type="text" name="' . commonsbooking_sanitizeHTML( $startDateInputName ) . '" placeholder="' . esc_html__(
+			echo '<input type="text" class="cb-date-filter-input" name="' . commonsbooking_sanitizeHTML( $startDateInputName ) . '" placeholder="' . esc_html__(
 					'Start date',
 					'commonsbooking'
 				) . '" value="' . esc_attr( $from ) . '" />
-            <input type="text" name="' . commonsbooking_sanitizeHTML( $endDateInputName ) . '" placeholder="' . esc_html__(
+            <input type="text" class="cb-date-filter-input" name="' . commonsbooking_sanitizeHTML( $endDateInputName ) . '" placeholder="' . esc_html__(
 					'End date',
 					'commonsbooking'
 				) . '" value="' . esc_attr( $to ) . '" />

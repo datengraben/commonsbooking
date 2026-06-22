@@ -92,7 +92,7 @@ if ( $templateData && $templateData['total'] > 0 ) {
         <div id="booking-list--results">
             <div class="my-sizer-element"></div>
         </div>
-        <div id="booking-list--pagination" style="display: none"></div>
+        <div id="booking-list--pagination" class="cb-hidden"></div>
     </div>
     ';
 

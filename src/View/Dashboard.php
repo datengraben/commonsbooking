@@ -39,7 +39,7 @@ class Dashboard extends View {
 					return strtotime( $a->getStartTime() ) <=> strtotime( $b->getStartTime() );
 				}
 			);
-			$html  = '<div style="padding:5px 20px 5px 20px">';
+			$html  = '<div class="cb-dashboard-booking-list">';
 			$html .= '<ul>';
 			/** @var \CommonsBooking\Model\Booking $booking */
 			foreach ( $beginningBookings as $booking ) {
@@ -47,7 +47,7 @@ class Dashboard extends View {
 				$html .= '<strong>' . $booking->pickupDatetime() . ' </strong> => ' . $booking->returnDatetime() . '<br>';
 				$html .= '<a href="' . $booking->bookingLinkUrl() . '" target="_blank">' . $booking->getItem()->title() . ' ' . __( 'at', 'commonsbooking' ) . ' ' . $booking->getLocation()->title() . '</a>';
 				$html .= '</li>';
-				$html .= '<hr style="border-top: 1px solid #bbb; border-radius: 0px; border-color:#67b32a;">';
+				$html .= '<hr class="cb-dashboard-booking-separator">';
 			}
 			$html .= '</ul>';
 			$html .= '</div>';
@@ -85,7 +85,7 @@ class Dashboard extends View {
 				}
 			);
 			// return self::renderBookingsTable( $endingBookings, false);
-			$html  = '<div style="padding:5px 20px 5px 20px">';
+			$html  = '<div class="cb-dashboard-booking-list">';
 			$html .= '<ul>';
 			/** @var \CommonsBooking\Model\Booking $booking */
 			foreach ( $endingBookings as $booking ) {
@@ -93,7 +93,7 @@ class Dashboard extends View {
 				$html .= '<strong>' . $booking->returnDatetime() . '</strong><br>';
 				$html .= '<a href="' . $booking->bookingLinkUrl() . '" target="_blank">' . $booking->getItem()->title() . ' ' . __( 'at', 'commonsbooking' ) . ' ' . $booking->getLocation()->title() . '</a>';
 				$html .= '</li>';
-				$html .= '<hr style="border-top: 1px solid #bbb; border-radius: 0px; border-color:#67b32a;">';
+				$html .= '<hr class="cb-dashboard-booking-separator">';
 			}
 			$html .= '</ul>';
 			$html .= '</div>';
