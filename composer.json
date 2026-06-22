@@ -72,10 +72,13 @@
   },
   "scripts": {
     "post-install-cmd": [
-      "@prefix-namespaces"
+      "@prefix-namespaces-if-missing"
     ],
     "post-update-cmd": [
       "@prefix-namespaces"
+    ],
+    "prefix-namespaces-if-missing": [
+      "sh -c 'test -d ./vendor-prefixed || composer run prefix-namespaces'"
     ],
     "prefix-namespaces": [
       "sh -c 'test -f ./bin/strauss.phar || curl -o bin/strauss.phar -L -C - https://github.com/BrianHenryIE/strauss/releases/download/0.26.5/strauss.phar'",
