@@ -203,6 +203,17 @@ abstract class Message {
 		// WPML: Switch system language to user´s set lang https://wpml.org/documentation/support/sending-emails-with-wpml/
 		do_action( 'wpml_switch_language_for_email', $recipientUser->getEmail() );
 
+		// Polylang: Switch language to the user's preferred language before building the email body.
+		if ( function_exists( 'pll_get_user_language' ) && function_exists( 'PLL' ) ) {
+			$wp_user = get_user_by( 'email', $recipientUser->getEmail() );
+			if ( $wp_user ) {
+				$user_lang = pll_get_user_language( $wp_user->ID );
+				if ( $user_lang ) {
+					PLL()->curlang = PLL()->model->get_language( $user_lang );
+				}
+			}
+		}
+
 		// check if templates are available
 		if ( ! $template_body or ! $template_subject ) {
 			new WP_Error( 'e-mail ', commonsbooking_sanitizeHTML( __( 'Could not send email because mail-template was not available. Check options -> templates', 'commonsbooking' ) ) );
@@ -257,6 +268,12 @@ abstract class Message {
 		}
 		// WPML: Reset system lang
 		do_action( 'wpml_reset_language_after_mailing' );
+
+		// Polylang: Reset to default site language after sending.
+		if ( function_exists( 'pll_default_language' ) && function_exists( 'PLL' ) ) {
+			PLL()->curlang = PLL()->model->get_language( pll_default_language() );
+		}
+
 		do_action( 'commonsbooking_mail_sent', $this->getAction(), $result );
 	}
 
