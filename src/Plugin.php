@@ -570,11 +570,19 @@ class Plugin {
 	public static function registerScriptsAndStyles() {
 		$base = COMMONSBOOKING_PLUGIN_ASSETS_URL . 'packaged/';
 
+		// All of these are non-critical frontend libraries, so we register them with the
+		// "defer" loading strategy (WordPress 6.3+). Passing the script args as an array is
+		// backwards compatible: on WordPress < 6.3 the truthy array is interpreted as the
+		// legacy `$in_footer` flag. WordPress computes defer eligibility across the whole
+		// dependency tree and falls back to blocking automatically where a dependent (or an
+		// attached inline script) requires it, so this is safe for every chain below.
+		$defer = array( 'strategy' => 'defer' );
+
 		// spin.js
-		wp_register_script( 'cb-spin', $base . 'spin-js/spin.min.js', [], self::packagedVersion( 'spin.js' ) );
+		wp_register_script( 'cb-spin', $base . 'spin-js/spin.min.js', [], self::packagedVersion( 'spin.js' ), $defer );
 
 		// leaflet
-		wp_register_script( 'cb-leaflet', $base . 'leaflet/leaflet.js', [], self::packagedVersion( 'leaflet' ) );
+		wp_register_script( 'cb-leaflet', $base . 'leaflet/leaflet.js', [], self::packagedVersion( 'leaflet' ), $defer );
 		wp_register_style( 'cb-leaflet', $base . 'leaflet/leaflet.css', [], self::packagedVersion( 'leaflet' ) );
 
 		// leaflet markercluster
@@ -582,7 +590,8 @@ class Plugin {
 			'cb-leaflet-markercluster',
 			$base . 'leaflet-markercluster/leaflet.markercluster.js',
 			[ 'cb-leaflet' ],
-			self::packagedVersion( 'leaflet.markercluster' )
+			self::packagedVersion( 'leaflet.markercluster' ),
+			$defer
 		);
 		wp_register_style(
 			'cb-leaflet-markercluster-base',
@@ -610,7 +619,8 @@ class Plugin {
 			'cb-scripts-select2',
 			$base . 'select2/js/select2.min.js',
 			array( 'jquery' ),
-			self::packagedVersion( 'select2' )
+			self::packagedVersion( 'select2' ),
+			$defer
 		);
 
 		// Moment.js
@@ -619,7 +629,7 @@ class Plugin {
 			$base . 'moment/moment.min.js',
 			array(),
 			self::packagedVersion( 'moment' ),
-			true
+			array( 'in_footer' => true, 'strategy' => 'defer' )
 		);
 
 		// leaflet-easybutton
@@ -627,7 +637,8 @@ class Plugin {
 			'cb-leaflet-easybutton',
 			$base . 'leaflet-easybutton/easy-button.js',
 			[ 'cb-leaflet' ],
-			self::packagedVersion( 'leaflet-easybutton' )
+			self::packagedVersion( 'leaflet-easybutton' ),
+			$defer
 		);
 		wp_register_style(
 			'cb-leaflet-easybutton',
@@ -641,7 +652,8 @@ class Plugin {
 			'cb-leaflet-spin',
 			$base . 'leaflet-spin/leaflet.spin.min.js',
 			[ 'cb-leaflet', 'cb-spin' ],
-			self::packagedVersion( 'leaflet-spin' )
+			self::packagedVersion( 'leaflet-spin' ),
+			$defer
 		);
 
 		// leaflet-messagebox (not tracked by NPM)
@@ -650,6 +662,7 @@ class Plugin {
 			COMMONSBOOKING_MAP_ASSETS_URL . 'leaflet-messagebox/leaflet-messagebox.js',
 			[ 'cb-leaflet' ],
 			'1.1',
+			$defer
 		);
 		wp_register_style(
 			'cb-leaflet-messagebox',
@@ -663,7 +676,8 @@ class Plugin {
 			'cb-jquery-overscroll',
 			COMMONSBOOKING_MAP_ASSETS_URL . 'overscroll/jquery.overscroll.min.js',
 			[ 'jquery' ],
-			'1.7.7'
+			'1.7.7',
+			$defer
 		);
 
 		// cb_map shortcode
@@ -671,13 +685,15 @@ class Plugin {
 			'cb-map-filters',
 			COMMONSBOOKING_MAP_ASSETS_URL . 'js/cb-map-filters.js',
 			[ 'jquery' ],
-			COMMONSBOOKING_MAP_PLUGIN_DATA['Version']
+			COMMONSBOOKING_MAP_PLUGIN_DATA['Version'],
+			$defer
 		);
 		wp_register_script(
 			'cb-map-shortcode',
 			COMMONSBOOKING_MAP_ASSETS_URL . 'js/cb-map-shortcode.js',
 			[ 'jquery', 'cb-jquery-overscroll', 'cb-leaflet', 'cb-leaflet-easybutton', 'cb-leaflet-markercluster', 'cb-leaflet-messagebox', 'cb-leaflet-spin', 'cb-map-filters' ],
-			COMMONSBOOKING_MAP_PLUGIN_DATA['Version']
+			COMMONSBOOKING_MAP_PLUGIN_DATA['Version'],
+			$defer
 		);
 		wp_register_style(
 			'cb-map-shortcode',
@@ -687,14 +703,15 @@ class Plugin {
 		);
 
 		// vue
-		wp_register_script( 'cb-vue', $base . 'vue/vue.runtime.global.prod.js', [], self::packagedVersion( 'vue' ) );
+		wp_register_script( 'cb-vue', $base . 'vue/vue.runtime.global.prod.js', [], self::packagedVersion( 'vue' ), $defer );
 
 		// commons-search
 		wp_register_script(
 			'cb-commons-search',
 			$base . 'commons-search/commons-search.umd.js',
 			[ 'cb-leaflet', 'cb-leaflet-markercluster', 'cb-vue' ],
-			self::packagedVersion( '@commonsbooking/frontend' )
+			self::packagedVersion( '@commonsbooking/frontend' ),
+			$defer
 		);
 		wp_register_style(
 			'cb-commons-search',
