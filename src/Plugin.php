@@ -25,6 +25,9 @@ use CommonsBooking\Wordpress\CustomPostType\Location;
 use CommonsBooking\Wordpress\CustomPostType\Map;
 use CommonsBooking\Wordpress\CustomPostType\Restriction;
 use CommonsBooking\Wordpress\CustomPostType\Timeframe;
+use CommonsBooking\Wordpress\Compat\JetpackCompat;
+use CommonsBooking\Wordpress\Compat\SeoCompat;
+use CommonsBooking\Wordpress\Gutenberg\BlockPatterns;
 use CommonsBooking\Wordpress\Options\AdminOptions;
 use CommonsBooking\Wordpress\Options\OptionsTab;
 use CommonsBooking\Wordpress\PostStatus\PostStatus;
@@ -831,6 +834,13 @@ class Plugin {
 
 		// iCal rewrite
 		iCalendar::initRewrite();
+
+		// Third-party plugin compatibility
+		JetpackCompat::init();
+		SeoCompat::init();
+
+		// Gutenberg block patterns (wraps existing shortcodes — no JS needed)
+		BlockPatterns::init();
 	}
 
 	/**
