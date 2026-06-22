@@ -809,7 +809,10 @@ class Plugin {
 		// Add custom hook to clear cache from cronjob
 		add_action( self::$clearCacheHook, array( $this, 'clearCache' ) );
 
-		add_action( 'plugins_loaded', array( $this, 'commonsbooking_load_textdomain' ), 20 );
+		// Load translations on `init` (WordPress 6.7 guidance), as early as
+		// possible so the bundled-`.mo`-first override applies before CPT labels
+		// and other init-time strings are translated.
+		add_action( 'init', array( $this, 'commonsbooking_load_textdomain' ), -PHP_INT_MAX );
 
 		$map_admin = new LocationMapAdmin();
 		add_action( 'plugins_loaded', array( $map_admin, 'load_location_map_admin' ) );
