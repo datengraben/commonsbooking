@@ -11,6 +11,9 @@ namespace CommonsBooking\Wordpress\Compat;
  */
 class SeoCompat {
 
+	/**
+	 * Registers SEO plugin compatibility filters. Binds only when Yoast or Rank Math is active.
+	 */
 	public static function init(): void {
 		// Yoast SEO
 		if ( defined( 'WPSEO_VERSION' ) ) {
@@ -29,7 +32,7 @@ class SeoCompat {
 	 * so that title/meta templates and the SEO score feature work for item and
 	 * location pages.
 	 *
-	 * @param array $post_types
+	 * @param array $post_types Post types Yoast SEO already considers accessible.
 	 * @return array
 	 */
 	public static function addCbPostTypesToYoast( array $post_types ): array {
@@ -43,8 +46,8 @@ class SeoCompat {
 	 * Without this the sitemaps only cover built-in post types plus types that
 	 * have has_archive set, which CB's CPTs do not.
 	 *
-	 * @param array  $args      WP_Query args used by Yoast to fetch posts.
-	 * @param string $post_type The post type currently being processed.
+	 * @param array  $args      WP_Query args Yoast uses to fetch posts for the sitemap.
+	 * @param string $post_type The post type currently being processed by the sitemap builder.
 	 * @return array
 	 */
 	public static function allowCbPostTypesInYoastSitemap( array $args, string $post_type ): array {
@@ -58,14 +61,14 @@ class SeoCompat {
 	/**
 	 * Tell Rank Math to include cb_item and cb_location in its XML sitemap.
 	 *
-	 * @param bool   $include
-	 * @param string $post_type
+	 * @param bool   $enabled   Whether Rank Math already includes this post type in the sitemap.
+	 * @param string $post_type The post type being evaluated by the sitemap builder.
 	 * @return bool
 	 */
-	public static function addCbPostTypesToRankMathSitemap( bool $include, string $post_type ): bool {
+	public static function addCbPostTypesToRankMathSitemap( bool $enabled, string $post_type ): bool {
 		if ( in_array( $post_type, [ 'cb_item', 'cb_location' ], true ) ) {
 			return true;
 		}
-		return $include;
+		return $enabled;
 	}
 }

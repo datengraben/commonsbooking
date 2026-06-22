@@ -10,6 +10,9 @@ namespace CommonsBooking\Wordpress\Compat;
  */
 class JetpackCompat {
 
+	/**
+	 * Registers all Jetpack compatibility filters. No-op if Jetpack is not active.
+	 */
 	public static function init(): void {
 		if ( ! defined( 'JETPACK__VERSION' ) ) {
 			return;
@@ -33,7 +36,7 @@ class JetpackCompat {
 	 * Exclude cb_booking and cb_restriction from Jetpack Sync so that personal booking
 	 * data is not transmitted to WordPress.com infrastructure.
 	 *
-	 * @param string[] $post_types
+	 * @param string[] $post_types Post types currently blacklisted from Jetpack Sync.
 	 * @return string[]
 	 */
 	public static function excludePrivatePostTypesFromSync( array $post_types ): array {
@@ -47,8 +50,8 @@ class JetpackCompat {
 	 * Photon only handles media-library images; trying to proxy plugin asset URLs
 	 * results in broken references.
 	 *
-	 * @param bool   $skip
-	 * @param string $image_url
+	 * @param bool   $skip      Whether Photon is already set to skip this URL.
+	 * @param string $image_url The image URL being evaluated.
 	 * @return bool
 	 */
 	public static function skipPhotonForMapAssets( bool $skip, string $image_url ): bool {
@@ -66,7 +69,7 @@ class JetpackCompat {
 	 * Add CB map container classes to the Jetpack Lazy Images class blacklist so
 	 * that images inside Leaflet map wrappers are never lazy-loaded by Jetpack.
 	 *
-	 * @param string[] $blacklisted_classes
+	 * @param string[] $blacklisted_classes CSS classes already excluded from Jetpack lazy loading.
 	 * @return string[]
 	 */
 	public static function skipLazyImagesInMapContainers( array $blacklisted_classes ): array {

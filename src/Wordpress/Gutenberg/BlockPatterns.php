@@ -12,11 +12,17 @@ namespace CommonsBooking\Wordpress\Gutenberg;
  */
 class BlockPatterns {
 
+	/**
+	 * Registers the block pattern category and all shortcode-based patterns on init.
+	 */
 	public static function init(): void {
 		add_action( 'init', array( static::class, 'registerPatternCategory' ) );
 		add_action( 'init', array( static::class, 'registerPatterns' ) );
 	}
 
+	/**
+	 * Registers the "CommonsBooking" block pattern category with WordPress.
+	 */
 	public static function registerPatternCategory(): void {
 		if ( ! function_exists( 'register_block_pattern_category' ) ) {
 			return;
@@ -27,6 +33,9 @@ class BlockPatterns {
 		);
 	}
 
+	/**
+	 * Registers all CommonsBooking shortcode-based block patterns.
+	 */
 	public static function registerPatterns(): void {
 		if ( ! function_exists( 'register_block_pattern' ) ) {
 			return;
