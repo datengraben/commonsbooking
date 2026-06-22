@@ -4,6 +4,7 @@ namespace CommonsBooking\Model;
 
 use CommonsBooking\Exception\OverlappingException;
 use CommonsBooking\Exception\TimeframeInvalidException;
+use CommonsBooking\Helper\Helper;
 use CommonsBooking\Helper\Wordpress;
 use DateTime;
 use Exception;
@@ -249,8 +250,8 @@ class Timeframe extends CustomPost {
 		$format = self::getDateFormat();
 		$today  = strtotime( 'now' );
 
-		$startDateFormatted = date_i18n( $format, $startDate );
-		$endDateFormatted   = date_i18n( $format, $endDate );
+		$startDateFormatted = Helper::formatLocalTimestamp( $format, $startDate );
+		$endDateFormatted   = Helper::formatLocalTimestamp( $format, $endDate );
 
 		$label           = commonsbooking_sanitizeHTML( __( 'Available here', 'commonsbooking' ) );
 		$availableString = '';
