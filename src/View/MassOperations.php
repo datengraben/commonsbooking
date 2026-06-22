@@ -90,17 +90,17 @@ class MassOperations {
 		echo '
 		<div class="cmb-row cmb-type-text">
 			<div id="orphans-migration-in-progress">
-				<strong style="color: red">
+				<strong class="cb-text-error">
 					<span>' . esc_html__( 'migration in process .. please wait ...', 'commonsbooking' ) . '</span>
 				</strong>
 			</div>
 			<div id="orphans-migration-done">
-				<strong style="color: green">
+				<strong class="cb-text-success">
 					<span>' . esc_html__( 'Migration finished', 'commonsbooking' ) . '</span>
 				</strong>
 			</div>
 			<div id="orphans-migration-failed">
-				<strong style="color: red">
+				<strong class="cb-text-error">
 					<span>' . esc_html__( 'Migration failed', 'commonsbooking' ) . '</span>
 				</strong>
 			</div>

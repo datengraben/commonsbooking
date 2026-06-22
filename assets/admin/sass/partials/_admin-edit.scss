@@ -7,3 +7,25 @@
 div.error {
     background-color: #f0b6b6 !important;
 }
+
+.cb-text-error {
+    color: #d53e08;
+}
+
+.cb-text-success {
+    color: #56a820;
+}
+
+.cb-border-error {
+    border: 4px solid #d53e08;
+    border-radius: 0;
+    padding: 20px;
+}
+
+/* Date filter inputs in admin list views */
+.cb-date-filter-input {
+    line-height: 28px;
+    height: 28px;
+    margin: 0;
+    width: 150px;
+}

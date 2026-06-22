@@ -206,6 +206,7 @@
     .cb-dropdown {
         position: relative;
         display: inline-block;
+        float: right;
 
         .cb-dropbtn::after {
             content: '\2807';
@@ -264,6 +265,7 @@
     }
 
     #booking-list--pagination {
+        display: none;
         @include variables.font-default;
 
         ul {

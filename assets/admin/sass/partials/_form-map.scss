@@ -2,6 +2,15 @@
 * The CPT creation form map
  */
 
+#cb_positioning_map {
+    width: 100%;
+    height: 400px;
+}
+
+#nogpsresult {
+    color: #d53e08;
+}
+
 #cmb2-metabox-cb_map-custom-fields {
     .map-organizer {
         .cmb2-metabox-title {

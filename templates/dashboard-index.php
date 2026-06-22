@@ -8,7 +8,7 @@
 			echo esc_html__( 'Welcome to CommonsBooking', 'commonsbooking' );?>.</h2>
 			<div class="cb_welcome-panel-column-container">
 				<div class="cb_welcome-panel-column">
-					<img src="<?php echo plugin_dir_url( __DIR__ ) . 'assets/global/cb-ci/logo.png'; ?>" style="width:200px">
+					<img src="<?php echo plugin_dir_url( __DIR__ ) . 'assets/global/cb-ci/logo.png'; ?>" class="cb-dashboard-logo">
 				</div><!-- .cb_welcome-panel-column -->
 				<div class="cb_welcome-panel-column">
 				<p></p>
@@ -23,12 +23,12 @@
 				<p>			<?php echo esc_html__( 'CommonsBooking Version', 'commonsbooking' ) . ' ' . commonsbooking_sanitizeHTML( COMMONSBOOKING_VERSION . ' ' . COMMONSBOOKING_VERSION_COMMENT ); ?></p>
 				</div><!-- .cb_welcome-panel-column -->
 			</div><!-- .cb_welcome-panel-column-container -->
-			<div style="clear:both;">
-			<hr style="border-top: 8px solid #bbb; border-radius: 5px; border-color:#67b32a;">
+			<div class="cb-dashboard-divider-wrapper">
+			<hr class="cb-dashboard-divider">
 			</div>
-			<div class="cb_welcome-panel-column-container" style="margin-top: 10px;">
+			<div class="cb_welcome-panel-column-container cb-welcome-panel-column-container--spaced">
 				<div class="cb_welcome-panel-column">
-					<h3 style="padding-bottom:20px"><?php echo esc_html__( 'Setup and manage Items, Locations and Timeframes', 'commonsbooking' ); ?></h3>
+					<h3 class="cb-dashboard-column-heading"><?php echo esc_html__( 'Setup and manage Items, Locations and Timeframes', 'commonsbooking' ); ?></h3>
 					<ul>
 						<li><a href="edit.php?post_type=cb_item"><span class="dashicons dashicons-carrot"></span> <?php echo esc_html__( 'Items', 'commonsbooking' ); ?></a>
 						</li>
@@ -40,7 +40,7 @@
 
 				</div><!-- .cb_welcome-panel-column -->
 				<div class="cb_welcome-panel-column">
-					<h3 style="padding-bottom:20px"><?php echo esc_html__( 'See Bookings & manage restrictions', 'commonsbooking' ); ?></h3>
+					<h3 class="cb-dashboard-column-heading"><?php echo esc_html__( 'See Bookings & manage restrictions', 'commonsbooking' ); ?></h3>
 					<ul>
 						<li><a href="edit.php?post_type=cb_booking"><span class="dashicons dashicons-list-view"></span> <?php echo esc_html__( 'Bookings', 'commonsbooking' ); ?></a>
 						</li>
@@ -49,7 +49,7 @@
 					</ul>
 				</div><!-- .cb_welcome-panel-column -->
 				<div class="cb_welcome-panel-column cb_welcome-panel-last">
-					<h3 style="padding-bottom:20px"><?php echo esc_html__( 'Configuration', 'commonsbooking' ); ?></h3>
+					<h3 class="cb-dashboard-column-heading"><?php echo esc_html__( 'Configuration', 'commonsbooking' ); ?></h3>
 					<ul>
 					<?php if ( commonsbooking_isCurrentUserAdmin() ) { ?>
 							<li><a href="edit.php?post_type=cb_map"><span class="dashicons dashicons-location-alt"></span> <?php echo esc_html__( 'Maps', 'commonsbooking' ); ?></a>
@@ -65,7 +65,7 @@
 	<div id="cb_welcome-panel" class="cb_welcome-panel">
 		<div class="cb_welcome-panel-content">
 			<div class="cb_welcome-panel-column-container">
-				<div class="cb_welcome-panel-column" style="width: 50%;">
+				<div class="cb-dashboard-bookings-column;">
 					<h3><?php echo esc_html__( "Today's pickups", 'commonsbooking' ); ?></h3>
 					<?php
 					// Display list of bookings with pickup date = today
@@ -78,7 +78,7 @@
 
 					?>
 				</div>
-				<div class="cb_welcome-panel-column" style="width: 50%">
+				<div class="cb-dashboard-bookings-column">
 					<h3><?php echo esc_html__( "Today's returns", 'commonsbooking' ); ?></h3>
 					<?php
 					// Display list of bookings with return date = today

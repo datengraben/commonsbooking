@@ -29,6 +29,44 @@
     }
 }
 
+.cb-dashboard-logo {
+    width: 200px;
+}
+
+.cb-dashboard-divider-wrapper {
+    clear: both;
+}
+
+.cb-dashboard-divider {
+    border-top: 8px solid #bbb;
+    border-radius: 5px;
+    border-color: #67b32a;
+}
+
+.cb-dashboard-column-heading {
+    padding-bottom: 20px;
+}
+
+.cb-dashboard-bookings-column {
+    width: 50%;
+    min-width: 200px;
+    float: left;
+}
+
+.cb-dashboard-booking-separator {
+    border-top: 1px solid #bbb;
+    border-radius: 0;
+    border-color: #67b32a;
+}
+
+.cb-dashboard-booking-list {
+    padding: 5px 20px;
+}
+
+.cb-welcome-panel-column-container--spaced {
+    margin-top: 10px;
+}
+
 .cb_welcome-panel {
     position: relative;
     overflow: auto;
