@@ -171,12 +171,20 @@ abstract class View {
 		return $cptData;
 	}
 
+	const COLOR_CSS_TRANSIENT = 'cb_color_css';
+
 	/**
-	 * Compiles the user defined color scheme from settings (templates) using SCSSPHP and returns it
+	 * Compiles the user defined color scheme from settings (templates) using SCSSPHP and returns it.
+	 * Result is cached in a transient and invalidated when template settings are saved.
 	 *
 	 * @return string|false
 	 */
 	public static function getColorCSS() {
+		$cached = get_transient( self::COLOR_CSS_TRANSIENT );
+		if ( $cached !== false ) {
+			return $cached;
+		}
+
 		$compiler    = new Compiler();
 		$var_import  = COMMONSBOOKING_PLUGIN_DIR . 'assets/global/sass/partials/_variables.scss';
 		$import_path = COMMONSBOOKING_PLUGIN_DIR . 'assets/public/sass/partials/';
@@ -210,6 +218,7 @@ abstract class View {
 		$css     = $result->getCss();
 
 		if ( ! empty( $css ) ) {
+			set_transient( self::COLOR_CSS_TRANSIENT, $css, YEAR_IN_SECONDS );
 			return $css;
 		} else {
 			return false;

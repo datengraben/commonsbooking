@@ -7,13 +7,9 @@ deferred to keep the initial fix scope small. Pick them up as separate tasks.
 
 ## Medium severity
 
-### 1. Runtime SCSS compilation — cache the result
-`src/View/View.php::getColorCSS()` runs the SCSSPHP compiler on every public
-page load to generate the user-defined colour overrides. Cache the compiled
-output in a transient and invalidate it when the template settings option is
-updated (`update_option_commonsbooking_options_templates` hook).  
-Alternatively, replace the compiled output with CSS custom properties set on
-`:root` — the stylesheet already uses `var(--commonsbooking-*)` throughout.
+### ~~1. Runtime SCSS compilation — cache the result~~ ✓ Done
+Transient `cb_color_css` caches the compiled output. Invalidated in
+`OptionsTab::savePostOptions()` whenever template settings are saved.
 
 ### 2. All public CSS/JS loaded on every page
 `includes/Public.php` enqueues all plugin styles and scripts globally via

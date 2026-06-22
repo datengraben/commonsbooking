@@ -3,6 +3,7 @@
 namespace CommonsBooking\Wordpress\Options;
 
 use CommonsBooking\Plugin;
+use CommonsBooking\View\View;
 use Exception;
 
 /**
@@ -176,6 +177,9 @@ class OptionsTab {
 				}
 			}
 		}
+
+		// Invalidate compiled colour CSS so the next page load recompiles with the new values.
+		delete_transient( View::COLOR_CSS_TRANSIENT );
 
 		// we set transient to be able to flush rewrites at an ini hook in Plugin.php to set permalinks properly
 		set_transient( 'commonsbooking_options_saved', 1 );
