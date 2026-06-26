@@ -30,7 +30,8 @@ services:
     volumes:
       - ./telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro
     environment:
-      COMMONSBOOKING_URL: ${COMMONSBOOKING_URL:?set COMMONSBOOKING_URL in .env}
+      COMMONSBOOKING_URL_1: ${COMMONSBOOKING_URL_1:?set COMMONSBOOKING_URL_1 in .env}
+      COMMONSBOOKING_URL_2: ${COMMONSBOOKING_URL_2:-}
       INFLUXDB_TOKEN: ${INFLUXDB_TOKEN:?set INFLUXDB_TOKEN in .env}
 
 volumes:
