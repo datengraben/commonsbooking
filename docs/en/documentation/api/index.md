@@ -7,3 +7,5 @@ The CommonsBooking plugin provides various interfaces for using the data or inte
 * [GBFS](gbfs)
 
 Additionally, you can also use the [standard WordPress REST API](https://developer.wordpress.org/rest-api) with some technical understanding.
+
+If you're looking for a non-technical summary of these interfaces for advocacy, research or industry purposes, see [Open Data & Interoperability](../open-data/).
