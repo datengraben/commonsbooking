@@ -240,6 +240,9 @@ export function sidebarDocs_de(): DefaultTheme.SidebarItem[] {
               { text: 'GBFS', link: 'gbfs'}
           ]
       },
+      {
+          text: 'Offene Daten & Interoperabilität', link: '/de/documentation/open-data/'
+      },
 
     {
       text: 'Erweiterte Funktionalität', base: '/de/documentation/advanced-functionality/',
@@ -376,6 +379,9 @@ export function sidebarDocs_en(): DefaultTheme.SidebarItem[] {
               { text: 'Using the CommonsBooking API', link: 'commonsbooking-api' },
               { text: 'GBFS', link: 'gbfs' }
           ]
+      },
+      {
+          text: 'Open Data & Interoperability', link: '/en/documentation/open-data/'
       },
     {
       text: 'Advanced functionality', base: '/en/documentation/advanced-functionality/',
