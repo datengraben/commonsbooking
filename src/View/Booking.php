@@ -7,6 +7,7 @@ use CommonsBooking\Repository\Timeframe;
 use Exception;
 
 use CommonsBooking\Helper\Wordpress;
+use CommonsBooking\Model\BookingListEntry;
 use CommonsBooking\Plugin;
 use CommonsBooking\Settings\Settings;
 use CommonsBooking\Service\iCalendar;
@@ -28,11 +29,30 @@ class Booking extends View {
 	 */
 	public static function getTemplateData(): void {
 		header( 'Content-Type: application/json' );
-		echo wp_json_encode( self::getBookingListData() );
+
+		// This is the webservice boundary: it's the only place where the typed BookingListEntry
+		// objects returned by getBookingListData() get turned into plain assoc arrays for JSON output.
+		$bookingListData = self::getBookingListData();
+		if ( $bookingListData && array_key_exists( 'data', $bookingListData ) ) {
+			$bookingListData['data'] = array_map(
+				fn( BookingListEntry $entry ) => $entry->toArray(),
+				$bookingListData['data']
+			);
+		}
+
+		echo wp_json_encode( $bookingListData );
 		wp_die(); // All ajax handlers die when finished
 	}
 
 	/**
+	 * Returns paginated/filtered/sorted booking list data.
+	 *
+	 * NOTE: The 'data' entry of the returned array holds a list of {@see BookingListEntry} objects,
+	 * pairing each row's typed Booking model with its rendered row data. Only the webservice
+	 * boundary ({@see self::getTemplateData()}, the AJAX JSON response) should reduce these entries
+	 * to their plain assoc array form via {@see BookingListEntry::toArray()}. Internal consumers
+	 * (e.g. {@see self::getBookingListiCal()}) should use the Booking model directly instead.
+	 *
 	 * @param int           $postsPerPage
 	 * @param \WP_User|null $user
 	 *
@@ -172,9 +192,11 @@ class Booking extends View {
 				$location      = $booking->getLocation();
 				$locationTitle = $location ? $booking->getLocation()->post_title : commonsbooking_sanitizeHTML( __( 'Not available', 'commonsbooking' ) );
 
-				// Prepare row data
-				// FIXME This untyped structure is exposed via the filter commonsbooking_booking_filter below, but the set of keys of the assoc array must not be changed. This is not ideal and should be either replace by a dedicated object type or removed entirely.
-				// If not, why not expose this as own type?
+				// Prepare row data.
+				// NOTE: This untyped structure is exposed via the filter commonsbooking_booking_filter
+				// below, so its set of keys is public API and must not change. It gets paired with the
+				// typed $booking model in a BookingListEntry right after, so this array itself should
+				// stay confined to the webservice boundary (see getTemplateData()) and not leak further.
 				$rowData = [
 					'postID'             => $booking->ID,
 					'startDate'          => $booking->getStartDate(),
@@ -263,7 +285,7 @@ class Booking extends View {
 					} else {
 						continue;
 					}
-					$bookingDataArray['data'][] = $filteredRowData;
+					$bookingDataArray['data'][] = new BookingListEntry( $booking, $filteredRowData );
 				}
 			}
 
@@ -287,11 +309,11 @@ class Booking extends View {
 
 				// Init function to pass sort and order param to sorting callback
 				$sorter = function ( $sort, $order ) {
-					return function ( $a, $b ) use ( $sort, $order ) {
+					return function ( BookingListEntry $a, BookingListEntry $b ) use ( $sort, $order ) {
 						if ( $order == 'asc' ) {
-							return strcasecmp( $a[ $sort ], $b[ $sort ] );
+							return strcasecmp( $a->rowData[ $sort ], $b->rowData[ $sort ] );
 						} else {
-							return strcasecmp( $b[ $sort ], $a[ $sort ] );
+							return strcasecmp( $b->rowData[ $sort ], $a->rowData[ $sort ] );
 						}
 					};
 				};
@@ -527,8 +549,9 @@ class Booking extends View {
 
 		$calendar = new iCalendar();
 
-		foreach ( $bookingList['data'] as $bookingData ) {
-			$booking = \CommonsBooking\Repository\Booking::getPostById( $bookingData['postID'] );
+		/** @var BookingListEntry $entry */
+		foreach ( $bookingList['data'] as $entry ) {
+			$booking = $entry->booking;
 			if ( ! $booking->isConfirmed() ) {
 				continue;
 			}
