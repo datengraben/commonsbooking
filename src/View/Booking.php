@@ -41,13 +41,16 @@ class Booking extends View {
 	 * Returns paginated/filtered/sorted booking list data.
 	 *
 	 * NOTE: The 'data' entry of the returned array holds a list of {@see BookingListEntry} objects,
-	 * pairing each row's typed Booking model with its rendered row data. These stay typed objects
-	 * throughout -- they behave like the old plain assoc array (ArrayAccess/Countable/foreach) for
-	 * compatibility with existing commonsbooking_booking_filter callbacks, but are only actually
-	 * turned into arrays where required: at the webservice boundary when JSON-encoded
-	 * ({@see self::getTemplateData()}), or explicitly via {@see BookingListEntry::toArray()}.
-	 * Internal consumers (e.g. {@see self::getBookingListiCal()}) should use the Booking model
-	 * directly via the entry's public $booking property instead of re-fetching it.
+	 * pairing each row's typed Booking model with its rendered row data. Known row fields (postID,
+	 * startDate, item, ...) are real typed properties on the entry (e.g. $entry->postID); fields
+	 * added by a commonsbooking_booking_filter callback outside that schema land in an untyped
+	 * overflow bag instead of being rejected. Entries stay typed objects throughout -- they behave
+	 * like the old plain assoc array (ArrayAccess/Countable/foreach) for compatibility with existing
+	 * filter callbacks, but are only actually turned into arrays where required: at the webservice
+	 * boundary when JSON-encoded ({@see self::getTemplateData()}), or explicitly via
+	 * {@see BookingListEntry::toArray()}. Internal consumers (e.g. {@see self::getBookingListiCal()})
+	 * should use the Booking model directly via the entry's public $booking property instead of
+	 * re-fetching it.
 	 *
 	 * @param int           $postsPerPage
 	 * @param \WP_User|null $user
