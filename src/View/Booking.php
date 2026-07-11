@@ -30,17 +30,10 @@ class Booking extends View {
 	public static function getTemplateData(): void {
 		header( 'Content-Type: application/json' );
 
-		// This is the webservice boundary: it's the only place where the typed BookingListEntry
-		// objects returned by getBookingListData() get turned into plain assoc arrays for JSON output.
-		$bookingListData = self::getBookingListData();
-		if ( $bookingListData && array_key_exists( 'data', $bookingListData ) ) {
-			$bookingListData['data'] = array_map(
-				fn( BookingListEntry $entry ) => $entry->toArray(),
-				$bookingListData['data']
-			);
-		}
-
-		echo wp_json_encode( $bookingListData );
+		// This is the webservice boundary: wp_json_encode() reduces the BookingListEntry objects
+		// returned by getBookingListData() to plain arrays right here, via BookingListEntry::jsonSerialize().
+		// Nowhere earlier in the codebase are they turned into arrays.
+		echo wp_json_encode( self::getBookingListData() );
 		wp_die(); // All ajax handlers die when finished
 	}
 
@@ -48,10 +41,13 @@ class Booking extends View {
 	 * Returns paginated/filtered/sorted booking list data.
 	 *
 	 * NOTE: The 'data' entry of the returned array holds a list of {@see BookingListEntry} objects,
-	 * pairing each row's typed Booking model with its rendered row data. Only the webservice
-	 * boundary ({@see self::getTemplateData()}, the AJAX JSON response) should reduce these entries
-	 * to their plain assoc array form via {@see BookingListEntry::toArray()}. Internal consumers
-	 * (e.g. {@see self::getBookingListiCal()}) should use the Booking model directly instead.
+	 * pairing each row's typed Booking model with its rendered row data. These stay typed objects
+	 * throughout -- they behave like the old plain assoc array (ArrayAccess/Countable/foreach) for
+	 * compatibility with existing commonsbooking_booking_filter callbacks, but are only actually
+	 * turned into arrays where required: at the webservice boundary when JSON-encoded
+	 * ({@see self::getTemplateData()}), or explicitly via {@see BookingListEntry::toArray()}.
+	 * Internal consumers (e.g. {@see self::getBookingListiCal()}) should use the Booking model
+	 * directly via the entry's public $booking property instead of re-fetching it.
 	 *
 	 * @param int           $postsPerPage
 	 * @param \WP_User|null $user
@@ -192,11 +188,9 @@ class Booking extends View {
 				$location      = $booking->getLocation();
 				$locationTitle = $location ? $booking->getLocation()->post_title : commonsbooking_sanitizeHTML( __( 'Not available', 'commonsbooking' ) );
 
-				// Prepare row data.
-				// NOTE: This untyped structure is exposed via the filter commonsbooking_booking_filter
-				// below, so its set of keys is public API and must not change. It gets paired with the
-				// typed $booking model in a BookingListEntry right after, so this array itself should
-				// stay confined to the webservice boundary (see getTemplateData()) and not leak further.
+				// Prepare row data. Its set of keys is public API (exposed via commonsbooking_booking_filter
+				// and the AJAX JSON response below), so it must not change. It gets paired with the typed
+				// $booking model into a BookingListEntry before being passed to the filter.
 				$rowData = [
 					'postID'             => $booking->ID,
 					'startDate'          => $booking->getStartDate(),
@@ -261,31 +255,39 @@ class Booking extends View {
 					$rowData['actions'] = $actions;
 
 					/**
-					 * Default assoc array of row data and the booking object, which gets added to the booking list data result.
+					 * Row data for one booking, which gets added to the booking list data result.
 					 *
-					 * NOTE: Upon using this filter hook, the schema of associative array keys needs to be adhered to in order to not break the booking list.
-					 * See $rowData in this function, for the valid keys.
+					 * NOTE: $row behaves like the plain assoc array this filter used to receive
+					 * (ArrayAccess/Countable/foreach all still work, e.g. $row['postID']), so the
+					 * schema of keys still needs to be adhered to in order to not break the booking
+					 * list. See $rowData in this function, for the valid keys. A plain array can
+					 * still be returned instead for backwards compatibility. Return null to drop the
+					 * row from the list.
 					 *
-					 * @param array|mixed|null              $rowData assoc array of one row booking data
+					 * @param BookingListEntry|array|null   $row     row data for one booking
 					 * @param \CommonsBooking\Model\Booking $booking booking model of one row booking data
 					 *
 					 *@since 2.7.3
 					 */
-					$filteredRowData = apply_filters( 'commonsbooking_booking_filter', $rowData, $booking );
+					$filteredRow = apply_filters( 'commonsbooking_booking_filter', new BookingListEntry( $booking, $rowData ), $booking );
 
-					// Only includes non-null array row data objects
-					if ( isset( $filteredRowData ) && is_array( $filteredRowData ) ) {
-						if ( WP_DEBUG ) {
-							// Logs absent keys, relative to the original row data keys, could cause problems
-							$absentKeys = array_diff_key( $filteredRowData, $rowData );
-							if ( count( $absentKeys ) > 0 ) {
-								error_log( 'After commonsbooking_booking_filter: Filtered rows have missing keys: ' . join( ',', array_keys( $absentKeys ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
-							}
-						}
-					} else {
+					// Only includes non-null row data, normalized back to a BookingListEntry for
+					// callbacks that still return a plain array.
+					if ( is_array( $filteredRow ) ) {
+						$filteredRow = new BookingListEntry( $booking, $filteredRow );
+					} elseif ( ! $filteredRow instanceof BookingListEntry ) {
 						continue;
 					}
-					$bookingDataArray['data'][] = new BookingListEntry( $booking, $filteredRowData );
+
+					if ( WP_DEBUG ) {
+						// Logs absent keys, relative to the original row data keys, could cause problems
+						$absentKeys = array_diff_key( $filteredRow->toArray(), $rowData );
+						if ( count( $absentKeys ) > 0 ) {
+							error_log( 'After commonsbooking_booking_filter: Filtered rows have missing keys: ' . join( ',', array_keys( $absentKeys ) ) ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_error_log
+						}
+					}
+
+					$bookingDataArray['data'][] = $filteredRow;
 				}
 			}
 
@@ -311,9 +313,9 @@ class Booking extends View {
 				$sorter = function ( $sort, $order ) {
 					return function ( BookingListEntry $a, BookingListEntry $b ) use ( $sort, $order ) {
 						if ( $order == 'asc' ) {
-							return strcasecmp( $a->rowData[ $sort ], $b->rowData[ $sort ] );
+							return strcasecmp( $a[ $sort ], $b[ $sort ] );
 						} else {
-							return strcasecmp( $b->rowData[ $sort ], $a->rowData[ $sort ] );
+							return strcasecmp( $b[ $sort ], $a[ $sort ] );
 						}
 					};
 				};
