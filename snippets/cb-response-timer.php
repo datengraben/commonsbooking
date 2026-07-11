@@ -13,13 +13,20 @@
  * Note: CommonsBooking's cache layer short-circuits to "miss" whenever WP_DEBUG is
  *       on (see Cache::getCacheItem()), so cache stats are only meaningful with
  *       WP_DEBUG off.
+ * Note: DB query stats are collected via $wpdb->save_queries, which stores every
+ *       query's SQL and a backtrace for the request - real overhead, intended for
+ *       load-test/staging use, not left running against full production traffic.
+ *       Disable it with the `cb_response_timer_track_queries` filter if needed.
  *
  * Extend:
- *   - filter `cb_response_timer_is_relevant` to change which requests are measured.
- *   - filter `cb_response_timer_log_file`    to change the NDJSON log destination
- *                                             (default: wp-content/cb-response-timer.log).
- *   - action `cb_response_timer_measured`    to change where/how a measurement is
- *                                             recorded instead (receives the data array).
+ *   - filter `cb_response_timer_is_relevant`     to change which requests are measured.
+ *   - filter `cb_response_timer_payload_denylist` to change which $_REQUEST keys are
+ *                                                  stripped from the logged payload.
+ *   - filter `cb_response_timer_track_queries`    to turn DB query stats off (default on).
+ *   - filter `cb_response_timer_log_file`         to change the NDJSON log destination
+ *                                                  (default: wp-content/cb-response-timer.log).
+ *   - action `cb_response_timer_measured`         to change where/how a measurement is
+ *                                                  recorded instead (receives the data array).
  */
 
 defined( 'ABSPATH' ) || die;
@@ -34,6 +41,11 @@ class CB_Response_Timer {
 
 	public static function init() {
 		self::$start = $_SERVER['REQUEST_TIME_FLOAT'] ?? microtime( true );
+
+		if ( apply_filters( 'cb_response_timer_track_queries', true ) ) {
+			global $wpdb;
+			$wpdb->save_queries = true;
+		}
 
 		add_action( 'commonsbooking_cache_hit', array( __CLASS__, 'record_cache_hit' ) );
 		add_action( 'commonsbooking_cache_miss', array( __CLASS__, 'record_cache_miss' ) );
@@ -68,6 +80,8 @@ class CB_Response_Timer {
 					'hits'   => self::$cache_hits,
 					'misses' => self::$cache_misses,
 				),
+				'payload'     => self::derive_payload(),
+				'db'          => self::derive_db_stats(),
 				'duration_ms' => round( ( microtime( true ) - self::$start ) * 1000, 1 ),
 			)
 		);
@@ -118,6 +132,63 @@ class CB_Response_Timer {
 
 	protected static function post_types(): array {
 		return array( 'cb_item', 'cb_location', 'cb_timeframe', 'cb_booking', 'cb_map', 'cb_restriction' );
+	}
+
+	/**
+	 * Sanitized snapshot of the request params, captured generically - whatever a hot
+	 * route's params are (date range, item/location ids, ...) comes along for free,
+	 * with no per-route parsing. Array values collapse to a count to bound row size and
+	 * avoid leaking list contents; noise/security keys are stripped via a denylist,
+	 * overridable through `cb_response_timer_payload_denylist`.
+	 */
+	protected static function derive_payload(): array {
+		$denylist = apply_filters(
+			'cb_response_timer_payload_denylist',
+			array( 'action', '_wpnonce', 'nonce', '_wp_http_referer', 'apikey', 'rest_route' )
+		);
+
+		$payload = array();
+		foreach ( $_REQUEST as $key => $value ) {
+			if ( in_array( $key, $denylist, true ) ) {
+				continue;
+			}
+			if ( is_array( $value ) ) {
+				$payload[ $key ] = array( '_count' => count( $value ) );
+				continue;
+			}
+			$payload[ $key ] = mb_substr( (string) $value, 0, 200 );
+		}
+
+		return $payload;
+	}
+
+	/**
+	 * Aggregate DB cost for the request, sourced from $wpdb->queries (populated because
+	 * init() turns save_queries on). Each entry is [sql, exec_time_seconds, caller, ...].
+	 * The slowest query's SQL is normalized (literals stripped) so rows are groupable by
+	 * query shape and don't leak literal data values into the log.
+	 */
+	protected static function derive_db_stats(): ?array {
+		global $wpdb;
+
+		if ( empty( $wpdb->save_queries ) || empty( $wpdb->queries ) ) {
+			return null;
+		}
+
+		$times   = array_column( $wpdb->queries, 1 );
+		$slowest = $wpdb->queries[ array_search( max( $times ), $times, true ) ];
+
+		return array(
+			'query_count' => count( $wpdb->queries ),
+			'time_ms'     => round( array_sum( $times ) * 1000, 1 ),
+			'slowest_ms'  => round( $slowest[1] * 1000, 1 ),
+			'slowest_sql' => self::normalize_sql( $slowest[0] ),
+		);
+	}
+
+	protected static function normalize_sql( string $sql ): string {
+		$sql = preg_replace( "/'[^']*'/", "'?'", $sql );
+		return preg_replace( '/\b\d+\b/', '?', $sql );
 	}
 
 	protected static function current_url(): string {
