@@ -28,7 +28,13 @@ class Booking extends View {
 	 */
 	public static function getTemplateData(): void {
 		header( 'Content-Type: application/json' );
-		echo wp_json_encode( self::getBookingListData() );
+		$bookingListData = self::getBookingListData();
+		// This is the webservice boundary: only the plain assoc array (wire format) leaves the
+		// process. The typed booking models are for internal consumers and must not be serialized.
+		if ( is_array( $bookingListData ) ) {
+			unset( $bookingListData['bookingModels'] );
+		}
+		echo wp_json_encode( $bookingListData );
 		wp_die(); // All ajax handlers die when finished
 	}
 
@@ -102,16 +108,19 @@ class Booking extends View {
 		if ( $cacheItem ) {
 			return $cacheItem;
 		} else {
-			$bookingDataArray             = [];
-			$bookingDataArray['page']     = $page;
-			$bookingDataArray['per_page'] = $postsPerPage;
-			$bookingDataArray['filters']  = [
+			$bookingDataArray                  = [];
+			$bookingDataArray['page']          = $page;
+			$bookingDataArray['per_page']      = $postsPerPage;
+			$bookingDataArray['filters']       = [
 				'user'     => [],
 				'item'     => [],
 				'location' => [],
 				'status'   => [],
 			];
-			$bookingDataArray['data']     = [];
+			$bookingDataArray['data']          = [];
+			// Typed booking models keyed by post ID, for internal (non-webservice) consumers.
+			// Not part of the wire format - stripped at the webservice boundary in getTemplateData().
+			$bookingDataArray['bookingModels'] = [];
 
 			$posts = \CommonsBooking\Repository\Booking::getForUser(
 				$user,
@@ -172,9 +181,11 @@ class Booking extends View {
 				$location      = $booking->getLocation();
 				$locationTitle = $location ? $booking->getLocation()->post_title : commonsbooking_sanitizeHTML( __( 'Not available', 'commonsbooking' ) );
 
-				// Prepare row data
-				// FIXME This untyped structure is exposed via the filter commonsbooking_booking_filter below, but the set of keys of the assoc array must not be changed. This is not ideal and should be either replace by a dedicated object type or removed entirely.
-				// If not, why not expose this as own type?
+				// Prepare row data. This untyped structure is the wire format exposed via the
+				// commonsbooking_booking_filter hook below and the JSON webservice in getTemplateData().
+				// The set of keys must not be changed to not break the booking list / hook consumers.
+				// Internal consumers should use $bookingDataArray['bookingModels'] (the typed Booking
+				// model) instead of re-deriving it from this array.
 				$rowData = [
 					'postID'             => $booking->ID,
 					'startDate'          => $booking->getStartDate(),
@@ -263,7 +274,8 @@ class Booking extends View {
 					} else {
 						continue;
 					}
-					$bookingDataArray['data'][] = $filteredRowData;
+					$bookingDataArray['data'][]                        = $filteredRowData;
+					$bookingDataArray['bookingModels'][ $booking->ID ] = $booking;
 				}
 			}
 
@@ -525,7 +537,11 @@ class Booking extends View {
 		$calendar = new iCalendar();
 
 		foreach ( $bookingList['data'] as $bookingData ) {
-			$booking = \CommonsBooking\Repository\Booking::getPostById( $bookingData['postID'] );
+			// Use the typed booking model that was already fetched while building the booking
+			// list, instead of re-fetching it from the database by ID. Falls back to a lookup
+			// for robustness in case a commonsbooking_booking_filter callback altered postID.
+			$booking = $bookingList['bookingModels'][ $bookingData['postID'] ]
+				?? \CommonsBooking\Repository\Booking::getPostById( $bookingData['postID'] );
 			if ( ! $booking->isConfirmed() ) {
 				continue;
 			}
