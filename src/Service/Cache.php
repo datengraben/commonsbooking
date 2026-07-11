@@ -46,6 +46,7 @@ trait Cache {
 			$cacheKey  = self::getCacheId( $custom_id );
 			$cacheItem = self::getCache()->getItem( $cacheKey );
 			if ( $cacheItem->isHit() ) {
+				do_action( 'commonsbooking_cache_hit', $cacheKey );
 				return $cacheItem->get();
 			}
 		} catch ( \CommonsBooking\Psr\Cache\CacheException $exception ) {
@@ -54,6 +55,7 @@ trait Cache {
 			commonsbooking_write_log( sprintf( 'Could not get cache item (params $custom_id = %s): message: %s, traceback %s', $custom_id, $exception->getMessage(), $exception->getTraceAsString() ) );
 		}
 
+		do_action( 'commonsbooking_cache_miss', $cacheKey ?? null );
 		return false;
 	}
 
