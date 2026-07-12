@@ -1,51 +1,60 @@
 <?php
 /**
  * Plugin Name: CommonsBooking – Response Timer
- * Description: Drop-in diagnostic snippet. Measures end-to-end response duration,
- *               cache hit/miss counts, DB query cost and a URL-derived workload route
- *               for every 200-status response that goes through CommonsBooking
- *               (frontend CPT pages, admin-ajax `cb_*` actions, `commonsbooking/v*`
- *               REST routes). Rows are queued to a file per request (cheap) and bulk-
- *               inserted into a `{$wpdb->prefix}cb_response_timer` SQL table by a
- *               WP-Cron job, so no request pays for a synchronous DB write.
+ * Description: Drop-in diagnostic snippet, DB-only, zero setup. Measures end-to-end
+ *               response duration, cache hit/miss counts, DB query cost, a redacted
+ *               client IP and user agent, and a URL-derived workload route for every
+ *               200-status response that goes through CommonsBooking (frontend CPT
+ *               pages, admin-ajax `cb_*` actions, `commonsbooking/v*` REST routes).
+ *               Each measured request writes one row directly to a dedicated table -
+ *               no file, no cron, no queue.
  *
  * Install: copy this file into wp-content/mu-plugins/ (or `require` it from a
- *          plugin/theme). No further setup needed - it self-registers on load and
- *          creates its table lazily on first `init`.
+ *          plugin/theme). Nothing else to configure - it creates its own table lazily
+ *          on first `init` and auto-generates an export secret on first use.
  *
- * Note: CommonsBooking's cache layer short-circuits to "miss" whenever WP_DEBUG is
- *       on (see Cache::getCacheItem()), so cache stats are only meaningful with
- *       WP_DEBUG off.
- * Note: DB query stats are collected via $wpdb->save_queries, which stores every
- *       query's SQL and a backtrace for the request - real overhead, intended for
- *       load-test/staging use, not left running against full production traffic.
- *       Disable it with the `cb_response_timer_track_queries` filter if needed.
- * Note: the flush relies on WP-Cron's normal pseudo-cron (a non-blocking loopback
- *       request triggered by site traffic). If `DISABLE_WP_CRON` is set with no real
- *       system cron configured, the queue file will grow until one is set up.
+ * Export: GET /cb-response-timer/{secret}/export.csv streams the raw table as CSV.
+ *         Matched directly against the request path (no rewrite rule, so nothing to
+ *         flush/configure). The secret is a plugin variable: define it yourself with
+ *         `define('CB_RESPONSE_TIMER_SECRET', '...')` in wp-config.php, or leave it
+ *         unset and read the auto-generated one via
+ *         `get_option('cb_response_timer_export_secret')`.
+ *
+ * Note: writes are synchronous (one $wpdb->insert() per measured request) - simple and
+ *       always-on, but real DB cost per request. If that becomes a bottleneck under
+ *       heavy load-test volume, batch/defer it yourself via the
+ *       `cb_response_timer_measured` action instead of using the default listener.
+ * Note: CommonsBooking's cache layer short-circuits to "miss" whenever WP_DEBUG is on
+ *       (see Cache::getCacheItem()), so cache stats are only meaningful with WP_DEBUG off.
+ * Note: DB query stats are collected via $wpdb->save_queries, which stores every query's
+ *       SQL and a backtrace for the request - real overhead, intended for load-test/
+ *       staging use. Disable via the `cb_response_timer_track_queries` filter.
+ * Note: the client IP is read from $_SERVER['REMOTE_ADDR'] and stored with its last
+ *       octet (IPv4) / last colon-group (IPv6) zeroed out before it ever reaches the
+ *       table - the raw IP is never persisted.
  *
  * Extend:
- *   - filter `cb_response_timer_is_relevant`      to change which requests are measured.
- *   - filter `cb_response_timer_payload_denylist`  to change which $_REQUEST keys are
- *                                                   stripped from the captured payload.
- *   - filter `cb_response_timer_track_queries`     to turn DB query stats off (default on).
- *   - filter `cb_response_timer_log_file`          to change the queue file location
- *                                                   (default: wp-content/cb-response-timer-queue.log).
- *   - filter `cb_response_timer_flush_interval`    seconds between cron flushes (default 300).
- *   - action `cb_response_timer_measured`          to change where/how a measurement is
- *                                                   recorded instead (receives the full
- *                                                   data array, incl. url/post_type/slowest_sql
- *                                                   which the default SQL sink drops).
+ *   - filter `cb_response_timer_is_relevant`     to change which requests are measured.
+ *   - filter `cb_response_timer_payload_denylist` to change which $_REQUEST keys are
+ *                                                  stripped from the captured payload.
+ *   - filter `cb_response_timer_track_queries`    to turn DB query stats off (default on).
+ *   - filter `cb_response_timer_client_ip`        to change how the client IP is sourced
+ *                                                  (default: $_SERVER['REMOTE_ADDR']).
+ *   - filter `cb_response_timer_export_secret`    to override the export secret.
+ *   - action `cb_response_timer_measured`         to change where/how a measurement is
+ *                                                  recorded instead (receives the full
+ *                                                  data array, incl. url/post_type/
+ *                                                  slowest_sql which the default SQL
+ *                                                  sink drops).
  */
 
 defined( 'ABSPATH' ) || die;
 
 class CB_Response_Timer {
 
-	const DB_VERSION     = '1.0';
-	const TABLE          = 'cb_response_timer';
-	const FLUSH_HOOK     = 'cb_response_timer_flush';
-	const FLUSH_SCHEDULE = 'cb_response_timer_interval';
+	const DB_VERSION   = '2.0';
+	const TABLE        = 'cb_response_timer';
+	const EXPORT_REGEX = '#^/cb-response-timer/([^/?]+)/export\.csv#';
 
 	/** @var float Request start, set as early as PHP itself provides it. */
 	private static $start;
@@ -65,11 +74,8 @@ class CB_Response_Timer {
 		add_action( 'commonsbooking_cache_miss', array( __CLASS__, 'record_cache_miss' ) );
 		add_action( 'shutdown', array( __CLASS__, 'maybe_log' ) );
 
-		add_filter( 'cron_schedules', array( __CLASS__, 'register_cron_schedule' ) );
-		add_action( self::FLUSH_HOOK, array( __CLASS__, 'flush_queue' ) );
-
 		add_action( 'init', array( __CLASS__, 'maybe_create_table' ) );
-		add_action( 'init', array( __CLASS__, 'maybe_schedule_flush' ) );
+		add_action( 'init', array( __CLASS__, 'maybe_handle_export' ) );
 	}
 
 	public static function record_cache_hit() {
@@ -96,6 +102,8 @@ class CB_Response_Timer {
 				'url'         => self::current_url(),
 				'route'       => self::derive_route(),
 				'post_type'   => get_post_type() ?: null,
+				'ip'          => self::redacted_ip(),
+				'user_agent'  => mb_substr( (string) ( $_SERVER['HTTP_USER_AGENT'] ?? '' ), 0, 255 ),
 				'cache'       => array(
 					'hits'   => self::$cache_hits,
 					'misses' => self::$cache_misses,
@@ -185,8 +193,8 @@ class CB_Response_Timer {
 	/**
 	 * Aggregate DB cost for the request, sourced from $wpdb->queries (populated because
 	 * init() turns save_queries on). Each entry is [sql, exec_time_seconds, caller, ...].
-	 * The slowest query's SQL is normalized (literals stripped) so rows are groupable by
-	 * query shape and don't leak literal data values into the log.
+	 * The slowest query's SQL is normalized (literals stripped) so it's groupable by
+	 * query shape and doesn't leak literal data values.
 	 */
 	protected static function derive_db_stats(): ?array {
 		global $wpdb;
@@ -211,6 +219,29 @@ class CB_Response_Timer {
 		return preg_replace( '/\b\d+\b/', '?', $sql );
 	}
 
+	/**
+	 * Client IP with its last octet (IPv4) / last colon-group (IPv6) zeroed out before
+	 * it's ever used elsewhere - only the redacted form is computed and stored, the raw
+	 * IP is never persisted. Source is filterable for setups behind a trusted proxy.
+	 */
+	protected static function redacted_ip(): string {
+		$ip = (string) apply_filters( 'cb_response_timer_client_ip', $_SERVER['REMOTE_ADDR'] ?? '' );
+
+		if ( str_contains( $ip, ':' ) ) {
+			$parts                        = explode( ':', $ip );
+			$parts[ count( $parts ) - 1 ] = '0';
+			return implode( ':', $parts );
+		}
+
+		$parts = explode( '.', $ip );
+		if ( count( $parts ) === 4 ) {
+			$parts[3] = '0';
+			return implode( '.', $parts );
+		}
+
+		return $ip;
+	}
+
 	protected static function current_url(): string {
 		$scheme = is_ssl() ? 'https://' : 'http://';
 		$host   = $_SERVER['HTTP_HOST'] ?? '';
@@ -218,16 +249,12 @@ class CB_Response_Timer {
 		return $scheme . $host . $uri;
 	}
 
-	public static function queue_file(): string {
-		return apply_filters( 'cb_response_timer_log_file', WP_CONTENT_DIR . '/cb-response-timer-queue.log' );
-	}
-
 	/**
 	 * Creates {$wpdb->prefix}cb_response_timer via dbDelta(), same pattern as
 	 * BookingCodes::initBookingCodesTable() (src/Repository/BookingCodes.php). Runs
 	 * lazily on `init` since a drop-in mu-plugin has no activation hook; guarded by a
 	 * versioned option so it's a single get_option() call on every request after the
-	 * first successful run.
+	 * first successful (or schema-upgrading) run.
 	 */
 	public static function maybe_create_table() {
 		if ( get_option( 'cb_response_timer_db_version' ) === self::DB_VERSION ) {
@@ -247,6 +274,8 @@ class CB_Response_Timer {
 			cache_misses SMALLINT UNSIGNED NOT NULL DEFAULT 0,
 			db_query_count SMALLINT UNSIGNED NOT NULL DEFAULT 0,
 			db_time_ms FLOAT NOT NULL DEFAULT 0,
+			ip VARCHAR(45) NULL,
+			user_agent VARCHAR(255) NULL,
 			payload TEXT NULL,
 			PRIMARY KEY  (id),
 			KEY route_measured_at (route, measured_at)
@@ -258,130 +287,109 @@ class CB_Response_Timer {
 		update_option( 'cb_response_timer_db_version', self::DB_VERSION );
 	}
 
-	public static function register_cron_schedule( array $schedules ): array {
-		$schedules[ self::FLUSH_SCHEDULE ] = array(
-			'interval' => apply_filters( 'cb_response_timer_flush_interval', 300 ),
-			'display'  => 'CB Response Timer flush',
-		);
-
-		return $schedules;
-	}
-
-	public static function maybe_schedule_flush() {
-		if ( ! wp_next_scheduled( self::FLUSH_HOOK ) ) {
-			wp_schedule_event( time(), self::FLUSH_SCHEDULE, self::FLUSH_HOOK );
-		}
-	}
-
 	/**
-	 * Flushes the queue into the SQL table. Rotates the live queue file out of the way
-	 * first (rename() is atomic on POSIX filesystems, so concurrent per-request writers
-	 * safely resume onto a fresh file - error_log()'s mode-3 append recreates it as
-	 * needed). Also sweeps up any `.processing.*` file left behind by a previous flush
-	 * that rotated but failed before its insert completed, so nothing is silently lost.
+	 * The secret path segment for /cb-response-timer/{secret}/export.csv. Prefers the
+	 * `CB_RESPONSE_TIMER_SECRET` constant (set it in wp-config.php for a real deployment);
+	 * otherwise auto-generates one on first use and persists it as an option, so the
+	 * export route works with zero setup. Always overridable via the
+	 * `cb_response_timer_export_secret` filter.
 	 */
-	public static function flush_queue() {
-		$queue = self::queue_file();
+	public static function export_secret(): string {
+		$secret = defined( 'CB_RESPONSE_TIMER_SECRET' ) ? CB_RESPONSE_TIMER_SECRET : '';
 
-		if ( file_exists( $queue ) ) {
-			$processing = $queue . '.processing.' . uniqid();
-			if ( rename( $queue, $processing ) ) {
-				self::process_file( $processing );
+		if ( ! $secret ) {
+			$secret = get_option( 'cb_response_timer_export_secret' );
+			if ( ! $secret ) {
+				$secret = wp_generate_password( 32, false );
+				update_option( 'cb_response_timer_export_secret', $secret, false );
 			}
 		}
 
-		foreach ( glob( $queue . '.processing.*' ) ?: array() as $leftover ) {
-			self::process_file( $leftover );
-		}
+		return (string) apply_filters( 'cb_response_timer_export_secret', $secret );
 	}
 
-	protected static function process_file( string $file ) {
-		$lines = file( $file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES );
-		if ( ! $lines ) {
-			unlink( $file );
+	/**
+	 * Matches the request path directly against EXPORT_REGEX - no rewrite rule
+	 * registered, so there's nothing to flush/configure. Falls through to normal WP
+	 * routing (404) whenever the path doesn't match or the secret is wrong.
+	 */
+	public static function maybe_handle_export() {
+		$path = (string) parse_url( $_SERVER['REQUEST_URI'] ?? '', PHP_URL_PATH );
+
+		if ( ! preg_match( self::EXPORT_REGEX, $path, $matches ) ) {
 			return;
 		}
 
-		$rows = array();
-		foreach ( $lines as $line ) {
-			$row = json_decode( $line );
-			if ( $row !== null ) {
-				$rows[] = $row;
-			}
+		if ( ! hash_equals( self::export_secret(), $matches[1] ) ) {
+			return;
 		}
 
-		if ( ! self::bulk_insert( $rows ) ) {
-			return; // Leave the file for the next flush to retry.
-		}
-
-		unlink( $file );
+		self::stream_csv();
+		exit;
 	}
 
 	/**
-	 * Bulk-inserts rows in chunks (wpdb has no native multi-row insert, so the query is
-	 * built by repeating a placeholder group per row and flattening the args).
+	 * Streams the raw table as CSV in chunks (rather than loading the whole table into
+	 * memory) so the export stays usable as the table grows.
 	 */
-	protected static function bulk_insert( array $rows ): bool {
-		if ( empty( $rows ) ) {
-			return true;
-		}
-
+	protected static function stream_csv() {
 		global $wpdb;
-		$table = $wpdb->prefix . self::TABLE;
-		$ok    = true;
+		$table   = $wpdb->prefix . self::TABLE;
+		$columns = array( 'id', 'measured_at', 'route', 'duration_ms', 'cache_hits', 'cache_misses', 'db_query_count', 'db_time_ms', 'ip', 'user_agent', 'payload' );
 
-		foreach ( array_chunk( $rows, 500 ) as $chunk ) {
-			$placeholders = array();
-			$args         = array();
+		nocache_headers();
+		header( 'Content-Type: text/csv; charset=utf-8' );
+		header( 'Content-Disposition: attachment; filename="cb-response-timer.csv"' );
 
-			foreach ( $chunk as $row ) {
-				$placeholders[] = '(%s, %s, %f, %d, %d, %d, %f, %s)';
-				$measured_at    = ! empty( $row->time ) ? gmdate( 'Y-m-d H:i:s', strtotime( $row->time ) ) : gmdate( 'Y-m-d H:i:s' );
-				array_push(
-					$args,
-					$measured_at,
-					$row->route ?? 'other',
-					$row->duration_ms ?? 0,
-					$row->cache->hits ?? 0,
-					$row->cache->misses ?? 0,
-					$row->db->query_count ?? 0,
-					$row->db->time_ms ?? 0,
-					wp_json_encode( $row->payload ?? array() )
-				);
+		$out = fopen( 'php://output', 'w' );
+		fputcsv( $out, $columns );
+
+		$chunk_size = 1000;
+		$offset     = 0;
+		do {
+			$rows = $wpdb->get_results(
+				$wpdb->prepare(
+					'SELECT ' . implode( ', ', $columns ) . " FROM $table ORDER BY id ASC LIMIT %d OFFSET %d",
+					$chunk_size,
+					$offset
+				),
+				ARRAY_A
+			);
+			foreach ( $rows as $row ) {
+				fputcsv( $out, $row );
 			}
+			flush();
+			$offset += $chunk_size;
+		} while ( count( $rows ) === $chunk_size );
 
-			$sql = "INSERT INTO $table (measured_at, route, duration_ms, cache_hits, cache_misses, db_query_count, db_time_ms, payload) VALUES "
-				. implode( ', ', $placeholders );
-
-			if ( false === $wpdb->query( $wpdb->prepare( $sql, $args ) ) ) {
-				$ok = false;
-			}
-		}
-
-		return $ok;
+		fclose( $out );
 	}
 }
 
 CB_Response_Timer::init();
 
-// Default sink: append one trimmed JSON line per measurement to the queue file, which
-// a WP-Cron job (see flush_queue()) bulk-inserts into the SQL table. This keeps the
-// per-request cost to a single small error_log() call - no synchronous DB write.
-// Replace/remove this listener (or add your own) to send data elsewhere.
+// Default sink: one direct, synchronous insert per measured request. See the file
+// header for the tradeoff and how to swap this for a deferred/batched sink instead.
 add_action(
 	'cb_response_timer_measured',
 	function ( array $data ) {
-		$row = array(
-			'time'        => $data['time'],
-			'route'       => $data['route'],
-			'duration_ms' => $data['duration_ms'],
-			'cache'       => $data['cache'],
-			'db'          => array(
-				'query_count' => $data['db']['query_count'] ?? 0,
-				'time_ms'     => $data['db']['time_ms'] ?? 0,
+		global $wpdb;
+
+		$wpdb->insert(
+			$wpdb->prefix . CB_Response_Timer::TABLE,
+			array(
+				'measured_at'    => gmdate( 'Y-m-d H:i:s', strtotime( $data['time'] ) ),
+				'route'          => $data['route'],
+				'duration_ms'    => $data['duration_ms'],
+				'cache_hits'     => $data['cache']['hits'],
+				'cache_misses'   => $data['cache']['misses'],
+				'db_query_count' => $data['db']['query_count'] ?? 0,
+				'db_time_ms'     => $data['db']['time_ms'] ?? 0,
+				'ip'             => $data['ip'],
+				'user_agent'     => $data['user_agent'],
+				'payload'        => wp_json_encode( $data['payload'] ),
 			),
-			'payload'     => $data['payload'],
+			array( '%s', '%s', '%f', '%d', '%d', '%d', '%f', '%s', '%s', '%s' )
 		);
-		error_log( wp_json_encode( $row ) . "\n", 3, CB_Response_Timer::queue_file() );
 	}
 );
