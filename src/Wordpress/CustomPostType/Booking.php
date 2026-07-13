@@ -344,7 +344,6 @@ class Booking extends Timeframe {
 
 			$postId          = wp_insert_post( $postarr, true );
 			$needsValidation = true;
-			$isNewBooking    = true;
 
 			// Existing booking
 		} else {
@@ -360,7 +359,6 @@ class Booking extends Timeframe {
 			} else {
 				$needsValidation = false;
 			}
-			$isNewBooking = false;
 		}
 
 		self::saveGridSizes( $postId, $locationId, $itemId, $repetitionStart, $repetitionEnd );
@@ -394,17 +392,6 @@ class Booking extends Timeframe {
 				__( 'There was an error while saving the booking. Please try again. Resulting WP_ERROR: ', 'commonsbooking' ) .
 												PHP_EOL . implode( ', ', $postId->get_error_messages() )
 			);
-		}
-
-		if ( $isNewBooking ) {
-			/**
-			 * Fires once after a new booking has been created via the frontend booking flow.
-			 *
-			 * @since 2.11.0
-			 *
-			 * @param \CommonsBooking\Model\Booking $booking the newly created booking
-			 */
-			do_action( 'commonsbooking_booking_created', $bookingModel );
 		}
 
 		return $postId;
@@ -520,17 +507,6 @@ class Booking extends Timeframe {
 					} else {
 						$booking_msg = new BookingMessage( $post_ID, $post_after->post_status );
 						$booking_msg->triggerMail();
-
-						if ( $post_after->post_status === 'confirmed' ) {
-							/**
-							 * Fires once after a booking has been confirmed.
-							 *
-							 * @since 2.11.0
-							 *
-							 * @param \CommonsBooking\Model\Booking $booking the confirmed booking
-							 */
-							do_action( 'commonsbooking_booking_confirmed', new \CommonsBooking\Model\Booking( $post_ID ) );
-						}
 					}
 				}
 			}
