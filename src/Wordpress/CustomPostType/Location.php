@@ -27,7 +27,7 @@ class Location extends CustomPostType {
 		add_action( 'pre_get_posts', array( $this, 'filterAdminList' ) );
 
 		// Save-handling
-		add_action( 'save_post', array( $this, 'savePost' ), 11, 2 );
+		add_action( 'save_post', array( $this, 'savePost' ), 11, 3 );
 	}
 
 	protected static function getTaxonomyArgs() {
@@ -42,14 +42,29 @@ class Location extends CustomPostType {
 
 	/**
 	 * Handles save-Request for location.
+	 *
+	 * @param int      $post_id
+	 * @param \WP_Post $post
+	 * @param bool     $update true if this is an update of an existing location, false if the location was just created
 	 */
-	public function savePost( $post_id, \WP_Post $post ) {
+	public function savePost( $post_id, \WP_Post $post, $update = true ) {
 		if ( $post->post_type == self::$postType && $post_id ) {
 			$location = new \CommonsBooking\Model\Location( intval( $post_id ) );
 			$location->updateGeoLocation();
 
 			// update all dynamic timeframes
 			Timeframe::updateAllTimeframes();
+
+			if ( ! $update && $post->post_status !== 'auto-draft' ) {
+				/**
+				 * Fires once after a new location has been created.
+				 *
+				 * @since 2.11.0
+				 *
+				 * @param \CommonsBooking\Model\Location $location the newly created location
+				 */
+				do_action( 'commonsbooking_location_created', $location );
+			}
 		}
 	}
 

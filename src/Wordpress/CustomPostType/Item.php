@@ -29,7 +29,7 @@ class Item extends CustomPostType {
 		add_action( 'pre_get_posts', array( $this, 'filterAdminList' ) );
 
 		// Save-handling
-		add_action( 'save_post', array( $this, 'savePost' ), 11, 2 );
+		add_action( 'save_post', array( $this, 'savePost' ), 11, 3 );
 	}
 
 	/**
@@ -50,11 +50,26 @@ class Item extends CustomPostType {
 
 	/**
 	 * Handles save-Request for items.
+	 *
+	 * @param int      $post_id
+	 * @param \WP_Post $post
+	 * @param bool     $update true if this is an update of an existing item, false if the item was just created
 	 */
-	public function savePost( $post_id, \WP_Post $post ) {
+	public function savePost( $post_id, \WP_Post $post, $update = true ) {
 		if ( $post->post_type == self::$postType && $post_id ) {
 			// update all dynamic timeframes
 			Timeframe::updateAllTimeframes();
+
+			if ( ! $update && $post->post_status !== 'auto-draft' ) {
+				/**
+				 * Fires once after a new item has been created.
+				 *
+				 * @since 2.11.0
+				 *
+				 * @param \CommonsBooking\Model\Item $item the newly created item
+				 */
+				do_action( 'commonsbooking_item_created', new \CommonsBooking\Model\Item( $post ) );
+			}
 		}
 	}
 
