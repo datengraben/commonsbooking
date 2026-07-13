@@ -231,19 +231,36 @@ abstract class BookablePost extends PostRepository {
 			unset( $args['category_slug'] );
 		}
 
-		$customCacheKey = md5( serialize( $args ) );
+		$defaults = array(
+			'post_status' => array( 'publish', 'inherit' ),
+			'nopaging'    => true,
+		);
+
+		$queryArgs = wp_parse_args( $args, $defaults );
+
+		/**
+		 * Filters the WP_Query arguments used to fetch items/locations.
+		 * Allows external code to scope the returned items/locations by an arbitrary
+		 * criterion (e.g. a postmeta value tying a post to an external group/community)
+		 * instead of only the built-in taxonomy filtering, without having to reimplement
+		 * or duplicate this query. Applies to both Item::get() and Location::get(), which
+		 * is also what backs the map, the cb_items/cb_locations shortcodes and the REST API.
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param array  $queryArgs WP_Query arguments that are about to be used
+		 * @param string $postType  post type being queried, e.g. cb_item or cb_location
+		 * @param bool   $bookable  whether the query is restricted to bookable posts
+		 */
+		$queryArgs = apply_filters( 'commonsbooking_repository_query_args', $queryArgs, static::getPostType(), $bookable );
+
+		$customCacheKey = md5( serialize( $queryArgs ) );
 
 		$cacheItem = Plugin::getCacheItem( $customCacheKey );
 		if ( $cacheItem ) {
 			return $cacheItem;
 		} else {
-			$defaults = array(
-				'post_status' => array( 'publish', 'inherit' ),
-				'nopaging'    => true,
-			);
-
-			$queryArgs = wp_parse_args( $args, $defaults );
-			$query     = new WP_Query( $queryArgs );
+			$query = new WP_Query( $queryArgs );
 
 			if ( $query->have_posts() ) {
 				$posts = $query->get_posts();
