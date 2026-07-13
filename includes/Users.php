@@ -261,15 +261,28 @@ function commonsbooking_isCurrentUserAllowedToBook( $timeframeID ): bool {
 	$allowedUserRoles = get_post_meta( $timeframeID, \CommonsBooking\Model\Timeframe::META_ALLOWED_USER_ROLES, true );
 
 	if ( empty( $allowedUserRoles ) || ( commonsbooking_isCurrentUserAdmin() ) ) {
-		return true;
+		$isAllowed = true;
+	} else {
+		$current_user = wp_get_current_user();
+		$user_roles   = $current_user->roles;
+
+		$match = array_intersect( $user_roles, $allowedUserRoles );
+
+		$isAllowed = count( $match ) > 0;
 	}
 
-	$current_user = wp_get_current_user();
-	$user_roles   = $current_user->roles;
-
-	$match = array_intersect( $user_roles, $allowedUserRoles );
-
-	return count( $match ) > 0;
+	/**
+	 * Filters whether the current user is allowed to book the given timeframe.
+	 * Runs in addition to the role-based check above, so external code (e.g. an integration
+	 * that restricts booking eligibility to members of some external group/community) can
+	 * grant or revoke booking permission without having to model that as a WordPress role.
+	 *
+	 * @since 2.11.0
+	 *
+	 * @param bool  $isAllowed   true or false, if current user is allowed to book the timeframe based on the role check
+	 * @param mixed $timeframeID id of the timeframe that is checked
+	 */
+	return apply_filters( 'commonsbooking_isCurrentUserAllowedToBook', $isAllowed, $timeframeID );
 }
 
 /**
