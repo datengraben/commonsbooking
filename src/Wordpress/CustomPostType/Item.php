@@ -3,6 +3,7 @@
 namespace CommonsBooking\Wordpress\CustomPostType;
 
 use CommonsBooking\Repository\UserRepository;
+use CommonsBooking\Service\ActivityPubCompat;
 use CommonsBooking\Settings\Settings;
 
 class Item extends CustomPostType {
@@ -209,6 +210,10 @@ class Item extends CustomPostType {
 	 * @throws \Exception
 	 */
 	public function getTemplate( $content ) {
+		if ( ActivityPubCompat::isGeneratingActivityPubContent() ) {
+			return $content;
+		}
+
 		$cb_content   = '';
 		$errormessage = '';
 		if ( ! post_password_required() &&

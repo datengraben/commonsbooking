@@ -3,6 +3,7 @@
 namespace CommonsBooking\Wordpress\CustomPostType;
 
 use CommonsBooking\View\Map;
+use CommonsBooking\Service\ActivityPubCompat;
 use CommonsBooking\Settings\Settings;
 use CommonsBooking\Repository\UserRepository;
 
@@ -122,6 +123,10 @@ class Location extends CustomPostType {
 	 * @return string
 	 */
 	public function getTemplate( $content ) {
+		if ( ActivityPubCompat::isGeneratingActivityPubContent() ) {
+			return $content;
+		}
+
 		$cb_content = '';
 		if ( ! post_password_required() &&
 			is_singular( self::getPostType() ) && is_main_query() ) {

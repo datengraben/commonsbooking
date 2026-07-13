@@ -10,6 +10,7 @@ use CommonsBooking\Map\LocationMapAdmin;
 use CommonsBooking\Map\SearchShortcode;
 use CommonsBooking\Model\Booking;
 use CommonsBooking\Model\BookingCode;
+use CommonsBooking\Service\ActivityPubCompat;
 use CommonsBooking\Service\BookingRuleApplied;
 use CommonsBooking\Service\Cache;
 use CommonsBooking\Service\Scheduler;
@@ -793,6 +794,10 @@ class Plugin {
 		add_action( self::$clearCacheHook, array( $this, 'clearCache' ) );
 
 		add_action( 'plugins_loaded', array( $this, 'commonsbooking_load_textdomain' ), 20 );
+
+		// Compatibility hooks for the ActivityPub plugin, if active. Registered on `plugins_loaded`
+		// (rather than run directly here) so all plugins, including ActivityPub, have finished loading.
+		add_action( 'plugins_loaded', array( ActivityPubCompat::class, 'initHooks' ) );
 
 		$map_admin = new LocationMapAdmin();
 		add_action( 'plugins_loaded', array( $map_admin, 'load_location_map_admin' ) );
