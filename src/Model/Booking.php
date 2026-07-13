@@ -111,6 +111,15 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 
 		update_post_meta( $this->post->ID, 'cancellation_time', current_time( 'timestamp' ) );
 
+		/**
+		 * Fires once after a booking has been cancelled.
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param Booking $booking the cancelled booking
+		 */
+		do_action( 'commonsbooking_booking_cancelled', $this );
+
 		$this->sendCancellationMail();
 	}
 
