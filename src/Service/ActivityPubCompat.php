@@ -39,6 +39,10 @@ class ActivityPubCompat {
 		// Point admins at the ActivityPub plugin's own "Post Types" setting, since Items and
 		// Locations are eligible (public + REST-enabled) but not enabled for federation by default.
 		add_action( 'admin_notices', array( self::class, 'maybeShowSettingsNotice' ) );
+
+		// ActivityPub's [ap_hashtags] shortcode only reads the standard `post_tag` taxonomy, which
+		// Item/Location don't use. Bridge their own category taxonomy into the federated content.
+		add_filter( 'activitypub_the_content', array( self::class, 'appendCategoryHashtags' ), 20, 2 );
 	}
 
 	/**
@@ -99,5 +103,44 @@ class ActivityPubCompat {
 	 */
 	public static function isGeneratingActivityPubContent(): bool {
 		return self::$isGeneratingActivityPubContent;
+	}
+
+	/**
+	 * Appends Item/Location category terms as hashtags to the federated content, mirroring what
+	 * ActivityPub's own [ap_hashtags] shortcode does for the standard `post_tag` taxonomy.
+	 *
+	 * @param string   $content
+	 * @param \WP_Post $post
+	 *
+	 * @return string
+	 */
+	public static function appendCategoryHashtags( string $content, \WP_Post $post ): string {
+		if ( Item::$postType === $post->post_type ) {
+			$taxonomy = Item::getTaxonomyName();
+		} elseif ( Location::$postType === $post->post_type ) {
+			$taxonomy = Location::getTaxonomyName();
+		} else {
+			return $content;
+		}
+
+		$terms = get_the_terms( $post, $taxonomy );
+
+		if ( empty( $terms ) || is_wp_error( $terms ) ) {
+			return $content;
+		}
+
+		$hashtags = array();
+		foreach ( $terms as $term ) {
+			$hashtag = '#' . preg_replace( '/[^\p{L}\p{N}]/u', '', $term->name );
+			if ( '#' !== $hashtag ) {
+				$hashtags[] = $hashtag;
+			}
+		}
+
+		if ( empty( $hashtags ) ) {
+			return $content;
+		}
+
+		return trim( $content ) . '<p>' . implode( ' ', $hashtags ) . '</p>';
 	}
 }
