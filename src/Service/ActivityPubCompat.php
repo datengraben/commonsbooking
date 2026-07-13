@@ -2,6 +2,10 @@
 
 namespace CommonsBooking\Service;
 
+use CommonsBooking\Messages\AdminMessage;
+use CommonsBooking\Wordpress\CustomPostType\Item;
+use CommonsBooking\Wordpress\CustomPostType\Location;
+
 /**
  * Compatibility layer for the ActivityPub plugin (https://wordpress.org/plugins/activitypub/).
  *
@@ -31,6 +35,41 @@ class ActivityPubCompat {
 		// let Item::getTemplate() / Location::getTemplate() skip themselves for its duration.
 		add_action( 'activitypub_before_get_content', array( self::class, 'startContentGeneration' ) );
 		add_filter( 'activitypub_the_content', array( self::class, 'stopContentGeneration' ), 5 );
+
+		// Point admins at the ActivityPub plugin's own "Post Types" setting, since Items and
+		// Locations are eligible (public + REST-enabled) but not enabled for federation by default.
+		add_action( 'admin_notices', array( self::class, 'maybeShowSettingsNotice' ) );
+	}
+
+	/**
+	 * Shows a one-line pointer to the ActivityPub post-type settings on the CommonsBooking
+	 * dashboard, as long as Items/Locations aren't already enabled for federation.
+	 */
+	public static function maybeShowSettingsNotice() {
+		global $plugin_page;
+
+		if ( 'cb-dashboard' !== $plugin_page ) {
+			return;
+		}
+
+		$supportedPostTypes = (array) get_option( 'activitypub_support_post_types', array() );
+		$cbPostTypes         = array( Item::$postType, Location::$postType );
+
+		// Already enabled for both post types, nothing to point out.
+		if ( ! array_diff( $cbPostTypes, $supportedPostTypes ) ) {
+			return;
+		}
+
+		$settingsUrl = admin_url( 'options-general.php?page=activitypub' );
+
+		$message = sprintf(
+			// translators: %1$s and %2$s are opening/closing link tags to the ActivityPub settings page.
+			__( 'The ActivityPub plugin is active. To let people follow your items and locations from Mastodon and other Fediverse apps, enable "Items" and "Locations" under %1$sSettings → ActivityPub → Post Types%2$s.', 'commonsbooking' ),
+			'<a href="' . esc_url( $settingsUrl ) . '">',
+			'</a>'
+		);
+
+		new AdminMessage( commonsbooking_sanitizeHTML( $message ) );
 	}
 
 	/**
