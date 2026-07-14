@@ -51,7 +51,18 @@ class AvailabilityRoute extends BaseRoute {
 			$id ? [ $id ] : []
 		);
 
-		return $calendar->getAvailabilitySlots();
+		/**
+		 * Filters the CommonsAPI availability slots for an item.
+		 *
+		 * Lets integrations adjust the availability exposed through the API, e.g.
+		 * to reflect an external booking source.
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param array    $slots The availability slots.
+		 * @param int|null $id    The item ID the availability was requested for, or null for all items.
+		 */
+		return apply_filters( 'commonsbooking_api_availability_response', $calendar->getAvailabilitySlots(), $id );
 	}
 
 	/**

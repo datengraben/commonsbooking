@@ -144,6 +144,7 @@ receives a value, modifies it, and then returns it.
   * commonsbooking_bookable_timeframes
   * commonsbooking_calendar_data
   * commonsbooking_api_item_response
+  * commonsbooking_api_availability_response
 
 There are also filter hooks that allow you to add additional user roles
 akin to the CB Manager that can manage items and locations.
@@ -209,6 +210,22 @@ In this example, the item's ID is simply returned.
 add_filter('commonsbooking_tag_cb_item_yourFunction', function( $value, $obj) {
     // $obj is in this case an instance of the class \CommonsBooking\Model\Item, but it can also be another model or WP_Post
     return $obj->ID;
+}, 10, 2);
+```
+
+### Filter `commonsbooking_api_availability_response`
+
+::: tip Since version 2.11.0
+:::
+
+Adjusts the availability slots exposed through the CommonsAPI, e.g. to reflect an
+external booking source. Receives the slots array and the item ID (or `null` for
+all items).
+
+```php
+add_filter('commonsbooking_api_availability_response', function (array $slots, $id): array {
+    // adjust $slots as needed
+    return $slots;
 }, 10, 2);
 ```
 
