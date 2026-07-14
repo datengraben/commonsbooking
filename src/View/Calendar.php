@@ -411,7 +411,21 @@ class Calendar {
 			}
 		}
 
-		return self::prepareJsonResponse( $startDate, $endDate, [ $location ], [ $item ], $advanceBookingDays, $lastBookableDate, $firstBookableDay );
+		$calendarData = self::prepareJsonResponse( $startDate, $endDate, [ $location ], [ $item ], $advanceBookingDays, $lastBookableDate, $firstBookableDay );
+
+		/**
+		 * Filters the calendar data array before it is rendered or returned as JSON.
+		 *
+		 * This is the payload that drives the frontend booking calendar (and its
+		 * AJAX endpoint), so integrations can adjust the data shown to users.
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param array $calendarData The prepared calendar data.
+		 * @param mixed $item         The item (post ID or WP_Post) the calendar is for.
+		 * @param mixed $location     The location (post ID or WP_Post) the calendar is for.
+		 */
+		return apply_filters( 'commonsbooking_calendar_data', $calendarData, $item, $location );
 	}
 
 	/**

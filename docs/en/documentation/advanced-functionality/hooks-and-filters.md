@@ -142,6 +142,7 @@ receives a value, modifies it, and then returns it.
   * commonsbooking_is_timeframe_bookable
   * commonsbooking_day_availability
   * commonsbooking_bookable_timeframes
+  * commonsbooking_calendar_data
 
 There are also filter hooks that allow you to add additional user roles
 akin to the CB Manager that can manage items and locations.
@@ -208,6 +209,22 @@ add_filter('commonsbooking_tag_cb_item_yourFunction', function( $value, $obj) {
     // $obj is in this case an instance of the class \CommonsBooking\Model\Item, but it can also be another model or WP_Post
     return $obj->ID;
 }, 10, 2);
+```
+
+### Filter `commonsbooking_calendar_data`
+
+::: tip Since version 2.11.0
+:::
+
+Adjusts the data array that drives the frontend booking calendar (and its AJAX
+endpoint) before it is rendered or returned as JSON. Receives the calendar data
+and the item and location it is for.
+
+```php
+add_filter('commonsbooking_calendar_data', function (array $calendarData, $item, $location): array {
+    // adjust $calendarData as needed
+    return $calendarData;
+}, 10, 3);
 ```
 
 ### Filter `commonsbooking_bookable_timeframes`
