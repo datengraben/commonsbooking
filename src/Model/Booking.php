@@ -112,6 +112,22 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 		update_post_meta( $this->post->ID, 'cancellation_time', current_time( 'timestamp' ) );
 
 		$this->sendCancellationMail();
+
+		/**
+		 * Fires after a booking has been cancelled.
+		 *
+		 * Because cancellation writes the status directly to the database (to
+		 * preserve meta data) it does not run through WordPress' post status
+		 * transition, so this is the authoritative hook for reacting to a
+		 * cancelled booking, e.g. releasing a smart lock or an external
+		 * calendar slot.
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param int     $booking_id The booking post ID.
+		 * @param Booking $booking    The booking model instance.
+		 */
+		do_action( 'commonsbooking_booking_cancelled', $this->post->ID, $this );
 	}
 
 	/**

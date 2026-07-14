@@ -50,6 +50,10 @@ add_action( 'commonsbooking_before_item-single', 'itemsingle_callback' );
   * commonsbooking_before_item-single
   * commonsbooking_after_item-single
   * commonsbooking_mail_sent
+  * [commonsbooking_booking_created](#buchungs-lifecycle-hooks-seit-2-11-0)
+  * [commonsbooking_booking_confirmed](#buchungs-lifecycle-hooks-seit-2-11-0)
+  * [commonsbooking_booking_cancelled](#buchungs-lifecycle-hooks-seit-2-11-0)
+  * [commonsbooking_booking_status_changed](#buchungs-lifecycle-hooks-seit-2-11-0)
 
 ### Hooks im Objektkontext (seit 2.10.8)
 
@@ -73,6 +77,43 @@ function my_cb_before_booking_single( $booking_id, $booking ) {
     echo 'Der Buchungsstatus ist ' . $booking->getStatus();
 }
 add_action( 'commonsbooking_before_booking-single', 'my_cb_before_booking_single', 10, 2 );
+```
+
+### Buchungs-Lifecycle-Hooks (seit 2.11.0)
+
+Mit diesen Action Hooks kannst du auf den Lebenszyklus einer Buchung reagieren –
+zum Beispiel um ein elektronisches Schloss anzusteuern, einen externen Kalender
+zu synchronisieren oder ein Protokoll zu schreiben. Sie werden unabhängig davon
+ausgelöst, wo die Änderung ausgelöst wurde (Frontend-Kalender, Admin-Backend,
+REST-API oder WP-CLI), da sie am Statuswechsel des WordPress-Posts und nicht an
+einem einzelnen Formular-Handler hängen.
+
+Jeder Hook erhält die Post-ID der Buchung und die zugehörige Instanz aus
+`\CommonsBooking\Model\Booking` (Ausnahme: `..._status_changed`, hier werden
+zusätzlich der alte und der neue Status übergeben).
+
+  * `commonsbooking_booking_created`
+    * Wird **einmalig** ausgelöst, sobald eine Buchung zum ersten Mal einen echten Status erhält.
+    * Parameter: `int $booking_id`, `\CommonsBooking\Model\Booking $booking`
+  * `commonsbooking_booking_confirmed`
+    * Wird ausgelöst, sobald eine Buchung den Status `confirmed` erhält. Das ist der empfohlene Hook für Integrationen, die auf eine aktiv werdende Buchung reagieren müssen.
+    * Parameter: `int $booking_id`, `\CommonsBooking\Model\Booking $booking`
+  * `commonsbooking_booking_cancelled`
+    * Wird ausgelöst, wenn eine Buchung storniert wird.
+    * Parameter: `int $booking_id`, `\CommonsBooking\Model\Booking $booking`
+  * `commonsbooking_booking_status_changed`
+    * Wird bei jedem Statuswechsel einer Buchung ausgelöst (Obermenge der Hooks oben). Hinweis: Da eine Stornierung den Status direkt in die Datenbank schreibt, sollten Stornierungen besser über `commonsbooking_booking_cancelled` als über diesen Hook beobachtet werden.
+    * Parameter: `int $booking_id`, `string $old_status`, `string $new_status`, `\CommonsBooking\Model\Booking $booking`
+
+#### Beispiel: Schloss ansteuern, wenn eine Buchung bestätigt wird
+
+```php
+add_action( 'commonsbooking_booking_confirmed', function ( $booking_id, $booking ) {
+    $item     = $booking->getItem();
+    $lockCode = $booking->formattedBookingCode();
+    // Code / Buchungszeitraum hier an das Schließsystem übergeben …
+    my_locking_system_program( $item->ID, $lockCode, $booking->getStartDate(), $booking->getEndDate() );
+}, 10, 2 );
 ```
 
 ##  Filter Hooks

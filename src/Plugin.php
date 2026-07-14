@@ -10,6 +10,7 @@ use CommonsBooking\Map\LocationMapAdmin;
 use CommonsBooking\Map\SearchShortcode;
 use CommonsBooking\Model\Booking;
 use CommonsBooking\Model\BookingCode;
+use CommonsBooking\Service\BookingLifecycle;
 use CommonsBooking\Service\BookingRuleApplied;
 use CommonsBooking\Service\Cache;
 use CommonsBooking\Service\Scheduler;
@@ -762,6 +763,9 @@ class Plugin {
 
 		// loads the Scheduler
 		add_action( 'init', array( Scheduler::class, 'initHooks' ), 40 );
+
+		// dispatch booking lifecycle action hooks (created / confirmed / status changed)
+		BookingLifecycle::initHooks();
 
 		// handle the booking forms, needs to happen after taxonomy registration so that we can access the taxonomy
 		add_action( 'init', array( self::class, 'handleBookingForms' ), 50 );
