@@ -355,6 +355,7 @@ class Booking extends Timeframe {
 				'type'                                              => Timeframe::BOOKING_ID,
 			);
 
+			$postarr         = self::filterBookingBeforeSave( $postarr, null );
 			$postId          = wp_insert_post( $postarr, true );
 			$needsValidation = true;
 
@@ -364,7 +365,8 @@ class Booking extends Timeframe {
 			if ( $postarr['post_status'] === 'canceled' ) {
 				$postarr['meta_input']['cancellation_time'] = current_time( 'timestamp' );
 			}
-			$postId = wp_update_post( $postarr );
+			$postarr = self::filterBookingBeforeSave( $postarr, $booking );
+			$postId  = wp_update_post( $postarr );
 
 			// we check if this is an already denied booking and demand validation again
 			if ( $postarr['post_status'] == 'unconfirmed' ) {
@@ -408,6 +410,25 @@ class Booking extends Timeframe {
 		}
 
 		return $postId;
+	}
+
+	/**
+	 * Applies the `commonsbooking_booking_before_save` filter to the post array
+	 * that is about to be inserted or updated for a booking.
+	 *
+	 * Lets integrations adjust or add meta data before a booking is persisted
+	 * (e.g. attach an external reference or default values). Return the modified
+	 * `$postarr` (a wp_insert_post()/wp_update_post() array).
+	 *
+	 * @since 2.11.0
+	 *
+	 * @param array                                $postarr The post array to be saved.
+	 * @param \CommonsBooking\Model\Booking|null   $booking The existing booking being updated, or null for a new booking.
+	 *
+	 * @return array
+	 */
+	private static function filterBookingBeforeSave( array $postarr, ?\CommonsBooking\Model\Booking $booking ): array {
+		return apply_filters( 'commonsbooking_booking_before_save', $postarr, $booking );
 	}
 
 	/**

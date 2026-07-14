@@ -138,6 +138,7 @@ receives a value, modifies it, and then returns it.
   * commonsbooking_disableCache
   * commonsbooking_gbfs_feeds
   * commonsbooking_can_cancel_booking
+  * commonsbooking_booking_before_save
 
 There are also filter hooks that allow you to add additional user roles
 akin to the CB Manager that can manage items and locations.
@@ -203,6 +204,23 @@ In this example, the item's ID is simply returned.
 add_filter('commonsbooking_tag_cb_item_yourFunction', function( $value, $obj) {
     // $obj is in this case an instance of the class \CommonsBooking\Model\Item, but it can also be another model or WP_Post
     return $obj->ID;
+}, 10, 2);
+```
+
+### Filter `commonsbooking_booking_before_save`
+
+::: tip Since version 2.11.0
+:::
+
+Adjusts the post array right before a booking is inserted or updated, e.g. to add
+meta data. Receives the `wp_insert_post()`/`wp_update_post()` array and the
+existing `\CommonsBooking\Model\Booking` (or `null` for a new booking); return the
+modified array.
+
+```php
+add_filter('commonsbooking_booking_before_save', function (array $postarr, $booking): array {
+    $postarr['meta_input']['my_external_ref'] = 'ext-123';
+    return $postarr;
 }, 10, 2);
 ```
 
