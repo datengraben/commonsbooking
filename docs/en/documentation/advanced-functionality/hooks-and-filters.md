@@ -143,6 +143,7 @@ receives a value, modifies it, and then returns it.
   * commonsbooking_day_availability
   * commonsbooking_bookable_timeframes
   * commonsbooking_calendar_data
+  * commonsbooking_api_item_response
 
 There are also filter hooks that allow you to add additional user roles
 akin to the CB Manager that can manage items and locations.
@@ -208,6 +209,22 @@ In this example, the item's ID is simply returned.
 add_filter('commonsbooking_tag_cb_item_yourFunction', function( $value, $obj) {
     // $obj is in this case an instance of the class \CommonsBooking\Model\Item, but it can also be another model or WP_Post
     return $obj->ID;
+}, 10, 2);
+```
+
+### Filter `commonsbooking_api_item_response`
+
+::: tip Since version 2.11.0
+:::
+
+Adds or adjusts fields exposed for an item in the CommonsAPI. Receives the
+prepared item object and the source `WP_Post`. Added fields must conform to the
+CommonsAPI JSON schema, otherwise response validation will reject them.
+
+```php
+add_filter('commonsbooking_api_item_response', function ($preparedItem, $item) {
+    $preparedItem->myField = get_post_meta($item->ID, 'my_field', true);
+    return $preparedItem;
 }, 10, 2);
 ```
 

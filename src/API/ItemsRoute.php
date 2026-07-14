@@ -143,6 +143,20 @@ class ItemsRoute extends BaseRoute {
 			];
 		}
 
+		/**
+		 * Filters the CommonsAPI item response object before it is returned.
+		 *
+		 * Lets integrations add or adjust fields exposed for an item. Note that
+		 * added fields must conform to the CommonsAPI JSON schema or validation
+		 * will reject the response.
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param stdClass $preparedItem The prepared item data.
+		 * @param \WP_Post  $item        The source item post.
+		 */
+		$preparedItem = apply_filters( 'commonsbooking_api_item_response', $preparedItem, $item );
+
 		return new WP_REST_Response( $preparedItem );
 	}
 }
