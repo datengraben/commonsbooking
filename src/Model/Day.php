@@ -184,7 +184,18 @@ class Day {
 	 * @throws Exception
 	 */
 	public function getGrid(): array {
-		return $this->getTimeframeSlots();
+		/**
+		 * Filters the availability slots computed for this day.
+		 *
+		 * Lets integrations add, remove or adjust the bookable slots of a day
+		 * (e.g. to reflect an external availability source).
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param array $slots The computed slots for this day.
+		 * @param Day   $day   The day model instance.
+		 */
+		return apply_filters( 'commonsbooking_day_availability', $this->getTimeframeSlots(), $this );
 	}
 
 	/**

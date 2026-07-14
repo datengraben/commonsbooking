@@ -140,6 +140,7 @@ receives a value, modifies it, and then returns it.
   * commonsbooking_can_cancel_booking
   * commonsbooking_booking_before_save
   * commonsbooking_is_timeframe_bookable
+  * commonsbooking_day_availability
 
 There are also filter hooks that allow you to add additional user roles
 akin to the CB Manager that can manage items and locations.
@@ -205,6 +206,21 @@ In this example, the item's ID is simply returned.
 add_filter('commonsbooking_tag_cb_item_yourFunction', function( $value, $obj) {
     // $obj is in this case an instance of the class \CommonsBooking\Model\Item, but it can also be another model or WP_Post
     return $obj->ID;
+}, 10, 2);
+```
+
+### Filter `commonsbooking_day_availability`
+
+::: tip Since version 2.11.0
+:::
+
+Adjusts the bookable slots computed for a single day, e.g. to reflect an external
+availability source. Receives the slots array and the `\CommonsBooking\Model\Day`.
+
+```php
+add_filter('commonsbooking_day_availability', function (array $slots, $day): array {
+    // inspect $day->getDate() and filter $slots as needed
+    return $slots;
 }, 10, 2);
 ```
 
