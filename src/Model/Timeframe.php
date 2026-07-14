@@ -394,7 +394,20 @@ class Timeframe extends CustomPost {
 		$startDateTimestamp                 = $this->getStartDate();
 		$latestPossibleBookingDateTimestamp = $this->getLatestPossibleBookingDateTimestamp();
 
-		return $startDateTimestamp <= $latestPossibleBookingDateTimestamp;
+		$bookable = $startDateTimestamp <= $latestPossibleBookingDateTimestamp;
+
+		/**
+		 * Filters whether this timeframe is currently bookable.
+		 *
+		 * Lets integrations add their own booking-window rules on top of the
+		 * default advance-booking-days check.
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param bool      $bookable  Whether the timeframe is bookable by default.
+		 * @param Timeframe $timeframe The timeframe model instance.
+		 */
+		return (bool) apply_filters( 'commonsbooking_is_timeframe_bookable', $bookable, $this );
 	}
 
 	/**

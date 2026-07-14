@@ -139,6 +139,7 @@ receives a value, modifies it, and then returns it.
   * commonsbooking_gbfs_feeds
   * commonsbooking_can_cancel_booking
   * commonsbooking_booking_before_save
+  * commonsbooking_is_timeframe_bookable
 
 There are also filter hooks that allow you to add additional user roles
 akin to the CB Manager that can manage items and locations.
@@ -204,6 +205,21 @@ In this example, the item's ID is simply returned.
 add_filter('commonsbooking_tag_cb_item_yourFunction', function( $value, $obj) {
     // $obj is in this case an instance of the class \CommonsBooking\Model\Item, but it can also be another model or WP_Post
     return $obj->ID;
+}, 10, 2);
+```
+
+### Filter `commonsbooking_is_timeframe_bookable`
+
+::: tip Since version 2.11.0
+:::
+
+Adds custom booking-window rules on top of the default advance-booking-days check.
+Receives the default decision (`bool`) and the `\CommonsBooking\Model\Timeframe`.
+
+```php
+// Block bookings on the timeframe's item while it is flagged for maintenance.
+add_filter('commonsbooking_is_timeframe_bookable', function (bool $bookable, $timeframe): bool {
+    return $bookable && ! get_post_meta($timeframe->getItem()->ID, 'in_maintenance', true);
 }, 10, 2);
 ```
 
