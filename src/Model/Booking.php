@@ -76,17 +76,24 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 * @return bool
 	 */
 	public function canCancel(): bool {
-		if ( $this->isPast() ) {
-			return false;
+		$canCancel = false;
+		if ( ! $this->isPast() ) {
+			$canCancel = intval( $this->post_author ) === get_current_user_id()
+				|| commonsbooking_isCurrentUserAllowedToEdit( $this->post );
 		}
 
-		if ( intval( $this->post_author ) === get_current_user_id() ) {
-			return true;
-		} elseif ( commonsbooking_isCurrentUserAllowedToEdit( $this->post ) ) {
-			return true;
-		} else {
-			return false;
-		}
+		/**
+		 * Filters whether the current user may cancel this booking.
+		 *
+		 * Lets integrations relax or tighten the default cancellation policy
+		 * (e.g. forbid cancelling within a notice period, or allow a custom role).
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param bool    $canCancel Whether cancellation is allowed by default.
+		 * @param Booking $booking   The booking model instance.
+		 */
+		return (bool) apply_filters( 'commonsbooking_can_cancel_booking', $canCancel, $this );
 	}
 
 	/**

@@ -137,6 +137,7 @@ receives a value, modifies it, and then returns it.
   * commonsbooking_mail_attachment
   * commonsbooking_disableCache
   * commonsbooking_gbfs_feeds
+  * commonsbooking_can_cancel_booking
 
 There are also filter hooks that allow you to add additional user roles
 akin to the CB Manager that can manage items and locations.
@@ -202,6 +203,21 @@ In this example, the item's ID is simply returned.
 add_filter('commonsbooking_tag_cb_item_yourFunction', function( $value, $obj) {
     // $obj is in this case an instance of the class \CommonsBooking\Model\Item, but it can also be another model or WP_Post
     return $obj->ID;
+}, 10, 2);
+```
+
+### Filter `commonsbooking_can_cancel_booking`
+
+::: tip Since version 2.11.0
+:::
+
+Overrides whether the current user may cancel a booking. Receives the default
+decision (`bool`) and the `\CommonsBooking\Model\Booking` instance.
+
+```php
+// Forbid cancelling a booking that starts within the next 24 hours.
+add_filter('commonsbooking_can_cancel_booking', function (bool $canCancel, $booking): bool {
+    return $canCancel && $booking->getStartDate() > time() + DAY_IN_SECONDS;
 }, 10, 2);
 ```
 
