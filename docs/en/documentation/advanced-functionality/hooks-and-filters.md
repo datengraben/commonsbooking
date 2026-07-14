@@ -141,6 +141,7 @@ receives a value, modifies it, and then returns it.
   * commonsbooking_booking_before_save
   * commonsbooking_is_timeframe_bookable
   * commonsbooking_day_availability
+  * commonsbooking_bookable_timeframes
 
 There are also filter hooks that allow you to add additional user roles
 akin to the CB Manager that can manage items and locations.
@@ -207,6 +208,23 @@ add_filter('commonsbooking_tag_cb_item_yourFunction', function( $value, $obj) {
     // $obj is in this case an instance of the class \CommonsBooking\Model\Item, but it can also be another model or WP_Post
     return $obj->ID;
 }, 10, 2);
+```
+
+### Filter `commonsbooking_bookable_timeframes`
+
+::: tip Since version 2.11.0
+:::
+
+Restricts or extends which timeframes are offered for booking. Receives the
+timeframes and the location/item IDs the query was scoped to. The element type
+follows the repository's `$returnAsModel` argument (post IDs, `WP_Post` or
+`\CommonsBooking\Model\Timeframe`).
+
+```php
+add_filter('commonsbooking_bookable_timeframes', function (array $timeframes, array $locations, array $items): array {
+    // filter $timeframes as needed
+    return $timeframes;
+}, 10, 3);
 ```
 
 ### Filter `commonsbooking_day_availability`
