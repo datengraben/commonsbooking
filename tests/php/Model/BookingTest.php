@@ -352,6 +352,31 @@ class BookingTest extends CustomPostTypeTest {
 		$this->assertTrue( commonsbooking_isCurrentUserAdmin() );
 	}
 
+	public function testCanCancelFilterOverridesDecision() {
+		ClockMock::freeze( new \DateTime( self::CURRENT_DATE ) );
+		wp_set_current_user( $this->subscriberId );
+
+		// Default: the subscriber may cancel their own future booking.
+		$this->assertTrue( $this->subscriberBookingInFuture->canCancel() );
+
+		// The filter can forbid it, and receives the booking instance.
+		$received = null;
+		$deny     = function ( $canCancel, $booking ) use ( &$received ) {
+			$received = $booking;
+			return false;
+		};
+		add_filter( 'commonsbooking_can_cancel_booking', $deny, 10, 2 );
+		$this->assertFalse( $this->subscriberBookingInFuture->canCancel() );
+		$this->assertInstanceOf( Booking::class, $received );
+		remove_filter( 'commonsbooking_can_cancel_booking', $deny, 10 );
+
+		// The filter can also allow cancelling a booking that is denied by default (a past booking).
+		$allow = fn() => true;
+		add_filter( 'commonsbooking_can_cancel_booking', $allow, 10, 2 );
+		$this->assertTrue( $this->testBookingPast->canCancel() );
+		remove_filter( 'commonsbooking_can_cancel_booking', $allow, 10 );
+	}
+
 	public function testHasTotalBreakdown() {
 		$testBooking = new Booking( $this->createConfirmedBookingStartingToday() );
 		$this->assertFalse( $this->testBookingTomorrow->hasTotalBreakdown() );
