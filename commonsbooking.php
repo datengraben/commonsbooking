@@ -43,3 +43,6 @@ require __DIR__ . '/vendor-prefixed/cmb2/cmb2/init.php';
 require __DIR__ . '/vendor-prefixed/mustardbees/cmb-field-select2/cmb-field-select2.php';
 require __DIR__ . '/vendor-prefixed/ed-itsolutions/cmb2-field-ajax-search/cmb2-field-ajax-search.php';
 require_once __DIR__ . '/includes/Plugin.php';
+
+// Optional third-party integrations (loaded conditionally, no hard dependency).
+require_once __DIR__ . '/integrations/uncanny-automator/bootstrap.php';

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="CommonsBooking">
+  <rect x="6" y="9" width="36" height="33" rx="4" fill="#ffffff" stroke="#66a03a" stroke-width="3"/>
+  <path d="M6 17h36" stroke="#66a03a" stroke-width="3"/>
+  <rect x="14" y="4" width="4" height="9" rx="2" fill="#66a03a"/>
+  <rect x="30" y="4" width="4" height="9" rx="2" fill="#66a03a"/>
+  <path d="M16 30l6 6 11-12" fill="none" stroke="#66a03a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

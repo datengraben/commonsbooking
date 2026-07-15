@@ -116,6 +116,16 @@ add_action( 'commonsbooking_booking_cancelled', function ( $booking_id, $booking
 }, 10, 2 );
 ```
 
+#### No-code automations via Uncanny Automator
+
+If the [Uncanny Automator](https://wordpress.org/plugins/uncanny-automator/) plugin
+is active, CommonsBooking registers an integration with a trigger **"A booking is
+confirmed"** (built on `commonsbooking_booking_confirmed`). This lets you build
+recipes without writing code — for example *when a booking is confirmed, send an
+email or call a webhook*. The trigger exposes tokens for the booking ID, item,
+location, start/end, booking code, user email and booking URL. The integration
+loads only when Automator is active and adds no overhead otherwise.
+
 ## Filter hooks
 
 Filter hooks (https://developer.wordpress.org/plugins/hooks/filters) work
