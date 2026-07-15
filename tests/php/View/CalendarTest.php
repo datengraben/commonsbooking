@@ -44,6 +44,36 @@ class CalendarTest extends CustomPostTypeTest {
 		$this->assertTrue( $firstDay == $startDate );
 	}
 
+	public function testCalendarDataFilterAdjustsData() {
+		$startDate = date( 'Y-m-d', strtotime( self::CURRENT_DATE ) );
+
+		$receivedItem     = null;
+		$receivedLocation = null;
+		$filter           = function ( array $calendarData, $item, $location ) use ( &$receivedItem, &$receivedLocation ) {
+			$receivedItem              = $item;
+			$receivedLocation          = $location;
+			$calendarData['injectedByFilter'] = true;
+			return $calendarData;
+		};
+
+		add_filter( 'commonsbooking_calendar_data', $filter, 10, 3 );
+		$jsonresponse = Calendar::getCalendarDataArray(
+			$this->itemId,
+			$this->locationId,
+			$startDate,
+			date( 'Y-m-d', strtotime( '+20 days', strtotime( self::CURRENT_DATE ) ) ),
+			true
+		);
+		remove_filter( 'commonsbooking_calendar_data', $filter, 10 );
+
+		// The filter's change is reflected in the returned data.
+		$this->assertArrayHasKey( 'injectedByFilter', $jsonresponse );
+		$this->assertTrue( $jsonresponse['injectedByFilter'] );
+		// The filter received the item and location the calendar is for.
+		$this->assertEquals( $this->itemId, $receivedItem );
+		$this->assertEquals( $this->locationId, $receivedLocation );
+	}
+
 	public function testAdvancedBookingDays() {
 		$startDate    = date( 'Y-m-d', strtotime( 'midnight' ) );
 		$endDate      = date( 'Y-m-d', strtotime( '+60 days midnight' ) );
