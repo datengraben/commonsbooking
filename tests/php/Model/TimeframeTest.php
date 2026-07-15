@@ -731,6 +731,22 @@ class TimeframeTest extends CustomPostTypeTest {
 		// This test does not work, function maybe broken?
 	}
 
+	public function testIsBookableFilterOverridesDecision() {
+		// Default: the timeframe is bookable.
+		$this->assertTrue( $this->validTF->isBookable() );
+
+		// The filter can forbid it and receives the timeframe instance.
+		$received = null;
+		$filter   = function ( $bookable, $timeframe ) use ( &$received ) {
+			$received = $timeframe;
+			return false;
+		};
+		add_filter( 'commonsbooking_is_timeframe_bookable', $filter, 10, 2 );
+		$this->assertFalse( $this->validTF->isBookable() );
+		$this->assertInstanceOf( Timeframe::class, $received );
+		remove_filter( 'commonsbooking_is_timeframe_bookable', $filter, 10 );
+	}
+
 	/**
 	 * Tests all validity concerns of timeframes with manual repetition
 	 * @return void
