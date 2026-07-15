@@ -30,6 +30,12 @@ function commonsbooking_load_automator_integration() {
 	require_once __DIR__ . '/class-cb-integration.php';
 	new \CommonsBooking\Integrations\Automator\CB_Integration();
 
+	// Shared token trait must be loaded before the triggers that use it.
+	require_once __DIR__ . '/trait-booking-tokens.php';
+
 	require_once __DIR__ . '/class-booking-confirmed-trigger.php';
 	new \CommonsBooking\Integrations\Automator\Booking_Confirmed_Trigger();
+
+	require_once __DIR__ . '/class-booking-cancelled-trigger.php';
+	new \CommonsBooking\Integrations\Automator\Booking_Cancelled_Trigger();
 }

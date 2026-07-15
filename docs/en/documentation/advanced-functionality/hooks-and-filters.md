@@ -119,12 +119,27 @@ add_action( 'commonsbooking_booking_cancelled', function ( $booking_id, $booking
 #### No-code automations via Uncanny Automator
 
 If the [Uncanny Automator](https://wordpress.org/plugins/uncanny-automator/) plugin
-is active, CommonsBooking registers an integration with a trigger **"A booking is
-confirmed"** (built on `commonsbooking_booking_confirmed`). This lets you build
-recipes without writing code — for example *when a booking is confirmed, send an
-email or call a webhook*. The trigger exposes tokens for the booking ID, item,
-location, start/end, booking code, user email and booking URL. The integration
+is active, CommonsBooking registers an integration with two triggers:
+
+  * **A booking is confirmed** (built on `commonsbooking_booking_confirmed`)
+  * **A booking is cancelled** (built on `commonsbooking_booking_cancelled`)
+
+Both expose the same tokens — booking ID, item, location, start/end, booking
+code, user email, **user phone** and booking URL — so you can route booking
+events to any gateway Automator supports (SMS via Twilio, Slack, Telegram,
+Google Calendar, Mailchimp, a webhook, …) without writing code. The integration
 loads only when Automator is active and adds no overhead otherwise.
+
+**Example — SMS an access code when a booking is confirmed:**
+*Trigger:* CommonsBooking → *A booking is confirmed*.
+*Action:* Twilio → Send SMS, with **To** = `{{CB_BOOKING_USER_PHONE}}` and
+**Body** = "Your booking of {{CB_ITEM_NAME}} at {{CB_LOCATION_NAME}} is confirmed.
+Access code: {{CB_BOOKING_CODE}}".
+
+**Example — alert the team on Slack/SMS when a booking is cancelled:**
+*Trigger:* CommonsBooking → *A booking is cancelled*.
+*Action:* Slack (or Twilio SMS to the team number) — "{{CB_ITEM_NAME}} at
+{{CB_LOCATION_NAME}} just freed up for {{CB_BOOKING_START}}–{{CB_BOOKING_END}}".
 
 ## Filter hooks
 
