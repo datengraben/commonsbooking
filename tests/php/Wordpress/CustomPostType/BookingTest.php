@@ -50,7 +50,7 @@ class BookingTest extends CustomPostTypeTest {
 		$this->assertFalse( $bookingModel->isConfirmed() );
 
 		// Case 2: We now confirm the booking. The booking should be confirmed
-		$newBookingId       = Booking::handleBookingRequest(
+		$confirmedBookingId = Booking::handleBookingRequest(
 			$this->itemId,
 			$this->locationId,
 			'confirmed',
@@ -61,10 +61,10 @@ class BookingTest extends CustomPostTypeTest {
 			$postName,
 			null
 		);
-		$this->bookingIds[] = $newBookingId;
+		$this->bookingIds[] = $confirmedBookingId;
 
 		// the id should be the same
-		$this->assertEquals( $bookingId, $newBookingId );
+		$this->assertEquals( $bookingId, $confirmedBookingId );
 		// we create a new model, just to be sure
 		$bookingModel = new \CommonsBooking\Model\Booking( $bookingId );
 		$this->assertTrue( $bookingModel->isConfirmed() );
@@ -95,6 +95,46 @@ class BookingTest extends CustomPostTypeTest {
 		// check, if the cancel time is correct
 		$cancelDate = $bookingModel->getCancellationDateDateTime();
 		$this->assertEquals( $date->format( 'Y-m-d H:i:s' ), $cancelDate->format( 'Y-m-d H:i:s' ) );
+	}
+
+	/**
+	 * The commonsbooking_booking_before_save filter can add meta to a booking
+	 * before it is persisted, and receives null as the "existing booking" for a
+	 * newly created booking.
+	 */
+	public function testBookingBeforeSaveFilterAddsMeta() {
+		$date = new \DateTime( self::CURRENT_DATE );
+		$date->modify( '-1 day' );
+		ClockMock::freeze( $date );
+
+		$received = 'unset';
+		$filter   = function ( array $postarr, $booking ) use ( &$received ) {
+			$received                                 = $booking;
+			$postarr['meta_input']['my_external_ref'] = 'ext-123';
+			return $postarr;
+		};
+		add_filter( 'commonsbooking_booking_before_save', $filter, 10, 2 );
+
+		$bookingId = Booking::handleBookingRequest(
+			$this->itemId,
+			$this->locationId,
+			'unconfirmed',
+			null,
+			null,
+			strtotime( self::CURRENT_DATE ),
+			strtotime( '+1 day', strtotime( self::CURRENT_DATE ) ),
+			null,
+			null
+		);
+		$this->bookingIds[] = $bookingId;
+
+		remove_filter( 'commonsbooking_booking_before_save', $filter, 10 );
+
+		$this->assertIsInt( $bookingId );
+		// The meta added by the filter was persisted with the new booking.
+		$this->assertEquals( 'ext-123', get_post_meta( $bookingId, 'my_external_ref', true ) );
+		// For a new booking, the existing-booking argument is null.
+		$this->assertNull( $received );
 	}
 
 	public function testHandleBookingRequest_deleteUnconfirmed() {
@@ -163,7 +203,7 @@ class BookingTest extends CustomPostTypeTest {
 		$this->assertFalse( $bookingModel->isConfirmed() );
 
 		// The overbooked days are not present anymore when confirming the booking cause they are only calculated on the Litepicker screen
-		$newBookingId       = Booking::handleBookingRequest(
+		$confirmedBookingId = Booking::handleBookingRequest(
 			$this->itemId,
 			$this->locationId,
 			'confirmed',
@@ -174,10 +214,10 @@ class BookingTest extends CustomPostTypeTest {
 			$postName,
 			null
 		);
-		$this->bookingIds[] = $newBookingId;
+		$this->bookingIds[] = $confirmedBookingId;
 
 		// the id should be the same
-		$this->assertEquals( $bookingId, $newBookingId );
+		$this->assertEquals( $bookingId, $confirmedBookingId );
 		// we create a new model, just to be sure
 		$bookingModel = new \CommonsBooking\Model\Booking( $bookingId );
 		$this->assertTrue( $bookingModel->isConfirmed() );
@@ -345,6 +385,65 @@ class BookingTest extends CustomPostTypeTest {
 			$postName,
 			'6'
 		);
+	}
+
+	/**
+	 * Regression test for #2217
+	 * When a booking is confirmed and another booking is created in the exact same timeframe afterwards,
+	 * the previously confirmed booking was set to unconfirmed again. This test is in place to ensure that
+	 * this does not happen again.
+	 *
+	 * @return void
+	 */
+	public function testHandleBookingRequest_noRecreation() {
+		$date = new \DateTime( self::CURRENT_DATE );
+		$date->modify( '-1 day' );
+		ClockMock::freeze( $date );
+		// create regular booking through unconfirmed -> confirmed route
+		$bookingId          = Booking::handleBookingRequest(
+			$this->itemId,
+			$this->locationId,
+			'unconfirmed',
+			null,
+			null,
+			strtotime( self::CURRENT_DATE ),
+			strtotime( '+1 day', strtotime( self::CURRENT_DATE ) ),
+			null,
+			null
+		);
+		$this->bookingIds[] = $bookingId;
+
+		$bookingModel       = new \CommonsBooking\Model\Booking( $bookingId );
+		$postName           = $bookingModel->post_name;
+		$confirmedBookingId = Booking::handleBookingRequest(
+			$this->itemId,
+			$this->locationId,
+			'confirmed',
+			$bookingId,
+			null,
+			strtotime( self::CURRENT_DATE ),
+			strtotime( '+1 day', strtotime( self::CURRENT_DATE ) ),
+			$postName,
+			null
+		);
+		$this->bookingIds[] = $confirmedBookingId;
+
+		// attempt to recreate the booking, should keep status as "confirmed" because it was not explicitly cancelled
+		$bookingId          = Booking::handleBookingRequest(
+			$this->itemId,
+			$this->locationId,
+			'unconfirmed',
+			null,
+			null,
+			strtotime( self::CURRENT_DATE ),
+			strtotime( '+1 day', strtotime( self::CURRENT_DATE ) ),
+			null,
+			null
+		);
+		$this->bookingIds[] = $bookingId;
+
+		$bookingModel = new \CommonsBooking\Model\Booking( $bookingId );
+		$this->assertTrue( $bookingModel->isConfirmed() );
 	}
 
 	/**

@@ -291,6 +291,19 @@ class Booking extends Timeframe {
 			throw new BookingDeniedException( __( 'There is already a booking in this time-range. This notice may also appear if there is an unconfirmed booking in the requested period. Unconfirmed bookings are deleted after about 10 minutes. Please try again in a few minutes.', 'commonsbooking' ) );
 		}
 
+		// The initial calendar flow always submits post_status=unconfirmed without a post_ID.
+		// If an exact-slot booking already exists for the current user, redirect to that booking
+		// instead of downgrading it back to unconfirmed via the update path below.
+		if ( $booking && $post_status === 'unconfirmed' && $post_ID === null ) {
+			return $booking->ID;
+		}
+
+		// Frontend requests should never reopen an existing booking as unconfirmed by ID.
+		// Treat this as an invalid request instead of mutating the current booking state.
+		if ( $post_status === 'unconfirmed' && $post_ID !== null ) {
+			throw new BookingDeniedException( __( 'Invalid booking request. Please try again.', 'commonsbooking' ) );
+		}
+
 		$existingBookings =
 			\CommonsBooking\Repository\Booking::getExistingBookings(
 				$itemId,
@@ -316,7 +329,7 @@ class Booking extends Timeframe {
 						array_values( $existingBookings )[0]->getPost()->post_name === $requestedPostName &&
 						intval( array_values( $existingBookings )[0]->getPost()->post_author ) === get_current_user_id();
 
-			if ( ( ! $isEdit || count( $existingBookings ) > 1 ) && $post_status !== 'canceled' ) {
+			if ( ! $isEdit && $post_status !== 'canceled' ) {
 				if ( $booking ) {
 					$post_status = 'unconfirmed';
 				} else {
@@ -342,6 +355,7 @@ class Booking extends Timeframe {
 				'type'                                              => Timeframe::BOOKING_ID,
 			);
 
+			$postarr         = self::filterBookingBeforeSave( $postarr, null );
 			$postId          = wp_insert_post( $postarr, true );
 			$needsValidation = true;
 
@@ -351,7 +365,8 @@ class Booking extends Timeframe {
 			if ( $postarr['post_status'] === 'canceled' ) {
 				$postarr['meta_input']['cancellation_time'] = current_time( 'timestamp' );
 			}
-			$postId = wp_update_post( $postarr );
+			$postarr = self::filterBookingBeforeSave( $postarr, $booking );
+			$postId  = wp_update_post( $postarr );
 
 			// we check if this is an already denied booking and demand validation again
 			if ( $postarr['post_status'] == 'unconfirmed' ) {
@@ -395,6 +410,25 @@ class Booking extends Timeframe {
 		}
 
 		return $postId;
+	}
+
+	/**
+	 * Applies the `commonsbooking_booking_before_save` filter to the post array
+	 * that is about to be inserted or updated for a booking.
+	 *
+	 * Lets integrations adjust or add meta data before a booking is persisted
+	 * (e.g. attach an external reference or default values). Return the modified
+	 * `$postarr` (a wp_insert_post()/wp_update_post() array).
+	 *
+	 * @since 2.11.0
+	 *
+	 * @param array                                $postarr The post array to be saved.
+	 * @param \CommonsBooking\Model\Booking|null   $booking The existing booking being updated, or null for a new booking.
+	 *
+	 * @return array
+	 */
+	private static function filterBookingBeforeSave( array $postarr, ?\CommonsBooking\Model\Booking $booking ): array {
+		return apply_filters( 'commonsbooking_booking_before_save', $postarr, $booking );
 	}
 
 	/**
@@ -749,7 +783,7 @@ class Booking extends Timeframe {
                     <li>Click on the <strong>Submit booking</strong> button at the end of the page to submit a new booking.</li>
                 </ul>
 				<strong>Please note</strong>: Only a few basic checks against existing bookings are performed. Please be wary of overlapping bookings.
-                </p> 
+                </p>
 				',
 						'commonsbooking'
 					) . '</p></div>'
@@ -890,7 +924,7 @@ class Booking extends Timeframe {
 		As an admin you can create bookings via this admin interface. Please be aware that admin bookings are not validated
 		and checked. Use this function with care.<br>
 		Click on preview to show booking details in frontend<br>
-		To search and filter bookings please integrate the frontend booking list via shortcode. 
+		To search and filter bookings please integrate the frontend booking list via shortcode.
 		See here %1$sHow to display the booking list%2$s',
 					'commonsbooking'
 				),

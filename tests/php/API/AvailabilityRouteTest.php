@@ -43,11 +43,37 @@ class AvailabilityRouteTest extends CB_REST_Route_UnitTestCase {
 		$this->assertSame( 200, $response->get_status() );
 		$this->assertSame( 2, count( $response->get_data()->availability ) );
 
+		$availabilityStart = new \DateTime( self::CURRENT_DATE );
+		$availabilityEnd   = new \DateTime( self::CURRENT_DATE );
+		$availabilityEnd->modify( '23:59:59' );
+
 		// Checks availability for the first day
 		$this->assertEquals( $this->locationId, $response->get_data()->availability[0]->locationId );
 		$this->assertEquals( $this->itemId, $response->get_data()->availability[0]->itemId );
-		$this->assertEquals( self::CURRENT_DATE . 'T00:00:00+00:00', $response->get_data()->availability[0]->start );
-		$this->assertEquals( self::CURRENT_DATE . 'T23:59:59+00:00', $response->get_data()->availability[0]->end );
+		$this->assertEquals( $availabilityStart->format( 'c' ), $response->get_data()->availability[0]->start );
+		$this->assertEquals( $availabilityEnd->format( 'c' ), $response->get_data()->availability[0]->end );
+
+		ClockMock::reset();
+	}
+
+	public function testApiAvailabilityResponseFilter() {
+		ClockMock::freeze( new \DateTime( self::CURRENT_DATE ) );
+
+		// Default: the item has availability slots.
+		$this->assertNotEmpty( \CommonsBooking\API\AvailabilityRoute::getItemData( $this->itemId ) );
+
+		$received = 'unset';
+		$filter   = function ( array $slots, $id ) use ( &$received ) {
+			$received = $id;
+			return array(); // clear availability
+		};
+
+		add_filter( 'commonsbooking_api_availability_response', $filter, 10, 2 );
+		$slots = \CommonsBooking\API\AvailabilityRoute::getItemData( $this->itemId );
+		remove_filter( 'commonsbooking_api_availability_response', $filter, 10 );
+
+		$this->assertSame( array(), $slots );
+		$this->assertEquals( $this->itemId, $received );
 
 		ClockMock::reset();
 	}

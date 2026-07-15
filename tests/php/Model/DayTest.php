@@ -217,6 +217,22 @@ class DayTest extends CustomPostTypeTest {
 		$this->assertEquals( $end, $this->instance->getEndTimestamp() );
 	}
 
+	public function testDayAvailabilityFilterOverridesSlots() {
+		// Default: one slot spanning the whole day.
+		$this->assertCount( 1, $this->instance->getGrid() );
+
+		// The filter can adjust the slots and receives the day instance.
+		$received = null;
+		$filter   = function ( array $slots, $day ) use ( &$received ) {
+			$received = $day;
+			return array(); // remove all availability
+		};
+		add_filter( 'commonsbooking_day_availability', $filter, 10, 2 );
+		$this->assertCount( 0, $this->instance->getGrid() );
+		$this->assertInstanceOf( Day::class, $received );
+		remove_filter( 'commonsbooking_day_availability', $filter, 10 );
+	}
+
 	public function testGetGrid() {
 		// one grid entry spanning whole day
 		$grid = $this->instance->getGrid();

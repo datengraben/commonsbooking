@@ -46,6 +46,26 @@ class ItemsRouteTest extends CB_REST_Route_UnitTestCase {
 		$this->assertNotEmpty( $item->url );
 	}
 
+	public function testApiItemResponseFilter() {
+		// Modify an existing (schema-conforming) field so validation still passes.
+		$received = null;
+		$filter   = function ( $preparedItem, $item ) use ( &$received ) {
+			$received       = $item;
+			$preparedItem->name = 'Filtered Name';
+			return $preparedItem;
+		};
+
+		add_filter( 'commonsbooking_api_item_response', $filter, 10, 2 );
+		$request  = new \WP_REST_Request( 'GET', $this->ENDPOINT );
+		$response = rest_do_request( $request );
+		remove_filter( 'commonsbooking_api_item_response', $filter, 10 );
+
+		$data = $response->get_data();
+		$this->assertEquals( 'Filtered Name', $data->items[0]->name );
+		$this->assertInstanceOf( \WP_Post::class, $received );
+		$this->assertEquals( $this->itemId, $received->ID );
+	}
+
 	public function testItemsIncludesLocations() {
 		$request  = new \WP_REST_Request( 'GET', $this->ENDPOINT );
 		$response = rest_do_request( $request );
@@ -80,5 +100,17 @@ class ItemsRouteTest extends CB_REST_Route_UnitTestCase {
 		$this->assertNotEmpty( $data->items );
 		$this->assertCount( 1, $data->items );
 		$this->assertEquals( (string) $this->itemId, $data->items[0]->id );
+	}
+
+	public function testExcludedIfBoxChecked() {
+		update_post_meta( $this->itemId, COMMONSBOOKING_METABOX_PREFIX . 'api_exclude', 'on' );
+		$request  = new \WP_REST_Request( 'GET', $this->ENDPOINT . '/' . $this->itemId );
+		$response = rest_do_request( $request );
+
+		$this->assertSame( 200, $response->get_status() );
+
+		$data = $response->get_data();
+
+		$this->assertEmpty( $data->items );
 	}
 }

@@ -52,6 +52,27 @@ class TimeframeTest extends CustomPostTypeTest {
 	}
 
 
+	public function testBookableTimeframesFilterOverridesResult() {
+		$sentinel          = array( 'sentinel' );
+		$receivedLocations = null;
+		$receivedItems     = null;
+		$filter            = function ( array $timeframes, array $locations, array $items ) use ( $sentinel, &$receivedLocations, &$receivedItems ) {
+			$receivedLocations = $locations;
+			$receivedItems     = $items;
+			return $sentinel;
+		};
+
+		add_filter( 'commonsbooking_bookable_timeframes', $filter, 10, 3 );
+		$result = Timeframe::getBookable( array( $this->locationId ), array( $this->itemId ) );
+		remove_filter( 'commonsbooking_bookable_timeframes', $filter, 10 );
+
+		// The returned value is exactly what the filter produced.
+		$this->assertSame( $sentinel, $result );
+		// The filter received the location/item scope of the query.
+		$this->assertEquals( array( $this->locationId ), $receivedLocations );
+		$this->assertEquals( array( $this->itemId ), $receivedItems );
+	}
+
 	public function testGetInRange() {
 		$inRangeTimeFrames = Timeframe::getInRange( $this->repetition_start, $this->repetition_end );
 		// All timeframes should be in range

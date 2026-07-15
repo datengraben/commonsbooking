@@ -51,7 +51,10 @@ class ItemsRoute extends BaseRoute {
 
 		$items = Item::get( $args );
 		foreach ( $items as $item ) {
-			$itemdata      = $this->prepare_item_for_response( $item, $request );
+			$itemdata = $this->prepare_item_for_response( $item, $request );
+			if ( $item->getMeta( COMMONSBOOKING_METABOX_PREFIX . 'api_exclude' ) == 'on' ) {
+				continue;
+			}
 			$data->items[] = $itemdata->get_data();
 		}
 
@@ -139,6 +142,20 @@ class ItemsRoute extends BaseRoute {
 				'full'      => wp_get_attachment_image_src( $thumbnailId, 'full' ),
 			];
 		}
+
+		/**
+		 * Filters the CommonsAPI item response object before it is returned.
+		 *
+		 * Lets integrations add or adjust fields exposed for an item. Note that
+		 * added fields must conform to the CommonsAPI JSON schema or validation
+		 * will reject the response.
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param stdClass $preparedItem The prepared item data.
+		 * @param \WP_Post  $item        The source item post.
+		 */
+		$preparedItem = apply_filters( 'commonsbooking_api_item_response', $preparedItem, $item );
 
 		return new WP_REST_Response( $preparedItem );
 	}

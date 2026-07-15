@@ -76,17 +76,24 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 	 * @return bool
 	 */
 	public function canCancel(): bool {
-		if ( $this->isPast() ) {
-			return false;
+		$canCancel = false;
+		if ( ! $this->isPast() ) {
+			$canCancel = intval( $this->post_author ) === get_current_user_id()
+				|| commonsbooking_isCurrentUserAllowedToEdit( $this->post );
 		}
 
-		if ( intval( $this->post_author ) === get_current_user_id() ) {
-			return true;
-		} elseif ( commonsbooking_isCurrentUserAllowedToEdit( $this->post ) ) {
-			return true;
-		} else {
-			return false;
-		}
+		/**
+		 * Filters whether the current user may cancel this booking.
+		 *
+		 * Lets integrations relax or tighten the default cancellation policy
+		 * (e.g. forbid cancelling within a notice period, or allow a custom role).
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param bool    $canCancel Whether cancellation is allowed by default.
+		 * @param Booking $booking   The booking model instance.
+		 */
+		return (bool) apply_filters( 'commonsbooking_can_cancel_booking', $canCancel, $this );
 	}
 
 	/**
@@ -112,6 +119,22 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 		update_post_meta( $this->post->ID, 'cancellation_time', current_time( 'timestamp' ) );
 
 		$this->sendCancellationMail();
+
+		/**
+		 * Fires after a booking has been cancelled.
+		 *
+		 * Because cancellation writes the status directly to the database (to
+		 * preserve meta data) it does not run through WordPress' post status
+		 * transition, so this is the authoritative hook for reacting to a
+		 * cancelled booking, e.g. releasing a smart lock or an external
+		 * calendar slot.
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param int     $booking_id The booking post ID.
+		 * @param Booking $booking    The booking model instance.
+		 */
+		do_action( 'commonsbooking_booking_cancelled', $this->post->ID, $this );
 	}
 
 	/**

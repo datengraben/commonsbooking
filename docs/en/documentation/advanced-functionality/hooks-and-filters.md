@@ -43,6 +43,10 @@ add_action( 'commonsbooking_before_item-single', 'itemsingle_callback' );
   * commonsbooking_before_item-single
   * commonsbooking_after_item-single
   * commonsbooking_mail_sent
+  * [commonsbooking_booking_created](#booking-lifecycle-hooks-since-2-11-0)
+  * [commonsbooking_booking_confirmed](#booking-lifecycle-hooks-since-2-11-0)
+  * [commonsbooking_booking_cancelled](#booking-lifecycle-hooks-since-2-11-0)
+  * [commonsbooking_booking_status_changed](#booking-lifecycle-hooks-since-2-11-0)
 
 ### Hooks in the context of an object (since 2.10.8)
 
@@ -68,6 +72,75 @@ function my_cb_before_booking_single( $booking_id, $booking ) {
 add_action( 'commonsbooking_before_booking-single', 'my_cb_before_booking_single', 10, 2 );
 ```
 
+### Booking lifecycle hooks (since 2.11.0)
+
+These action hooks let you react to the lifecycle of a booking — for example to
+program a smart lock, sync an external calendar, or write an audit log. They fire
+regardless of where the change originated (frontend calendar, admin backend, REST
+API or WP-CLI), because they are dispatched from WordPress' post status
+transition rather than from a single form handler.
+
+Every hook receives the booking post ID and the corresponding
+`\CommonsBooking\Model\Booking` instance (except `..._status_changed`, which also
+passes the old and new status).
+
+  * `commonsbooking_booking_created`
+    * Fires **once** when a booking first enters a real status.
+    * Parameters: `int $booking_id`, `\CommonsBooking\Model\Booking $booking`
+  * `commonsbooking_booking_confirmed`
+    * Fires whenever a booking becomes `confirmed`. This is the recommended hook for integrations that need to react to a booking becoming active.
+    * Parameters: `int $booking_id`, `\CommonsBooking\Model\Booking $booking`
+  * `commonsbooking_booking_cancelled`
+    * Fires when a booking is cancelled.
+    * Parameters: `int $booking_id`, `\CommonsBooking\Model\Booking $booking`
+  * `commonsbooking_booking_status_changed`
+    * Fires on every booking status transition (audit superset of the hooks above). Note: because cancellation writes the status directly to the database, cancellations are best observed via `commonsbooking_booking_cancelled` rather than this hook.
+    * Parameters: `int $booking_id`, `string $old_status`, `string $new_status`, `\CommonsBooking\Model\Booking $booking`
+
+#### Example: trigger a smart lock when a booking is confirmed
+
+```php
+add_action( 'commonsbooking_booking_confirmed', function ( $booking_id, $booking ) {
+    $item     = $booking->getItem();
+    $lockCode = $booking->formattedBookingCode();
+    // hand the code / booking window over to your locking system here …
+    my_locking_system_program( $item->ID, $lockCode, $booking->getStartDate(), $booking->getEndDate() );
+}, 10, 2 );
+```
+
+#### Example: release the lock again when a booking is cancelled
+
+```php
+add_action( 'commonsbooking_booking_cancelled', function ( $booking_id, $booking ) {
+    my_locking_system_revoke( $booking->getItem()->ID, $booking_id );
+}, 10, 2 );
+```
+
+#### No-code automations via Uncanny Automator
+
+If the [Uncanny Automator](https://wordpress.org/plugins/uncanny-automator/) plugin
+is active, CommonsBooking registers an integration with two triggers:
+
+  * **A booking is confirmed** (built on `commonsbooking_booking_confirmed`)
+  * **A booking is cancelled** (built on `commonsbooking_booking_cancelled`)
+
+Both expose the same tokens — booking ID, item, location, start/end, booking
+code, user email, **user phone** and booking URL — so you can route booking
+events to any gateway Automator supports (SMS via Twilio, Slack, Telegram,
+Google Calendar, Mailchimp, a webhook, …) without writing code. The integration
+loads only when Automator is active and adds no overhead otherwise.
+
+**Example — SMS an access code when a booking is confirmed:**
+*Trigger:* CommonsBooking → *A booking is confirmed*.
+*Action:* Twilio → Send SMS, with **To** = `{{CB_BOOKING_USER_PHONE}}` and
+**Body** = "Your booking of {{CB_ITEM_NAME}} at {{CB_LOCATION_NAME}} is confirmed.
+Access code: {{CB_BOOKING_CODE}}".
+
+**Example — alert the team on Slack/SMS when a booking is cancelled:**
+*Trigger:* CommonsBooking → *A booking is cancelled*.
+*Action:* Slack (or Twilio SMS to the team number) — "{{CB_ITEM_NAME}} at
+{{CB_LOCATION_NAME}} just freed up for {{CB_BOOKING_START}}–{{CB_BOOKING_END}}".
+
 ## Filter hooks
 
 Filter hooks (https://developer.wordpress.org/plugins/hooks/filters) work
@@ -77,7 +150,7 @@ receives a value, modifies it, and then returns it.
 ### Overview of all filter hooks
 
   * commonsbooking_custom_metadata
-  * [commonsbooking_isCurrentUserAdmin](../basics/permission-management#filterhook-isCurrentUserAdmin)
+  * [commonsbooking_isUserAdmin](../basics/permission-management#filterhook-isUserAdmin)
   * commonsbooking_isCurrentUserSubscriber
   * commonsbooking_get_template_part
   * commonsbooking_template_tag
@@ -88,6 +161,15 @@ receives a value, modifies it, and then returns it.
   * commonsbooking_mail_body
   * commonsbooking_mail_attachment
   * commonsbooking_disableCache
+  * commonsbooking_gbfs_feeds
+  * commonsbooking_can_cancel_booking
+  * commonsbooking_booking_before_save
+  * commonsbooking_is_timeframe_bookable
+  * commonsbooking_day_availability
+  * commonsbooking_bookable_timeframes
+  * commonsbooking_calendar_data
+  * commonsbooking_api_item_response
+  * commonsbooking_api_availability_response
 
 There are also filter hooks that allow you to add additional user roles
 akin to the CB Manager that can manage items and locations.
@@ -153,6 +235,133 @@ In this example, the item's ID is simply returned.
 add_filter('commonsbooking_tag_cb_item_yourFunction', function( $value, $obj) {
     // $obj is in this case an instance of the class \CommonsBooking\Model\Item, but it can also be another model or WP_Post
     return $obj->ID;
+}, 10, 2);
+```
+
+### Filter `commonsbooking_api_availability_response`
+
+::: tip Since version 2.11.0
+:::
+
+Adjusts the availability slots exposed through the CommonsAPI, e.g. to reflect an
+external booking source. Receives the slots array and the item ID (or `null` for
+all items).
+
+```php
+add_filter('commonsbooking_api_availability_response', function (array $slots, $id): array {
+    // adjust $slots as needed
+    return $slots;
+}, 10, 2);
+```
+
+### Filter `commonsbooking_api_item_response`
+
+::: tip Since version 2.11.0
+:::
+
+Adds or adjusts fields exposed for an item in the CommonsAPI. Receives the
+prepared item object and the source `WP_Post`. Added fields must conform to the
+CommonsAPI JSON schema, otherwise response validation will reject them.
+
+```php
+add_filter('commonsbooking_api_item_response', function ($preparedItem, $item) {
+    $preparedItem->myField = get_post_meta($item->ID, 'my_field', true);
+    return $preparedItem;
+}, 10, 2);
+```
+
+### Filter `commonsbooking_calendar_data`
+
+::: tip Since version 2.11.0
+:::
+
+Adjusts the data array that drives the frontend booking calendar (and its AJAX
+endpoint) before it is rendered or returned as JSON. Receives the calendar data
+and the item and location it is for.
+
+```php
+add_filter('commonsbooking_calendar_data', function (array $calendarData, $item, $location): array {
+    // adjust $calendarData as needed
+    return $calendarData;
+}, 10, 3);
+```
+
+### Filter `commonsbooking_bookable_timeframes`
+
+::: tip Since version 2.11.0
+:::
+
+Restricts or extends which timeframes are offered for booking. Receives the
+timeframes and the location/item IDs the query was scoped to. The element type
+follows the repository's `$returnAsModel` argument (post IDs, `WP_Post` or
+`\CommonsBooking\Model\Timeframe`).
+
+```php
+add_filter('commonsbooking_bookable_timeframes', function (array $timeframes, array $locations, array $items): array {
+    // filter $timeframes as needed
+    return $timeframes;
+}, 10, 3);
+```
+
+### Filter `commonsbooking_day_availability`
+
+::: tip Since version 2.11.0
+:::
+
+Adjusts the bookable slots computed for a single day, e.g. to reflect an external
+availability source. Receives the slots array and the `\CommonsBooking\Model\Day`.
+
+```php
+add_filter('commonsbooking_day_availability', function (array $slots, $day): array {
+    // inspect $day->getDate() and filter $slots as needed
+    return $slots;
+}, 10, 2);
+```
+
+### Filter `commonsbooking_is_timeframe_bookable`
+
+::: tip Since version 2.11.0
+:::
+
+Adds custom booking-window rules on top of the default advance-booking-days check.
+Receives the default decision (`bool`) and the `\CommonsBooking\Model\Timeframe`.
+
+```php
+// Block bookings on the timeframe's item while it is flagged for maintenance.
+add_filter('commonsbooking_is_timeframe_bookable', function (bool $bookable, $timeframe): bool {
+    return $bookable && ! get_post_meta($timeframe->getItem()->ID, 'in_maintenance', true);
+}, 10, 2);
+```
+
+### Filter `commonsbooking_booking_before_save`
+
+::: tip Since version 2.11.0
+:::
+
+Adjusts the post array right before a booking is inserted or updated, e.g. to add
+meta data. Receives the `wp_insert_post()`/`wp_update_post()` array and the
+existing `\CommonsBooking\Model\Booking` (or `null` for a new booking); return the
+modified array.
+
+```php
+add_filter('commonsbooking_booking_before_save', function (array $postarr, $booking): array {
+    $postarr['meta_input']['my_external_ref'] = 'ext-123';
+    return $postarr;
+}, 10, 2);
+```
+
+### Filter `commonsbooking_can_cancel_booking`
+
+::: tip Since version 2.11.0
+:::
+
+Overrides whether the current user may cancel a booking. Receives the default
+decision (`bool`) and the `\CommonsBooking\Model\Booking` instance.
+
+```php
+// Forbid cancelling a booking that starts within the next 24 hours.
+add_filter('commonsbooking_can_cancel_booking', function (bool $canCancel, $booking): bool {
+    return $canCancel && $booking->getStartDate() > time() + DAY_IN_SECONDS;
 }, 10, 2);
 ```
 

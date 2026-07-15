@@ -7,6 +7,7 @@ use CommonsBooking\Tests\Wordpress\CustomPostTypeTest;
 use CommonsBooking\Wordpress\CustomPostType\Item;
 use CommonsBooking\View\Calendar;
 use DateTime;
+use Override;
 use SlopeIt\ClockMock\ClockMock;
 
 /**
@@ -41,6 +42,36 @@ class CalendarTest extends CustomPostTypeTest {
 		$dayKeys  = array_keys( $jsonresponse['days'] );
 		$firstDay = array_shift( $dayKeys );
 		$this->assertTrue( $firstDay == $startDate );
+	}
+
+	public function testCalendarDataFilterAdjustsData() {
+		$startDate = date( 'Y-m-d', strtotime( self::CURRENT_DATE ) );
+
+		$receivedItem     = null;
+		$receivedLocation = null;
+		$filter           = function ( array $calendarData, $item, $location ) use ( &$receivedItem, &$receivedLocation ) {
+			$receivedItem              = $item;
+			$receivedLocation          = $location;
+			$calendarData['injectedByFilter'] = true;
+			return $calendarData;
+		};
+
+		add_filter( 'commonsbooking_calendar_data', $filter, 10, 3 );
+		$jsonresponse = Calendar::getCalendarDataArray(
+			$this->itemId,
+			$this->locationId,
+			$startDate,
+			date( 'Y-m-d', strtotime( '+20 days', strtotime( self::CURRENT_DATE ) ) ),
+			true
+		);
+		remove_filter( 'commonsbooking_calendar_data', $filter, 10 );
+
+		// The filter's change is reflected in the returned data.
+		$this->assertArrayHasKey( 'injectedByFilter', $jsonresponse );
+		$this->assertTrue( $jsonresponse['injectedByFilter'] );
+		// The filter received the item and location the calendar is for.
+		$this->assertEquals( $this->itemId, $receivedItem );
+		$this->assertEquals( $this->locationId, $receivedLocation );
 	}
 
 	public function testAdvancedBookingDays() {
@@ -229,6 +260,7 @@ class CalendarTest extends CustomPostTypeTest {
 	}
 
 	public function testRenderTable() {
+		\CommonsBooking\Wordpress\CustomPostType\Item::registerPostTypeTaxonomy();
 		$calendar = Calendar::renderTable( [] );
 		$item     = new \CommonsBooking\Model\Item( $this->itemId );
 		$location = new \CommonsBooking\Model\Location( $this->locationId );
@@ -241,15 +273,11 @@ class CalendarTest extends CustomPostTypeTest {
 		$taxonomyItem = new \CommonsBooking\Model\Item( $taxonomyItem );
 		$term         = wp_create_term( 'Test Category', Item::getTaxonomyName() );
 		wp_set_post_terms( $taxonomyItem->ID, [ $term['term_id'] ], Item::getTaxonomyName() );
-		$termObj   = get_term_by( 'id', $term['term_id'], Item::getTaxonomyName() );
-		$slug      = $termObj->slug;
-		$timeframe = $this->createTimeframe(
-			$this->locationId,
-			$taxonomyItem->ID,
-			strtotime( '+' . self::timeframeStart . ' days midnight', $this->now ),
-			strtotime( '+' . self::timeframeEnd . ' days midnight', $this->now )
-		);
-		$calendar  = Calendar::renderTable( [ 'itemcat' => $slug ] );
+		$termObj = get_term_by( 'id', $term['term_id'], Item::getTaxonomyName() );
+		$slug    = $termObj->slug;
+		$this->createBookableTimeFrameIncludingCurrentDay( $location->ID, $taxonomyItem->ID );
+		wp_cache_flush(); // for some reason, the tests were failing without this
+		$calendar = Calendar::renderTable( [ 'itemcat' => $slug ] );
 		$this->assertStringContainsString( $taxonomyItem->post_title, $calendar );
 		$this->assertStringNotContainsString( $item->post_title, $calendar );
 
@@ -474,8 +502,9 @@ class CalendarTest extends CustomPostTypeTest {
 	}
 
 	protected function setUp(): void {
-		parent::setUp();
+		ClockMock::freeze( new \DateTime( self::CURRENT_DATE ) );
 
+		parent::setUp();
 		$this->now         = time();
 		$this->timeframeId = $this->createTimeframe(
 			$this->locationId,
@@ -499,5 +528,10 @@ class CalendarTest extends CustomPostTypeTest {
 			strtotime( '+14 days midnight' ),
 			strtotime( '+300 days midnight' )
 		);
+	}
+
+	protected function tearDown(): void {
+		ClockMock::reset();
+		parent::tearDown();
 	}
 }

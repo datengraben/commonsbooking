@@ -37,7 +37,7 @@ class Timeframe extends PostRepository {
 		$minTimestamp = null,
 		array $postStatus = [ 'confirmed', 'unconfirmed', 'publish', 'inherit' ]
 	): array {
-		return self::get(
+		$timeframes = self::get(
 			$locations,
 			$items,
 			[ \CommonsBooking\Wordpress\CustomPostType\Timeframe::BOOKABLE_ID ],
@@ -46,6 +46,21 @@ class Timeframe extends PostRepository {
 			$minTimestamp,
 			$postStatus
 		);
+
+		/**
+		 * Filters the list of bookable timeframes for the given locations and items.
+		 *
+		 * Lets integrations restrict or extend which timeframes are offered for
+		 * booking. The element type follows the $returnAsModel argument (post IDs,
+		 * WP_Post or Model\Timeframe).
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param array $timeframes The bookable timeframes.
+		 * @param array $locations  The location IDs the query was scoped to.
+		 * @param array $items      The item IDs the query was scoped to.
+		 */
+		return apply_filters( 'commonsbooking_bookable_timeframes', $timeframes, $locations, $items );
 	}
 
 	/**
