@@ -763,6 +763,9 @@ class Plugin {
 		// loads the Scheduler
 		add_action( 'init', array( Scheduler::class, 'initHooks' ), 40 );
 
+		// One-click prefill from WP Inventory Manager, if present.
+		add_action( 'admin_init', array( \CommonsBooking\Service\WPInventoryImport::class, 'init' ), 40 );
+
 		// handle the booking forms, needs to happen after taxonomy registration so that we can access the taxonomy
 		add_action( 'init', array( self::class, 'handleBookingForms' ), 50 );
 
