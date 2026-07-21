@@ -2,7 +2,8 @@
   "$schema": "https://playground.wordpress.net/blueprint-schema.json",
   "meta": {
     "title": "CommonsBooking Demo (relative-date sample bookings)",
-    "description": "Boots WordPress with CommonsBooking and generates sample locations, items, timeframes and bookings whose dates are relative offsets from the current time."
+    "description": "Boots WordPress with CommonsBooking and generates sample locations, items, timeframes and bookings whose dates are relative offsets from the current time.",
+    "author": "wielebenwir"
   },
   "landingPage": "/wp-admin/edit.php?post_type=cb_booking",
   "preferredVersions": {
