@@ -1,0 +1,41 @@
+{
+  "$schema": "https://playground.wordpress.net/blueprint-schema.json",
+  "meta": {
+    "title": "CommonsBooking Demo (relative-date sample bookings)",
+    "description": "Boots WordPress with CommonsBooking and generates sample locations, items, timeframes and bookings whose dates are relative offsets from the current time.",
+    "author": "wielebenwir"
+  },
+  "landingPage": "/wp-admin/edit.php?post_type=cb_booking",
+  "preferredVersions": {
+    "php": "8.1",
+    "wp": "6.9"
+  },
+  "login": true,
+  "steps": [
+    {
+      "step": "setSiteOptions",
+      "options": {
+        "blogname": "CommonsBooking Demo",
+        "timezone_string": "Europe/Berlin"
+      }
+    },
+    {
+      "step": "installPlugin",
+      "pluginData": {
+        "resource": "wordpress.org/plugins",
+        "slug": "commonsbooking"
+      },
+      "options": {
+        "activate": true
+      }
+    },
+    {
+      "step": "writeFile",
+      "path": "/wordpress/wp-content/mu-plugins/cb-test-data.php",
+      "data": {
+        "resource": "url",
+        "url": "https://raw.githubusercontent.com/datengraben/commonsbooking/master/playground/test-data.php"
+      }
+    }
+  ]
+}
