@@ -277,6 +277,61 @@ class Booking extends PostRepository {
 	}
 
 	/**
+	 * Counts confirmed bookings whose booking period starts within the given timerange.
+	 *
+	 * The count is based on the booking's start date (repetition-start), so a booking is
+	 * counted for the period in which it takes place, regardless of when it was created.
+	 * Only bookings with post status "confirmed" are counted.
+	 *
+	 * @param int $startDate Start of the timerange (unix timestamp, inclusive).
+	 * @param int $endDate   End of the timerange (unix timestamp, inclusive).
+	 *
+	 * @return int Number of confirmed bookings starting within the timerange.
+	 * @throws Exception
+	 */
+	public static function countBookingsStartingInRange( int $startDate, int $endDate ): int {
+		$args = array(
+			'post_type'   => \CommonsBooking\Wordpress\CustomPostType\Booking::$postType,
+			'meta_query'  => array(
+				'relation' => 'AND',
+				array(
+					'key'     => \CommonsBooking\Model\Timeframe::REPETITION_START,
+					'value'   => $startDate,
+					'compare' => '>=',
+					'type'    => 'numeric',
+				),
+				array(
+					'key'     => \CommonsBooking\Model\Timeframe::REPETITION_START,
+					'value'   => $endDate,
+					'compare' => '<=',
+					'type'    => 'numeric',
+				),
+				array(
+					'key'     => 'type',
+					'value'   => Timeframe::BOOKING_ID,
+					'compare' => '=',
+				),
+			),
+			'post_status' => array( 'confirmed' ),
+			'fields'      => 'ids',
+			'nopaging'    => true,
+		);
+
+		$query = new WP_Query( $args );
+
+		// post_status filtering in the query is not reliable for our custom
+		// statuses, so we re-check it explicitly (see getModelsFromQuery()).
+		$count = 0;
+		foreach ( $query->posts as $postId ) {
+			if ( get_post_status( $postId ) === 'confirmed' ) {
+				$count++;
+			}
+		}
+
+		return $count;
+	}
+
+	/**
 	 * Returns all bookings, allowed to see for user.
 	 *
 	 * @param bool     $asModel if true, returns as Booking array, if false, return int array (defaults to false)

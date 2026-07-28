@@ -1226,6 +1226,57 @@ This item has been booked by {{user:first_name}} {{user:last_name}} ( {{user:use
 				),
 			),
 			/* field group booking end reminder for locations end */
+
+			/* field group periodic booking report */
+			'booking-report' => array(
+				'title'  => commonsbooking_sanitizeHTML( __( 'Periodic booking report', 'commonsbooking' ) ),
+				'id'     => 'booking-report',
+				'desc'   => commonsbooking_sanitizeHTML(
+					__(
+						'You can set here whether a plain-text report with booking numbers should be sent by e-mail on a regular basis. The report contains the number of confirmed bookings (counted by booking start date) for the last 7 days, 30 days and 3 months, each compared to the preceding period. The report is sent around 04:00 in the morning: weekly on Mondays or on the first day of the month.',
+						'commonsbooking'
+					)
+				),
+				'fields' => array(
+					// settings booking report -- activate
+					array(
+						'name' => esc_html__( 'Activate', 'commonsbooking' ),
+						'id'   => 'booking-report-activate',
+						'type' => 'checkbox',
+					),
+					// settings booking report -- interval
+					array(
+						'name'             => esc_html__( 'Interval', 'commonsbooking' ),
+						'id'               => 'booking-report-interval',
+						'desc'             => '<br>' . commonsbooking_sanitizeHTML(
+							__(
+								'Choose how often the report should be sent. Weekly reports are sent on Mondays, monthly reports on the first day of the month.',
+								'commonsbooking'
+							)
+						),
+						'type'             => 'select',
+						'show_option_none' => false,
+						'default'          => 'weekly',
+						'options'          => array(
+							'weekly'  => esc_html__( 'Weekly', 'commonsbooking' ),
+							'monthly' => esc_html__( 'Monthly', 'commonsbooking' ),
+						),
+					),
+					// settings booking report -- recipient
+					array(
+						'name'       => esc_html__( 'Recipient e-mail address', 'commonsbooking' ),
+						'id'         => 'booking-report-recipient',
+						'desc'       => '<br>' . commonsbooking_sanitizeHTML(
+							__(
+								'The e-mail address the report should be sent to. If left empty, the site administration e-mail address is used.',
+								'commonsbooking'
+							)
+						),
+						'type'       => 'text_email',
+					),
+				),
+			),
+			/* field group periodic booking report end */
 		),
 		/* field group container end */
 	),
