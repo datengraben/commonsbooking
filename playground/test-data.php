@@ -6,9 +6,11 @@
  *              time, so the demo always looks "current" no matter when the
  *              WordPress Playground session is booted.
  *
- * This file is dropped into wp-content/mu-plugins/ by playground/blueprint.json
- * (via a `writeFile` step) and therefore runs on every request inside a fully
- * booted WordPress — no `runPHP` step and no static WXR import required.
+ * playground/blueprint.json fetches this file by URL and drops it into
+ * wp-content/mu-plugins/ (via a `writeFile` step with a `url` resource), so it
+ * runs on every request inside a fully booted WordPress — no `runPHP` step and
+ * no static WXR import required. This file is the single source of truth; the
+ * blueprint references it rather than embedding a copy.
  *
  * A one-shot guard option makes generation run exactly once per fresh Playground
  * instance. Because Playground rebuilds a clean site (and re-applies the

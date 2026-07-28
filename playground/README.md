@@ -30,11 +30,11 @@ the generated bookings. The site front page (`Book an item`) shows the
    so `current_time()` offsets resolve in the intended zone (`Europe/Berlin`).
 4. **`installPlugin`** — installs & activates CommonsBooking from the
    [wordpress.org plugin directory](https://wordpress.org/plugins/commonsbooking/).
-5. **`writeFile`** — drops `generate-demo-data.php` into `wp-content/mu-plugins/`.
+5. **`writeFile`** — fetches [`test-data.php`](test-data.php) by URL and drops it into `wp-content/mu-plugins/`.
 
 ## The data generator
 
-[`generate-demo-data.php`](generate-demo-data.php) is a must-use plugin, so it runs
+[`test-data.php`](test-data.php) is a must-use plugin, so it runs
 inside a **fully booted WordPress request** — no `runPHP` step and no static WXR
 import. On the first request after boot it:
 
@@ -49,15 +49,10 @@ A one-shot option guard makes generation run once per instance; because Playgrou
 rebuilds a clean site on every session, the data is **regenerated fresh each
 session** with dates relative to that moment.
 
-`blueprint.json` embeds a copy of `generate-demo-data.php` in its `writeFile` step,
-so the blueprint is fully self-contained. **`generate-demo-data.php` is the source
-of truth** — after editing it, re-embed with:
-
-```sh
-cd playground
-jq --rawfile php generate-demo-data.php '.steps[2].data = $php' blueprint.json \
-  > blueprint.tmp && mv blueprint.tmp blueprint.json
-```
+`blueprint.json` references this file by URL in its `writeFile` step (a `url`
+resource), so `test-data.php` is the single source of truth — just edit it, no
+re-embedding needed. The URL points at `master`, so it resolves once this is
+merged (before then, test against the file on the development branch).
 
 ## Scope / roadmap
 
