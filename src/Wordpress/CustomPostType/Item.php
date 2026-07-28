@@ -282,12 +282,16 @@ class Item extends CustomPostType {
 			);
 
 			// checkbox if item should be excluded from API shares
+			// only shown when the API is globally activated in the settings
 			$cmb->add_field(
 				array(
 					'name' => esc_html__( 'Exclude from API', 'commonsbooking' ),
 					'desc' => esc_html__( 'When this box is checked, the item will not appear in any of the API shares.', 'commonsbooking' ),
 					'id' => COMMONSBOOKING_METABOX_PREFIX . 'api_exclude',
 					'type' => 'checkbox',
+					'show_on_cb' => function () {
+						return Settings::getOption( 'commonsbooking_options_api', 'api-activated' ) === 'on';
+					},
 				)
 			);
 		}
