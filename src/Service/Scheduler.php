@@ -188,6 +188,18 @@ class Scheduler {
 			'today midnight +3 hour'
 		);
 
+		// Init periodic booking report job.
+		// Runs daily at 04:00; the report itself is only sent on the configured
+		// interval (weekly/monthly), see BookingReport::sendReport().
+		new Scheduler(
+			'booking_report',
+			array( \CommonsBooking\Service\BookingReport::class, 'sendReport' ),
+			'daily',
+			'today midnight +4 hour',
+			array( 'commonsbooking_options_reminder', 'booking-report-activate' ),
+			'update_option_commonsbooking_options_reminder'
+		);
+
 		// Init timeframe export job
 		$exportPath     = Settings::getOption( 'commonsbooking_options_export', 'export-filepath' );
 		$exportInterval = Settings::getOption( 'commonsbooking_options_export', 'export-interval' );
