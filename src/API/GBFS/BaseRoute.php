@@ -5,6 +5,7 @@ namespace CommonsBooking\API\GBFS;
 
 use CommonsBooking\Repository\Location;
 use CommonsBooking\Repository\PostRepository;
+use CommonsBooking\Wordpress\CustomPostType\MetaField;
 use Exception;
 use stdClass;
 use WP_REST_Request;
@@ -54,7 +55,7 @@ class BaseRoute extends \CommonsBooking\API\BaseRoute {
 		$items = static::getRepository()::get();
 
 		foreach ( $items as $item ) {
-			if ( $item->getMeta( COMMONSBOOKING_METABOX_PREFIX . 'api_exclude' ) == 'on' ) {
+			if ( $item->getMeta( MetaField::ItemApiExclude->getFieldId() ) == 'on' ) {
 				continue;
 			}
 			try {

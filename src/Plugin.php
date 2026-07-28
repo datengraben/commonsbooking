@@ -5,6 +5,7 @@ namespace CommonsBooking;
 
 use CommonsBooking\CB\CB1UserFields;
 use CommonsBooking\Exception\BookingDeniedException;
+use CommonsBooking\Helper\Feature;
 use CommonsBooking\Helper\Wordpress;
 use CommonsBooking\Map\LocationMapAdmin;
 use CommonsBooking\Map\SearchShortcode;
@@ -904,8 +905,7 @@ class Plugin {
 	 */
 	public function initRoutes() {
 		// Check if API is activated in settings
-		$api_activated = Settings::getOption( 'commonsbooking_options_api', 'api-activated' );
-		if ( $api_activated != 'on' ) {
+		if ( ! Feature::isApiEnabled() ) {
 			return false;
 		}
 

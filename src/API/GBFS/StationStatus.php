@@ -5,6 +5,7 @@ namespace CommonsBooking\API\GBFS;
 
 use CommonsBooking\Model\Location;
 use CommonsBooking\Repository\Item;
+use CommonsBooking\Wordpress\CustomPostType\MetaField;
 use stdClass;
 use WP_REST_Response;
 
@@ -35,7 +36,7 @@ class StationStatus extends BaseRoute {
 		$availableItems = count(
 			array_filter(
 				Item::getByLocation( $location->ID, true ),
-				fn( $item ) => $item->isCurrentlyFreeAtLocation( $location->ID, true ) && $item->getMeta( COMMONSBOOKING_METABOX_PREFIX . 'api_exclude' ) != 'on'
+				fn( $item ) => $item->isCurrentlyFreeAtLocation( $location->ID, true ) && $item->getMeta( MetaField::ItemApiExclude->getFieldId() ) != 'on'
 			)
 		);
 
