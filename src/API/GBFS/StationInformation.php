@@ -35,10 +35,10 @@ class StationInformation extends BaseRoute {
 	 */
 	public function prepare_item_for_response( $item, $request ): WP_REST_Response {
 		$preparedItem                   = new stdClass();
-		$preparedItem->station_id       = $item->ID . '';
+		$preparedItem->station_id       = strval( $item->ID );
 		$preparedItem->name             = [
 			(object) [
-				'text' => $item->post_title,
+				'text' => $this->decodeApiTitle( $item->post_title ),
 				'language' => get_bloginfo( 'language' ),
 			],
 		];

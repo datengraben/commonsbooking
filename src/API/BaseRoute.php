@@ -179,6 +179,21 @@ class BaseRoute extends WP_REST_Controller {
 	}
 
 	/**
+	 * Decodes HTML entities in a post title for API output.
+	 *
+	 * WordPress stores post titles with encoded entities (e.g. "A&amp;B").
+	 * Since the API returns plain text values that consumers render as text,
+	 * we decode them so they receive "A&B" instead of "A&amp;B".
+	 *
+	 * @param string $title
+	 *
+	 * @return string
+	 */
+	protected function decodeApiTitle( string $title ): string {
+		return html_entity_decode( $title, ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5, 'UTF-8' );
+	}
+
+	/**
 	 * Returns true if current request is allowed.
 	 *
 	 * @return bool
@@ -187,7 +202,16 @@ class BaseRoute extends WP_REST_Controller {
 		$isApiActive            = Settings::getOption( 'commonsbooking_options_api', 'api-activated' );
 		$anonymousAccessAllowed = Settings::getOption( 'commonsbooking_options_api', 'apikey_not_required' );
 		$apiKey                 = array_key_exists( self::API_KEY_PARAM, $_REQUEST ) ? sanitize_text_field( $_REQUEST[ self::API_KEY_PARAM ] ) : false;
-		$apiShare               = ApiShares::getByKey( $apiKey );
+		if ( ! $apiKey ) {
+			// get apikey from headers (#2251)
+			if ( function_exists( 'getallheaders' ) ) {
+				$allHeaders = array_change_key_case( getallheaders(), CASE_LOWER );
+				$apiKey     = array_key_exists( self::API_KEY_PARAM, $allHeaders ) ? sanitize_text_field( $allHeaders[ self::API_KEY_PARAM ] ) : false;
+			} else {
+				$apiKey = array_key_exists( 'HTTP_' . strtoupper( self::API_KEY_PARAM ), $_SERVER ) ? sanitize_text_field( $_SERVER[ 'HTTP_' . strtoupper( self::API_KEY_PARAM ) ] ) : false;
+			}
+		}
+		$apiShare = ApiShares::getByKey( $apiKey );
 
 		// Only if api is active we return something
 		if ( $isApiActive ) {

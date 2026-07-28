@@ -51,7 +51,10 @@ class ItemsRoute extends BaseRoute {
 
 		$items = Item::get( $args );
 		foreach ( $items as $item ) {
-			$itemdata      = $this->prepare_item_for_response( $item, $request );
+			$itemdata = $this->prepare_item_for_response( $item, $request );
+			if ( $item->getMeta( COMMONSBOOKING_METABOX_PREFIX . 'api_exclude' ) == 'on' ) {
+				continue;
+			}
 			$data->items[] = $itemdata->get_data();
 		}
 
@@ -123,7 +126,7 @@ class ItemsRoute extends BaseRoute {
 	public function prepare_item_for_response( $item, $request ): WP_REST_Response {
 		$preparedItem              = new stdClass();
 		$preparedItem->id          = $item->ID . '';
-		$preparedItem->name        = $item->post_title;
+		$preparedItem->name        = $this->decodeApiTitle( $item->post_title );
 		$preparedItem->url         = get_permalink( $item->ID );
 		$preparedItem->description = $this->escapeJsonString( $item->post_content );
 		$preparedItem->ownerId     = '';  // not implemented, but currently required by schema

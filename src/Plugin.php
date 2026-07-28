@@ -384,7 +384,7 @@ class Plugin {
 				esc_html__( 'Item Categories', 'commonsbooking' ),
 				esc_html__( 'Item Categories', 'commonsbooking' ),
 				'manage_' . COMMONSBOOKING_PLUGIN_SLUG,
-				admin_url( 'edit-tags.php' ) . '?taxonomy=' . Item::getTaxonomyName(),
+				admin_url( 'edit-tags.php' ) . '?taxonomy=' . Item::getTaxonomyName() . '&post_type=' . Item::getPostType(),
 				''
 			);
 
@@ -394,7 +394,7 @@ class Plugin {
 				esc_html__( 'Location Categories', 'commonsbooking' ),
 				esc_html__( 'Location Categories', 'commonsbooking' ),
 				'manage_' . COMMONSBOOKING_PLUGIN_SLUG,
-				admin_url( 'edit-tags.php' ) . '?taxonomy=' . Location::getTaxonomyName(),
+				admin_url( 'edit-tags.php' ) . '?taxonomy=' . Location::getTaxonomyName() . '&post_type=' . Location::getPostType(),
 				''
 			);
 
@@ -831,6 +831,9 @@ class Plugin {
 
 		// iCal rewrite
 		iCalendar::initRewrite();
+
+		// permalink resolution rewrite
+		\CommonsBooking\Repository\Item::initRewrite();
 	}
 
 	/**
@@ -918,6 +921,9 @@ class Plugin {
 					new \CommonsBooking\API\GBFS\Discovery(),
 					new \CommonsBooking\API\GBFS\StationInformation(),
 					new \CommonsBooking\API\GBFS\StationStatus(),
+					new \CommonsBooking\API\GBFS\VehicleAvailability(),
+					new \CommonsBooking\API\GBFS\VehicleStatus(),
+					new \CommonsBooking\API\GBFS\VehicleTypes(),
 					new \CommonsBooking\API\GBFS\SystemInformation(),
 
 				];
