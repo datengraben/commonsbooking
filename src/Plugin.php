@@ -5,6 +5,7 @@ namespace CommonsBooking;
 
 use CommonsBooking\CB\CB1UserFields;
 use CommonsBooking\Exception\BookingDeniedException;
+use CommonsBooking\Helper\Feature;
 use CommonsBooking\Helper\Wordpress;
 use CommonsBooking\Map\LocationMapAdmin;
 use CommonsBooking\Map\SearchShortcode;
@@ -384,7 +385,7 @@ class Plugin {
 				esc_html__( 'Item Categories', 'commonsbooking' ),
 				esc_html__( 'Item Categories', 'commonsbooking' ),
 				'manage_' . COMMONSBOOKING_PLUGIN_SLUG,
-				admin_url( 'edit-tags.php' ) . '?taxonomy=' . Item::getTaxonomyName(),
+				admin_url( 'edit-tags.php' ) . '?taxonomy=' . Item::getTaxonomyName() . '&post_type=' . Item::getPostType(),
 				''
 			);
 
@@ -394,7 +395,7 @@ class Plugin {
 				esc_html__( 'Location Categories', 'commonsbooking' ),
 				esc_html__( 'Location Categories', 'commonsbooking' ),
 				'manage_' . COMMONSBOOKING_PLUGIN_SLUG,
-				admin_url( 'edit-tags.php' ) . '?taxonomy=' . Location::getTaxonomyName(),
+				admin_url( 'edit-tags.php' ) . '?taxonomy=' . Location::getTaxonomyName() . '&post_type=' . Location::getPostType(),
 				''
 			);
 
@@ -831,6 +832,9 @@ class Plugin {
 
 		// iCal rewrite
 		iCalendar::initRewrite();
+
+		// permalink resolution rewrite
+		\CommonsBooking\Repository\Item::initRewrite();
 	}
 
 	/**
@@ -901,26 +905,45 @@ class Plugin {
 	 */
 	public function initRoutes() {
 		// Check if API is activated in settings
-		$api_activated = Settings::getOption( 'commonsbooking_options_api', 'api-activated' );
-		if ( $api_activated != 'on' ) {
+		if ( ! Feature::isApiEnabled() ) {
 			return false;
 		}
 
 		add_action(
 			'rest_api_init',
 			function () {
-				$routes = [
-					new \CommonsBooking\API\AvailabilityRoute(),
-					new \CommonsBooking\API\ItemsRoute(),
-					new \CommonsBooking\API\LocationsRoute(),
-					// new \CommonsBooking\API\OwnersRoute(),
-					new \CommonsBooking\API\ProjectsRoute(),
-					new \CommonsBooking\API\GBFS\Discovery(),
-					new \CommonsBooking\API\GBFS\StationInformation(),
-					new \CommonsBooking\API\GBFS\StationStatus(),
-					new \CommonsBooking\API\GBFS\SystemInformation(),
+				$routes = [];
 
-				];
+				// Commons API routes
+				if ( Feature::isCommonsApiEnabled() ) {
+					$routes = array_merge(
+						$routes,
+						[
+							new \CommonsBooking\API\AvailabilityRoute(),
+							new \CommonsBooking\API\ItemsRoute(),
+							new \CommonsBooking\API\LocationsRoute(),
+							// new \CommonsBooking\API\OwnersRoute(),
+							new \CommonsBooking\API\ProjectsRoute(),
+						]
+					);
+				}
+
+				// GBFS API routes
+				if ( Feature::isGbfsEnabled() ) {
+					$routes = array_merge(
+						$routes,
+						[
+							new \CommonsBooking\API\GBFS\Discovery(),
+							new \CommonsBooking\API\GBFS\StationInformation(),
+							new \CommonsBooking\API\GBFS\StationStatus(),
+							new \CommonsBooking\API\GBFS\VehicleAvailability(),
+							new \CommonsBooking\API\GBFS\VehicleStatus(),
+							new \CommonsBooking\API\GBFS\VehicleTypes(),
+							new \CommonsBooking\API\GBFS\SystemInformation(),
+						]
+					);
+				}
+
 				foreach ( $routes as $route ) {
 					$route->register_routes();
 				}

@@ -2,6 +2,7 @@
 
 namespace CommonsBooking\Wordpress\CustomPostType;
 
+use CommonsBooking\Helper\Feature;
 use CommonsBooking\Repository\UserRepository;
 use CommonsBooking\Settings\Settings;
 
@@ -278,6 +279,20 @@ class Item extends CustomPostType {
 					'id'         => COMMONSBOOKING_METABOX_PREFIX . 'item_maintainer_email',
 					'type'       => 'text',
 					'show_on_cb' => 'cmb2_hide_if_no_cats', // function should return a bool value
+				)
+			);
+
+			// checkbox if item should be excluded from API shares
+			// only shown when the API is globally activated in the settings
+			$cmb->add_field(
+				array(
+					'name' => esc_html__( 'Exclude from API', 'commonsbooking' ),
+					'desc' => esc_html__( 'When this box is checked, the item will not appear in any of the API shares.', 'commonsbooking' ),
+					'id' => MetaField::ItemApiExclude->getFieldId(),
+					'type' => 'checkbox',
+					'show_on_cb' => function () {
+						return Feature::isApiEnabled();
+					},
 				)
 			);
 		}

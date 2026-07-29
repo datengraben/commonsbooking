@@ -1451,6 +1451,18 @@ This item has been booked by {{user:first_name}} {{user:last_name}} ( {{user:use
 						'id'   => 'apikey_not_required',
 						'type' => 'checkbox',
 					),
+					array(
+						'name' => esc_html__( 'Disable Commons API', 'commonsbooking' ),
+						'desc' => commonsbooking_sanitizeHTML( __( 'If selected, the Commons API endpoints (availability, items, locations, projects) are not registered, while the rest of the API stays active.', 'commonsbooking' ) ),
+						'id'   => 'commons-api-disabled',
+						'type' => 'checkbox',
+					),
+					array(
+						'name' => esc_html__( 'Disable GBFS API', 'commonsbooking' ),
+						'desc' => commonsbooking_sanitizeHTML( __( 'If selected, the GBFS API endpoints (gbfs.json, station and vehicle feeds) are not registered, while the rest of the API stays active.', 'commonsbooking' ) ),
+						'id'   => 'gbfs-api-disabled',
+						'type' => 'checkbox',
+					),
 
 					array(
 						// Repeatable group -> API Shares
