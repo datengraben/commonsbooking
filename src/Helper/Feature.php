@@ -25,6 +25,36 @@ class Feature {
 	}
 
 	/**
+	 * Whether the Commons API endpoints (availability, items, locations,
+	 * projects) should be registered.
+	 *
+	 * Requires the API to be globally enabled and the Commons API not to be
+	 * explicitly disabled. The disable flag is opt-out, so an unset value
+	 * (e.g. on installations that predate the flag) keeps the endpoints active.
+	 *
+	 * @return bool
+	 */
+	public static function isCommonsApiEnabled(): bool {
+		return self::isApiEnabled()
+			&& Settings::getOption( 'commonsbooking_options_api', 'commons-api-disabled' ) !== 'on';
+	}
+
+	/**
+	 * Whether the GBFS API endpoints (gbfs.json, station and vehicle feeds)
+	 * should be registered.
+	 *
+	 * Requires the API to be globally enabled and the GBFS API not to be
+	 * explicitly disabled. The disable flag is opt-out, so an unset value
+	 * (e.g. on installations that predate the flag) keeps the endpoints active.
+	 *
+	 * @return bool
+	 */
+	public static function isGbfsEnabled(): bool {
+		return self::isApiEnabled()
+			&& Settings::getOption( 'commonsbooking_options_api', 'gbfs-api-disabled' ) !== 'on';
+	}
+
+	/**
 	 * Whether the API may be accessed without a valid API key.
 	 *
 	 * @return bool

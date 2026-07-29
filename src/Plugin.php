@@ -912,21 +912,38 @@ class Plugin {
 		add_action(
 			'rest_api_init',
 			function () {
-				$routes = [
-					new \CommonsBooking\API\AvailabilityRoute(),
-					new \CommonsBooking\API\ItemsRoute(),
-					new \CommonsBooking\API\LocationsRoute(),
-					// new \CommonsBooking\API\OwnersRoute(),
-					new \CommonsBooking\API\ProjectsRoute(),
-					new \CommonsBooking\API\GBFS\Discovery(),
-					new \CommonsBooking\API\GBFS\StationInformation(),
-					new \CommonsBooking\API\GBFS\StationStatus(),
-					new \CommonsBooking\API\GBFS\VehicleAvailability(),
-					new \CommonsBooking\API\GBFS\VehicleStatus(),
-					new \CommonsBooking\API\GBFS\VehicleTypes(),
-					new \CommonsBooking\API\GBFS\SystemInformation(),
+				$routes = [];
 
-				];
+				// Commons API routes
+				if ( Feature::isCommonsApiEnabled() ) {
+					$routes = array_merge(
+						$routes,
+						[
+							new \CommonsBooking\API\AvailabilityRoute(),
+							new \CommonsBooking\API\ItemsRoute(),
+							new \CommonsBooking\API\LocationsRoute(),
+							// new \CommonsBooking\API\OwnersRoute(),
+							new \CommonsBooking\API\ProjectsRoute(),
+						]
+					);
+				}
+
+				// GBFS API routes
+				if ( Feature::isGbfsEnabled() ) {
+					$routes = array_merge(
+						$routes,
+						[
+							new \CommonsBooking\API\GBFS\Discovery(),
+							new \CommonsBooking\API\GBFS\StationInformation(),
+							new \CommonsBooking\API\GBFS\StationStatus(),
+							new \CommonsBooking\API\GBFS\VehicleAvailability(),
+							new \CommonsBooking\API\GBFS\VehicleStatus(),
+							new \CommonsBooking\API\GBFS\VehicleTypes(),
+							new \CommonsBooking\API\GBFS\SystemInformation(),
+						]
+					);
+				}
+
 				foreach ( $routes as $route ) {
 					$route->register_routes();
 				}
