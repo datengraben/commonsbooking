@@ -2,6 +2,8 @@
 
 namespace CommonsBooking\View;
 
+use CommonsBooking\Service\GBFSDiscoveryCheck;
+
 /**
  * The dashboard that can be seen in the WordPress Backend under CommonsBooking
  */
@@ -102,5 +104,108 @@ class Dashboard extends View {
 		} else {
 			return false;
 		}
+	}
+
+	/**
+	 * Renders the GBFS directory-listing panel: whether this instance's GBFS
+	 * auto-discovery feed is listed in public mobility-data directories.
+	 *
+	 * Handles the on-demand "Check now" reload (a nonce-protected link back to
+	 * the dashboard) before rendering, and shows the cached result plus the time
+	 * it was last checked.
+	 *
+	 * @return string
+	 */
+	public static function renderGBFSDiscovery(): string {
+		$capability = 'manage_' . COMMONSBOOKING_PLUGIN_SLUG;
+
+		// Handle on-demand re-check triggered by the "Check now" link.
+		if (
+			isset( $_GET['cb_gbfs_recheck'], $_GET['cb_gbfs_nonce'] ) &&
+			current_user_can( $capability ) &&
+			wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['cb_gbfs_nonce'] ) ), 'cb_gbfs_recheck' )
+		) {
+			GBFSDiscoveryCheck::refresh();
+		}
+
+		$status = GBFSDiscoveryCheck::getStatus();
+
+		$recheckUrl = wp_nonce_url(
+			add_query_arg( 'cb_gbfs_recheck', '1', admin_url( 'admin.php?page=cb-dashboard' ) ),
+			'cb_gbfs_recheck',
+			'cb_gbfs_nonce'
+		);
+		$checkButton = '<a href="' . esc_url( $recheckUrl ) . '" class="button">' . esc_html__( 'Check now', 'commonsbooking' ) . '</a>';
+
+		$html  = '<div class="cb_welcome-panel-column" style="width:100%;">';
+		$html .= '<h3>' . esc_html__( 'GBFS directory listing', 'commonsbooking' ) . '</h3>';
+
+		if ( null === $status ) {
+			$html .= '<p>' . esc_html__( 'Your GBFS feed has not been checked yet.', 'commonsbooking' ) . '</p>';
+			$html .= '<p>' . $checkButton . '</p>';
+			$html .= '</div>';
+			return $html;
+		}
+
+		$html .= '<p>' . sprintf(
+			/* translators: %s: e.g. "1/3" */
+			esc_html__( 'Listed in %s directories:', 'commonsbooking' ),
+			'<strong>' . esc_html( $status['summary'] ) . '</strong>'
+		) . '</p>';
+
+		$html .= '<ul>';
+		foreach ( $status['sources'] as $source ) {
+			$html .= '<li style="margin-bottom:6px;">' . self::renderGBFSSourceRow( $source ) . '</li>';
+		}
+		$html .= '</ul>';
+
+		$lastChecked = ! empty( $status['last_checked'] )
+			? (string) wp_date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $status['last_checked'] )
+			: esc_html__( 'never', 'commonsbooking' );
+		$html .= '<p><small>' . sprintf(
+			/* translators: %s: date and time of last check */
+			esc_html__( 'Last checked: %s', 'commonsbooking' ),
+			esc_html( $lastChecked )
+		) . '</small></p>';
+
+		$html .= '<p>' . $checkButton . '</p>';
+		$html .= '</div>';
+
+		return $html;
+	}
+
+	/**
+	 * Renders a single source row (icon + label + status) for the GBFS panel.
+	 *
+	 * @param array $source
+	 *
+	 * @return string
+	 */
+	private static function renderGBFSSourceRow( array $source ): string {
+		switch ( $source['status'] ) {
+			case 'included':
+				$icon  = '<span class="dashicons dashicons-yes-alt" style="color:#67b32a;"></span> ';
+				$state = esc_html__( 'listed', 'commonsbooking' );
+				break;
+			case 'not_included':
+				$icon  = '<span class="dashicons dashicons-marker" style="color:#d63638;"></span> ';
+				$state = esc_html__( 'not listed', 'commonsbooking' );
+				break;
+			case 'manual':
+				$icon  = '<span class="dashicons dashicons-external"></span> ';
+				$state = esc_html__( 'check manually', 'commonsbooking' );
+				break;
+			default:
+				$icon  = '<span class="dashicons dashicons-warning" style="color:#dba617;"></span> ';
+				$state = esc_html__( 'unknown', 'commonsbooking' );
+				break;
+		}
+
+		$label = esc_html( $source['label'] );
+		if ( ! empty( $source['link'] ) ) {
+			$label = '<a href="' . esc_url( $source['link'] ) . '" target="_blank" rel="noopener">' . $label . '</a>';
+		}
+
+		return $icon . $label . ' — ' . $state;
 	}
 }

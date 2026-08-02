@@ -180,6 +180,14 @@ class Scheduler {
 			'update_option_commonsbooking_options_reminder'
 		);
 
+		// Init GBFS discovery-listing check job
+		new Scheduler(
+			'gbfs_discovery_check',
+			array( \CommonsBooking\Service\GBFSDiscoveryCheck::class, 'refresh' ),
+			'daily',
+			'today midnight +5 hour'
+		);
+
 		// Init email booking codes job
 		new Scheduler(
 			'email_bookingcodes',

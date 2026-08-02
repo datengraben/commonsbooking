@@ -95,4 +95,11 @@
 
 		</div>
 	</div>
+	<div id="cb_welcome-panel" class="cb_welcome-panel">
+		<div class="cb_welcome-panel-content">
+			<div class="cb_welcome-panel-column-container">
+				<?php echo commonsbooking_sanitizeHTML( CommonsBooking\View\Dashboard::renderGBFSDiscovery() ); ?>
+			</div>
+		</div>
+	</div>
 </div>
