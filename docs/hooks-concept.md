@@ -326,6 +326,151 @@ CommonsBooking UX extension surface
 
 ---
 
+## 5. How the use cases and layers intertwine
+
+The tree in §4 reads each use case *in isolation*. In practice the use cases are
+not parallel lanes — they **share seams**. The value of a hook often comes
+precisely from the fact that two use cases meet at it. The graphs below make the
+overlaps explicit.
+
+> The diagrams use Mermaid and render directly on GitHub and in most Markdown
+> viewers.
+
+### 5.1 The overlap graph — where use cases meet
+
+Each rounded node is a **seam**: a shared concern that more than one use case
+touches. When two use cases connect to the same seam, they *overlap there*. The
+seam's label names the layer it lives in, so you can see the layers threading
+through the overlaps.
+
+```mermaid
+flowchart TB
+  classDef uc fill:#1f6feb,stroke:#0b3d91,color:#fff;
+  classDef seam fill:#fff3cd,stroke:#b8860b,color:#5b4500;
+
+  UC1["UC-1 · Discover &amp; browse"]:::uc
+  UC2["UC-2 · Availability &amp; book"]:::uc
+  UC3["UC-3 · Booking lifecycle"]:::uc
+  UC4["UC-4 · Communicate"]:::uc
+  UC5["UC-5 · Present &amp; theme"]:::uc
+  UC6["UC-6 · Govern access"]:::uc
+  UC7["UC-7 · Integrate"]:::uc
+
+  TPL(["Template &amp; tag system · L3"]):::seam
+  TF(["Timeframe hub · L1/L2"]):::seam
+  STATE(["Booking-state seam · L1→L2"]):::seam
+  ROLE(["Role gate · L4"]):::seam
+  DATA(["Cache &amp; metadata · L1"]):::seam
+  MSG(["Message &amp; language · L2/L5"]):::seam
+
+  UC1 --- TPL
+  UC2 --- TPL
+  UC3 --- TPL
+  UC5 --- TPL
+
+  UC1 --- TF
+  UC2 --- TF
+  UC3 --- TF
+  UC7 --- TF
+
+  UC3 --- STATE
+  UC4 --- STATE
+
+  UC1 --- ROLE
+  UC2 --- ROLE
+  UC3 --- ROLE
+  UC6 --- ROLE
+
+  UC1 --- DATA
+  UC2 --- DATA
+  UC7 --- DATA
+
+  UC4 --- MSG
+  UC7 --- MSG
+```
+
+**How to read the overlaps.** Two use cases sharing a seam is the intertwining:
+
+| Seam (shared concern) | Use cases that meet here | The overlap, in words |
+|---|---|---|
+| Template & tag system · L3 | UC-1, UC-2, UC-3, **UC-5** | UC-5 *is* the seam — every rendered surface (browse cards, calendar, booking notice) flows through `get_template_part` / `template_tag` / `tag_{key}_{property}`. |
+| Timeframe hub · L1/L2 | UC-1, UC-2, UC-3, UC-7 | An "available now" badge (UC-1), the calendar (UC-2), a booking's slot (UC-3) and the API's availability (UC-7) are all *the same timeframe*, read differently. |
+| Booking-state seam · L1→L2 | UC-3, UC-4 | The tightest seam: a state change (confirm/cancel/hold) is *simultaneously* a lifecycle event and the trigger for a message. |
+| Role gate · L4 | UC-1, UC-2, UC-3, UC-6 | UC-6 is the cross-cut — the role check decides whether the discover view, the book action and the manage tools even appear. |
+| Cache & metadata · L1 | UC-1, UC-2, UC-7 | Custom metadata added for display is the same field the listings, the calendar and the API all read. |
+| Message & language · L2/L5 | UC-4, UC-7 | Email content (UC-4) and its per-recipient language / iCal (UC-7, WPML) are one pipeline. |
+
+### 5.2 The convergent layered graph — threads meeting inside the layers
+
+The same picture, turned on its side: use cases enter at the top and **thread
+down through the layers**, converging on shared hook nodes. Where multiple
+arrows arrive at one node, the use cases intertwine at that hook.
+
+```mermaid
+flowchart TB
+  classDef uc fill:#1f6feb,stroke:#0b3d91,color:#fff;
+  classDef node fill:#eef6ff,stroke:#4c8dff,color:#083b7a;
+
+  UC1(UC-1):::uc
+  UC2(UC-2):::uc
+  UC3(UC-3):::uc
+  UC4(UC-4):::uc
+  UC5(UC-5):::uc
+  UC6(UC-6):::uc
+  UC7(UC-7):::uc
+
+  subgraph L3[L3 · Presentation]
+    TPL["template &amp; tag system"]:::node
+    CAL["calendar + headers"]:::node
+    SINGLE["before/after *-single"]:::node
+  end
+  subgraph L2[L2 · Service]
+    SLOTS["bookable_slots ◻"]:::node
+    STATE["booking_state_changed ◻"]:::node
+    MAIL["mail_* hooks ✔"]:::node
+  end
+  subgraph L1[L1 · Data]
+    QUERY["booking_filter / query ✔◻"]:::node
+    CACHE["cache · custom_metadata ✔"]:::node
+  end
+  subgraph L4[L4 · Access]
+    ROLE["role checks / can_book ✔◻"]:::node
+  end
+  subgraph L5[L5 · Integration]
+    API["api responses ◻"]:::node
+    LANG["email language ✔"]:::node
+  end
+
+  UC1 --> TPL & CAL & QUERY & CACHE & ROLE
+  UC2 --> CAL & TPL & SLOTS & CACHE & ROLE
+  UC3 --> SINGLE & TPL & STATE & QUERY & ROLE
+  UC4 --> STATE & MAIL & LANG
+  UC5 --> TPL & SINGLE
+  UC6 --> ROLE
+  UC7 --> QUERY & CACHE & SLOTS & API & LANG
+```
+
+Nodes with the most incoming arrows are the **load-bearing seams**: the template
+& tag system (L3), the role gate (L4), and the booking-state / query pair
+(L1↔L2). These are the places where a single hook customization ripples across
+several use cases at once — powerful to hook, and the ones to touch most
+carefully.
+
+### 5.3 What the intertwining means for an extender
+
+- **Hook a seam, move several use cases.** Overriding `tag_{key}_{property}` (L3)
+  re-labels a field in the browse card *and* the booking page *and* the calendar
+  header — because UC-1, UC-3 and UC-5 share that seam. One change, consistent
+  everywhere.
+- **Respect the tightest seam.** The booking-state → message seam (UC-3↔UC-4)
+  means anything you do on cancellation is felt by the mailer. React on the
+  *state* seam, not in two disconnected places.
+- **Keep cross-cuts honest.** The role gate (UC-6) and the cache/metadata seam
+  (UC-7) touch almost everything; a change there is never local. Verify it
+  against every use case that shares the seam before shipping.
+
+---
+
 ## Appendix A — Existing hooks, by layer (quick index)
 
 **L1 Data:** `commonsbooking_custom_metadata`, `commonsbooking_booking_filter`,
