@@ -9,6 +9,7 @@
 /changelog/
 /node_modules/
 /tests/
+/tools/
 /docs/
 /vendor/
 composer.*

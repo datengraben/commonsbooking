@@ -98,8 +98,11 @@
       "include_root_autoload": true
     },
     "changelogger": {
-      "changelog": "CHANGELOG.md",
+      "changelog": "readme.txt",
       "changes-dir": "changelog",
+      "formatter": {
+        "filename": "tools/changelogger/class-readme-changelog-formatter.php"
+      },
       "types": {
         "added": "Added",
         "enhanced": "Enhanced",
