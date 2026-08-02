@@ -6,6 +6,7 @@
 *.sh
 /bin/
 /build/
+/changelog/
 /node_modules/
 /tests/
 /docs/

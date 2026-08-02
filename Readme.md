@@ -63,6 +63,8 @@ Contributions are welcome either through
 * Improving or translating the documentation at https://commonsbooking.org
 * or through developing and testing new versions of the application (see [Development](#development))
 
+When you contribute code, please add a changelog entry describing your change. We use the [Jetpack Changelogger](https://github.com/Automattic/jetpack/tree/trunk/projects/packages/changelogger) CLI tool, which stores each entry as its own file in the `changelog/` directory so that pull requests don't conflict on a shared changelog. After installing the dev dependencies (`composer install`), run `composer changelog:add` and answer the prompts (significance and one of the `added`, `enhanced`, `fixed` or `updated` types). Commit the generated file together with your change. Maintainers collect these entries into `CHANGELOG.md` on release via `composer changelog:write`.
+
 ## Development
 
 ### Prerequisites
