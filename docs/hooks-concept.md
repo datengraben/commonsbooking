@@ -333,8 +333,8 @@ not parallel lanes — they **share seams**. The value of a hook often comes
 precisely from the fact that two use cases meet at it. The graphs below make the
 overlaps explicit.
 
-> The diagrams use Mermaid and render directly on GitHub and in most Markdown
-> viewers.
+> The rendered graphs are embedded below as images; the Mermaid source that
+> generated each is kept in a collapsible block beneath it for maintenance.
 
 ### 5.1 The overlap graph — where use cases meet
 
@@ -342,6 +342,11 @@ Each rounded node is a **seam**: a shared concern that more than one use case
 touches. When two use cases connect to the same seam, they *overlap there*. The
 seam's label names the layer it lives in, so you can see the layers threading
 through the overlaps.
+
+![Overlap graph: the seven use cases (top row) connected to the six shared seams (bottom row). Use cases wired to the same seam overlap there.](img/hooks-overlap-graph.png)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
 
 ```mermaid
 flowchart TB
@@ -389,6 +394,8 @@ flowchart TB
   UC7 --- MSG
 ```
 
+</details>
+
 **How to read the overlaps.** Two use cases sharing a seam is the intertwining:
 
 | Seam (shared concern) | Use cases that meet here | The overlap, in words |
@@ -405,6 +412,11 @@ flowchart TB
 The same picture, turned on its side: use cases enter at the top and **thread
 down through the layers**, converging on shared hook nodes. Where multiple
 arrows arrive at one node, the use cases intertwine at that hook.
+
+![Convergent layered graph: use cases at the top thread down into hook nodes grouped by the five layers (L1–L5); nodes with the most incoming arrows are the load-bearing seams.](img/hooks-layered-graph.png)
+
+<details>
+<summary>Diagram source (Mermaid)</summary>
 
 ```mermaid
 flowchart TB
@@ -449,6 +461,8 @@ flowchart TB
   UC6 --> ROLE
   UC7 --> QUERY & CACHE & SLOTS & API & LANG
 ```
+
+</details>
 
 Nodes with the most incoming arrows are the **load-bearing seams**: the template
 & tag system (L3), the role gate (L4), and the booking-state / query pair
