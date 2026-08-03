@@ -65,6 +65,23 @@ Contributions are welcome either through
 
 When you contribute code, please add a changelog entry describing your change. We use the [Jetpack Changelogger](https://github.com/Automattic/jetpack/tree/trunk/projects/packages/changelogger) CLI tool, which stores each entry as its own file in the `changelog/` directory so that pull requests don't conflict on a shared changelog. After installing the dev dependencies (`composer install`), run `composer changelog:add` and answer the prompts (significance and one of the `added`, `enhanced`, `fixed` or `updated` types). Commit the generated file together with your change. When cutting a release, maintainers run `composer changelog:write`, which compiles the pending entries into the `## Changelog` section of `readme.txt` (a small custom formatter in `tools/changelogger/` keeps the plugin's existing changelog format).
 
+#### Adding a changelog entry from the browser
+
+You don't need a local checkout: `composer changelog:add` only writes a small text file, and you can create that file yourself through GitHub's *Add file → Create new file*. On your branch, add a file under `changelog/` with any short slug as its name (no extension, and it must not start with a dot), for example `changelog/fix-map-crash`:
+
+```
+Significance: patch
+Type: fixed
+
+Map no longer crashes when a location has no coordinates
+```
+
+- `Significance` is `patch`, `minor` or `major` and decides the version bump.
+- `Type` is one of `added`, `enhanced`, `fixed` or `updated`.
+- Add a blank line, then your description. Use one file per change; several files in a single pull request are fine.
+
+Please put these instructions in the pull request rather than a README inside `changelog/`: the release step treats every non-dotfile in that directory as a changelog entry.
+
 ## Development
 
 ### Prerequisites
