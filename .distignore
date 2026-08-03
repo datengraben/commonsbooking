@@ -6,8 +6,10 @@
 *.sh
 /bin/
 /build/
+/changelog/
 /node_modules/
 /tests/
+/tools/
 /docs/
 /vendor/
 composer.*

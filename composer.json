@@ -68,7 +68,8 @@
     "phpstan/extension-installer": "^1.4",
     "ext-libxml": "*",
     "ext-dom": "*",
-    "phpbench/phpbench": "^1.4"
+    "phpbench/phpbench": "^1.4",
+    "automattic/jetpack-changelogger": "^6.0"
   },
   "scripts": {
     "post-install-cmd": [
@@ -81,14 +82,34 @@
       "sh -c 'test -f ./bin/strauss.phar || curl -o bin/strauss.phar -L -C - https://github.com/BrianHenryIE/strauss/releases/download/0.26.5/strauss.phar'",
       "@php bin/strauss.phar --info",
       "@composer dump-autoload"
-    ]
+    ],
+    "changelog:add": "changelogger add",
+    "changelog:validate": "changelogger validate",
+    "changelog:write": "changelogger write"
   },
   "scripts-descriptions": {
-    "prefix-namespaces": "Copy the required dependencies to vendor-prefixed and edit the PHP namespaces to begin with CommonsBooking."
+    "prefix-namespaces": "Copy the required dependencies to vendor-prefixed and edit the PHP namespaces to begin with CommonsBooking.",
+    "changelog:add": "Add a changelog entry for your change (creates a file in the changelog/ directory).",
+    "changelog:validate": "Validate the pending changelog entries in the changelog/ directory.",
+    "changelog:write": "Compile the pending changelog entries into CHANGELOG.md when cutting a release."
   },
   "extra": {
     "strauss": {
       "include_root_autoload": true
+    },
+    "changelogger": {
+      "changelog": "readme.txt",
+      "changes-dir": "changelog",
+      "formatter": {
+        "filename": "tools/changelogger/class-readme-changelog-formatter.php"
+      },
+      "types": {
+        "added": "Added",
+        "enhanced": "Enhanced",
+        "fixed": "Fixed",
+        "updated": "Updated"
+      },
+      "versioning": "semver"
     }
   }
 }

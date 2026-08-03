@@ -8,6 +8,8 @@ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https:
     <exclude-pattern>assets/</exclude-pattern>
 	<exclude-pattern>vendor/</exclude-pattern>
 	<exclude-pattern>node_modules/</exclude-pattern>
+	<!-- Development tooling (e.g. the changelogger formatter) is not shipped and follows the upstream tool's conventions. -->
+	<exclude-pattern>tools/</exclude-pattern>
 
 	<!-- How to scan -->
 	<!-- Usage instructions: https://github.com/squizlabs/PHP_CodeSniffer/wiki/Usage -->
