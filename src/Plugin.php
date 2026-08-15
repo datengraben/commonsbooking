@@ -57,6 +57,9 @@ class Plugin {
 		// Init booking codes table
 		BookingCodes::initBookingCodesTable();
 
+		// Show a one-time getting-started notice after activation.
+		update_option( 'commonsbooking_show_welcome_notice', 1 );
+
 		self::clearCache();
 	}
 
@@ -336,6 +339,68 @@ class Plugin {
 			BookingRuleApplied::validateRules();
 			set_transient( 'commonsbooking_options_saved', 0 );
 		}
+
+		self::handleWelcomeNoticeDismiss();
+	}
+
+	/**
+	 * Removes the one-time welcome notice when the user dismisses it or opens the dashboard.
+	 *
+	 * The native `is-dismissible` control only hides the notice for the current page view,
+	 * so we persist the dismissal here: either via the nonced dismiss link or once the
+	 * user has reached the CommonsBooking dashboard (e.g. through the "Get started" button).
+	 *
+	 * @return void
+	 */
+	public static function handleWelcomeNoticeDismiss() {
+		if ( ! get_option( 'commonsbooking_show_welcome_notice' ) ) {
+			return;
+		}
+
+		// Explicit dismissal via the nonced link in the notice.
+		if ( isset( $_GET['cb-dismiss-welcome'], $_GET['_wpnonce'] ) ) {
+			$nonce = sanitize_key( wp_unslash( $_GET['_wpnonce'] ) );
+			if ( wp_verify_nonce( $nonce, 'cb_dismiss_welcome' ) ) {
+				delete_option( 'commonsbooking_show_welcome_notice' );
+				wp_safe_redirect( remove_query_arg( array( 'cb-dismiss-welcome', '_wpnonce' ) ) );
+				exit;
+			}
+		}
+
+		// Reaching the dashboard counts as having started, so retire the notice.
+		if ( isset( $_GET['page'] ) && 'cb-dashboard' === sanitize_key( wp_unslash( $_GET['page'] ) ) ) {
+			delete_option( 'commonsbooking_show_welcome_notice' );
+		}
+	}
+
+	/**
+	 * Renders the one-time getting-started notice shown right after plugin activation.
+	 *
+	 * @return void
+	 */
+	public static function maybeShowWelcomeNotice() {
+		if ( ! get_option( 'commonsbooking_show_welcome_notice' ) ) {
+			return;
+		}
+
+		if ( ! current_user_can( 'manage_' . COMMONSBOOKING_PLUGIN_SLUG ) ) {
+			return;
+		}
+
+		$dashboard_url = admin_url( 'admin.php?page=cb-dashboard' );
+		$docs_url      = 'https://commonsbooking.org/documentation/first-steps/';
+		$dismiss_url   = wp_nonce_url( add_query_arg( 'cb-dismiss-welcome', 1 ), 'cb_dismiss_welcome' );
+
+		$message  = '<strong>' . esc_html__( 'Welcome to CommonsBooking!', 'commonsbooking' ) . '</strong> ';
+		$message .= esc_html__( 'Set up your first bookable item in a few steps.', 'commonsbooking' );
+		$message .= '</p><p>';
+		$message .= '<a class="button button-primary" href="' . esc_url( $dashboard_url ) . '">' . esc_html__( 'Get started', 'commonsbooking' ) . '</a> ';
+		$message .= '<a class="button" href="' . esc_url( $docs_url ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Documentation', 'commonsbooking' ) . '</a> ';
+		$message .= '<a href="' . esc_url( $dismiss_url ) . '" style="margin-left:8px;">' . esc_html__( 'Dismiss', 'commonsbooking' ) . '</a>';
+
+		echo '<div class="notice notice-info is-dismissible"><p>';
+		echo commonsbooking_sanitizeHTML( $message );
+		echo '</p></div>';
 	}
 
 	/**
@@ -768,6 +833,9 @@ class Plugin {
 
 		// admin init tasks
 		add_action( 'admin_init', array( self::class, 'admin_init' ), 30 );
+
+		// one-time getting-started notice after activation
+		add_action( 'admin_notices', array( self::class, 'maybeShowWelcomeNotice' ) );
 
 		// Add menu pages
 		add_action( 'admin_menu', array( self::class, 'addMenuPages' ) );

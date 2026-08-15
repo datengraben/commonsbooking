@@ -11,7 +11,23 @@
 					<img src="<?php echo plugin_dir_url( __DIR__ ) . 'assets/global/cb-ci/logo.png'; ?>" style="width:200px">
 				</div><!-- .cb_welcome-panel-column -->
 				<div class="cb_welcome-panel-column">
-				<p></p>
+					<h3><?php echo esc_html__( 'Getting started in 3 steps', 'commonsbooking' ); ?></h3>
+					<ol>
+						<li>
+							<a href="post-new.php?post_type=cb_item"><span class="dashicons dashicons-carrot"></span> <?php echo esc_html__( 'Create an Item', 'commonsbooking' ); ?></a>
+							(<a href="https://commonsbooking.org/documentation/first-steps/create-item/" target="_blank"><?php echo esc_html__( 'guide', 'commonsbooking' ); ?></a>)
+						</li>
+						<li>
+							<a href="post-new.php?post_type=cb_location"><span class="dashicons dashicons-store"></span> <?php echo esc_html__( 'Create a Location', 'commonsbooking' ); ?></a>
+							(<a href="https://commonsbooking.org/documentation/first-steps/create-location/" target="_blank"><?php echo esc_html__( 'guide', 'commonsbooking' ); ?></a>)
+						</li>
+						<li>
+							<a href="post-new.php?post_type=cb_timeframe"><span class="dashicons dashicons-calendar-alt"></span> <?php echo esc_html__( 'Create a Timeframe', 'commonsbooking' ); ?></a>
+							<?php echo esc_html__( '— assign the item and location and set availability.', 'commonsbooking' ); ?>
+							(<a href="https://commonsbooking.org/documentation/first-steps/booking-timeframes-manage/" target="_blank"><?php echo esc_html__( 'guide', 'commonsbooking' ); ?></a>)
+						</li>
+					</ol>
+					<p><a href="https://commonsbooking.org/documentation/first-steps/" target="_blank"><?php echo esc_html__( 'Read the full first-steps guide', 'commonsbooking' ); ?></a></p>
 				</div><!-- .cb_welcome-panel-column -->
 				<div class="cb_welcome-panel-column cb_welcome-panel-last">
 					<h3><?php echo esc_html__( 'Support', 'commonsbooking' ); ?></h3>
