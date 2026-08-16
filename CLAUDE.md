@@ -90,3 +90,17 @@ that don't pass. See `TECHNICAL.md`.
   with tests; for a bug, a test that fails before the fix and passes after is
   ideal.
 - **CI runs the full suite** on every pull request and must pass before merge.
+
+## What not to do
+
+- **Don't trust user input.** Always sanitize input and escape output
+  (WordPress `sanitize_*`, `esc_*`); booking forms and admin fields are
+  attack surface.
+- **Don't hardcode user-facing text.** Wrap it for translation so the plugin
+  stays localizable.
+- **Don't break existing data or bookings.** Be careful with database changes;
+  many live sites hold real booking data.
+- **Don't bypass the checks.** Don't silence PHPCS/PHPStan or skip tests to get
+  a green build — fix the underlying issue.
+- **Don't reinvent WordPress.** Use the platform's hooks, APIs, and helpers
+  instead of working around them.
