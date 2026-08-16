@@ -472,7 +472,50 @@ class Plugin {
 				'cb-mass-operations',
 				array( MassOperations::class, 'index' )
 			);
+
+			// Add menu item linking to the settings page (registered under Settings > General options)
+			add_submenu_page(
+				'cb-dashboard',
+				esc_html__( 'Settings', 'commonsbooking' ),
+				esc_html__( 'Settings', 'commonsbooking' ),
+				'manage_' . COMMONSBOOKING_PLUGIN_SLUG,
+				'options-general.php?page=commonsbooking_options',
+				''
+			);
 		}
+	}
+
+	/**
+	 * Adds a "Settings" action link to the plugin's row on the Plugins list page.
+	 *
+	 * @param array $links existing action links
+	 *
+	 * @return array
+	 */
+	public static function addPluginActionLinks( array $links ): array {
+		$settings_link = '<a href="' . esc_url( admin_url( 'options-general.php?page=commonsbooking_options' ) ) . '">' . esc_html__( 'Settings', 'commonsbooking' ) . '</a>';
+		array_unshift( $links, $settings_link );
+
+		return $links;
+	}
+
+	/**
+	 * Adds Documentation and Support links to the plugin's meta row on the Plugins list page.
+	 *
+	 * @param array  $links existing meta links
+	 * @param string $file  plugin file the row belongs to
+	 *
+	 * @return array
+	 */
+	public static function addPluginRowMeta( array $links, string $file ): array {
+		if ( COMMONSBOOKING_PLUGIN_BASE !== $file ) {
+			return $links;
+		}
+
+		$links[] = '<a href="' . esc_url( 'https://commonsbooking.org/documentation' ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Documentation', 'commonsbooking' ) . '</a>';
+		$links[] = '<a href="' . esc_url( 'https://commonsbooking.org/contact/' ) . '" target="_blank" rel="noopener noreferrer">' . esc_html__( 'Support', 'commonsbooking' ) . '</a>';
+
+		return $links;
 	}
 
 	/**
@@ -837,6 +880,10 @@ class Plugin {
 		// one-time getting-started notice after activation
 		add_action( 'admin_notices', array( self::class, 'maybeShowWelcomeNotice' ) );
 
+		// Add Settings / Documentation / Support links to the plugin row on the Plugins list page
+		add_filter( 'plugin_action_links_' . COMMONSBOOKING_PLUGIN_BASE, array( self::class, 'addPluginActionLinks' ) );
+		add_filter( 'plugin_row_meta', array( self::class, 'addPluginRowMeta' ), 10, 2 );
+
 		// Add menu pages
 		add_action( 'admin_menu', array( self::class, 'addMenuPages' ) );
 
@@ -1027,6 +1074,11 @@ class Plugin {
 					return 'cb-dashboard';
 				}
 			}
+		}
+
+		// Keep the CommonsBooking menu highlighted when the settings page is opened from it
+		if ( 'settings_page_commonsbooking_options' === $current_screen->base ) {
+			return 'cb-dashboard';
 		}
 
 		// Set 'cb-dashboard' as parent for cb categories
