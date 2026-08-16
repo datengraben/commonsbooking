@@ -80,3 +80,13 @@ that don't pass. See `TECHNICAL.md`.
   listed in `.git-blame-ignore-revs`.
 - **Don't commit broken work.** Tests and static analysis should pass before
   you commit.
+
+## Testing
+
+- **PHP unit tests** live in `tests/php/` (PHPUnit). Run `php vendor/bin/phpunit`.
+- **End-to-end tests** live in `tests/cypress/` and run against a local
+  WordPress (`npm run env:start`, then `npm run cypress:run`).
+- **Add tests with behaviour changes.** New features and bug fixes should come
+  with tests; for a bug, a test that fails before the fix and passes after is
+  ideal.
+- **CI runs the full suite** on every pull request and must pass before merge.
