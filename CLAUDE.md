@@ -10,6 +10,25 @@ CommonsBooking is a WordPress plugin for managing and booking shared common
 goods (e.g. cargo bikes, tools). PHP 8.1+, namespaced under `CommonsBooking\`
 (PSR-4, `src/`).
 
+## Philosophy
+
+> Maintainers: edit this freely. These are the values we want contributions
+> to respect, in plain words.
+
+- **Real communities depend on this.** People use CommonsBooking to share
+  bikes and tools every day. Bookings and their data must stay reliable;
+  don't break existing sites or lose user data.
+- **We are guests on WordPress.** The plugin runs inside other people's
+  WordPress installs, alongside other plugins. Follow WordPress conventions
+  (hooks/filters, translations, escaping/sanitizing, coding standards) and
+  stay compatible with the WordPress and PHP versions we support. Don't fight
+  the platform.
+- **Small, understandable changes.** Prefer changes a maintainer can read and
+  review in one sitting. Understand the existing code before changing it.
+- **Ask when unsure.** Maintainers have little time and mixed technical
+  backgrounds. When a change involves a real trade-off or is hard to reverse,
+  pause and ask rather than guessing.
+
 ## Repository layout
 
 ```
