@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📚 Documentation & tutorials
+    url: https://commonsbooking.org/documentation
+    about: Learn how to set up and use CommonsBooking.
+  - name: 💬 Support portal & FAQ
+    url: https://support.commonsbooking.org
+    about: Answers to common questions and setup help.
+  - name: ✉️ Contact & newsletter
+    url: https://commonsbooking.org/contact/
+    about: Get in touch with the team for general support questions.
