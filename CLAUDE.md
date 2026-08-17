@@ -104,3 +104,14 @@ that don't pass. See `TECHNICAL.md`.
   a green build — fix the underlying issue.
 - **Don't reinvent WordPress.** Use the platform's hooks, APIs, and helpers
   instead of working around them.
+
+## Self-review checklist
+
+Before opening a pull request, check that:
+
+- [ ] The change does one thing and the commits are clean.
+- [ ] `phpcbf` has been run and PHPCS/PHPStan pass.
+- [ ] Tests pass, and behaviour changes come with tests.
+- [ ] User input is sanitized and output is escaped.
+- [ ] User-facing text is wrapped for translation.
+- [ ] Existing bookings and data are not put at risk.
