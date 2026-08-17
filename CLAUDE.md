@@ -74,7 +74,8 @@ that don't pass. See `TECHNICAL.md`.
 - **One idea per commit.** Each commit should be a single, coherent change
   that a reviewer can understand on its own.
 - **Write a clear message.** Say *why* the change is needed, not just what
-  changed.
+  changed. A short area prefix helps, e.g. `booking: Fix off-by-one in
+  availability range.`
 - **Keep commits clean.** Run `phpcbf` first so code-style fixes don't clutter
   the diff. Cosmetic, repo-wide reformatting goes in its own commit and is
   listed in `.git-blame-ignore-revs`.
