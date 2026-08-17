@@ -96,10 +96,6 @@ that don't pass. See `TECHNICAL.md`.
 - **Don't trust user input.** Always sanitize input and escape output
   (WordPress `sanitize_*`, `esc_*`); booking forms and admin fields are
   attack surface.
-- **Don't hardcode user-facing text.** Wrap it for translation so the plugin
-  stays localizable.
-- **Don't break existing data or bookings.** Be careful with database changes;
-  many live sites hold real booking data.
 - **Don't bypass the checks.** Don't silence PHPCS/PHPStan or skip tests to get
   a green build — fix the underlying issue.
 - **Don't reinvent WordPress.** Use the platform's hooks, APIs, and helpers
@@ -114,4 +110,4 @@ Before opening a pull request, check that:
 - [ ] Tests pass, and behaviour changes come with tests.
 - [ ] User input is sanitized and output is escaped.
 - [ ] User-facing text is wrapped for translation.
-- [ ] Existing bookings and data are not put at risk.
+- [ ] Existing bookings and data are not put at risk (mind database changes).
