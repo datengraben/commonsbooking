@@ -138,3 +138,28 @@ User in der Rolle von Administrator*innen sehen hier alle Buchungen.
   * Import in digitalen Kalender über [iCalendar](../manage-bookings/icalendar-feed)-Format möglich
 
 ![](/img/shortcode-cb-bookings.png)
+
+## Buchungsempfehlungen ("Erneut buchen")
+
+Zeigt dem eingeloggten Nutzenden persönliche Empfehlungen an:
+
+  * **Erneut buchen**: Artikel, die der Nutzende bereits gebucht hat und die im
+    gewählten Zeitfenster aktuell frei sind.
+  * **Schon probiert …**: Artikel, die eine Kategorie mit den bisher gebuchten
+    Artikeln teilen und im selben Zeitfenster frei sind.
+
+Für nicht eingeloggte Nutzende oder wenn es nichts zu empfehlen gibt, gibt der
+Shortcode nichts aus.
+
+  * Shortcode: `[cb_book_again]`
+  * Parameter:
+    * `window`: Zu prüfendes Zeitfenster. Einer der Werte `today`, `tomorrow`
+      oder `week` (rollierende 7 Tage). Standard ist `week`.
+
+      Beispiel:
+      ```
+      [cb_book_again window=today]
+      ```
+    * `max`: Maximale Anzahl der Artikel pro Abschnitt (Standard `6`).
+    * `book-again`: Mit `no` wird der Abschnitt "Erneut buchen" ausgeblendet.
+    * `similar`: Mit `no` wird der Abschnitt "Schon probiert …" ausgeblendet.
