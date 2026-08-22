@@ -3,16 +3,27 @@
 namespace CommonsBooking\Repository;
 
 use CommonsBooking\Model\Timeframe;
-use CommonsBooking\Wordpress\CustomPostType\Timeframe as TimeframeCPT;
 use CommonsBooking\Wordpress\CustomPostType\Booking as BookingCPT;
+use CommonsBooking\Wordpress\CustomPostType\Timeframe as TimeframeCPT;
 
+/**
+ * Index of the timeframes that affect availability, kept in sync with the
+ * cb_timeframe / cb_booking posts.
+ *
+ * Timeframes store their locations and items as serialized meta arrays, which can
+ * only be queried with LIKE '%:"ID";%' scans. This index holds the same relations
+ * in two junction tables so they can be resolved with indexed integer joins.
+ */
 class AvailabilityIndex {
 
 	public static string $indexTable     = 'cb_availability_index';
 	public static string $locationsTable = 'cb_timeframe_locations';
 	public static string $itemsTable     = 'cb_timeframe_items';
 
-	private const ALLOWED_TYPES = [
+	/**
+	 * Timeframe types that make a slot un-/bookable. Everything else is not indexed.
+	 */
+	public const INDEXED_TYPES = [
 		TimeframeCPT::BOOKABLE_ID,
 		TimeframeCPT::HOLIDAYS_ID,
 		TimeframeCPT::OFF_HOLIDAYS_ID,
@@ -20,187 +31,158 @@ class AvailabilityIndex {
 		TimeframeCPT::BOOKING_ID,
 	];
 
-	private const SKIP_STATUSES = [ 'auto-draft', 'trash' ];
+	/**
+	 * Post statuses that count towards availability. Drafts, trashed timeframes and
+	 * canceled bookings are kept out of the index entirely.
+	 */
+	public const INDEXED_STATUSES = [ 'publish', 'confirmed', 'unconfirmed' ];
 
 	/**
-	 * Creates the three index tables if they do not yet exist.
-	 * Safe to call multiple times (uses dbDelta).
+	 * The post types held in the index.
+	 *
+	 * @return string[]
+	 */
+	public static function getIndexedPostTypes(): array {
+		return [ TimeframeCPT::$postType, BookingCPT::$postType ];
+	}
+
+	/**
+	 * Creates the index tables. Safe to call repeatedly (uses dbDelta).
 	 */
 	public static function initTables(): void {
 		global $wpdb;
-		$charset_collate = $wpdb->get_charset_collate();
 
+		$charsetCollate = $wpdb->get_charset_collate();
 		$indexTable     = $wpdb->prefix . self::$indexTable;
 		$locationsTable = $wpdb->prefix . self::$locationsTable;
 		$itemsTable     = $wpdb->prefix . self::$itemsTable;
 
 		$sql = "CREATE TABLE $indexTable (
-    id           BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    timeframe_id BIGINT(20) UNSIGNED NOT NULL,
-    type         TINYINT(3) UNSIGNED NOT NULL,
-    start_date   DATE NOT NULL,
-    end_date     DATE DEFAULT NULL,
-    post_status  VARCHAR(20) NOT NULL DEFAULT 'publish',
-    PRIMARY KEY (id),
-    UNIQUE KEY uk_timeframe_id (timeframe_id),
-    KEY idx_type_date (type, start_date, end_date),
-    KEY idx_date_range (start_date, end_date)
-) $charset_collate;
-CREATE TABLE $locationsTable (
-    timeframe_id BIGINT(20) UNSIGNED NOT NULL,
-    location_id  BIGINT(20) UNSIGNED NOT NULL,
-    PRIMARY KEY (timeframe_id, location_id),
-    KEY idx_location_id (location_id)
-) $charset_collate;
-CREATE TABLE $itemsTable (
-    timeframe_id BIGINT(20) UNSIGNED NOT NULL,
-    item_id      BIGINT(20) UNSIGNED NOT NULL,
-    PRIMARY KEY (timeframe_id, item_id),
-    KEY idx_item_id (item_id)
-) $charset_collate;";
+			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+			timeframe_id bigint(20) unsigned NOT NULL,
+			type tinyint(3) unsigned NOT NULL,
+			start_date date NOT NULL,
+			end_date date DEFAULT NULL,
+			post_status varchar(20) NOT NULL DEFAULT 'publish',
+			PRIMARY KEY (id),
+			UNIQUE KEY timeframe_id (timeframe_id),
+			KEY type_date (type, start_date, end_date),
+			KEY date_range (start_date, end_date)
+		) $charsetCollate;
+		CREATE TABLE $locationsTable (
+			timeframe_id bigint(20) unsigned NOT NULL,
+			location_id bigint(20) unsigned NOT NULL,
+			PRIMARY KEY (timeframe_id, location_id),
+			KEY location_id (location_id)
+		) $charsetCollate;
+		CREATE TABLE $itemsTable (
+			timeframe_id bigint(20) unsigned NOT NULL,
+			item_id bigint(20) unsigned NOT NULL,
+			PRIMARY KEY (timeframe_id, item_id),
+			KEY item_id (item_id)
+		) $charsetCollate;";
 
+		// Include dbDelta since it's not part of autoloaded modules
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql );
-
-		add_option( 'cb_availability_index_db_version', '1.0' );
 	}
 
 	/**
-	 * Inserts or replaces all three index rows for a timeframe.
-	 * Silently removes the timeframe from the index when it does not qualify
-	 * (wrong type, trashed status, missing location/item assignments).
+	 * Writes a timeframe and its location/item relations into the index, replacing any
+	 * previous entry. Timeframes that no longer qualify are removed instead.
 	 */
 	public static function upsertTimeframe( Timeframe $timeframe ): void {
-		$type = $timeframe->getType();
+		global $wpdb;
 
-		if ( ! in_array( $type, self::ALLOWED_TYPES, true ) ) {
-			self::deleteByTimeframeId( $timeframe->ID );
-			return;
-		}
-
-		if ( in_array( $timeframe->post_status, self::SKIP_STATUSES, true ) ) {
-			self::deleteByTimeframeId( $timeframe->ID );
-			return;
-		}
-
+		$type        = $timeframe->getType();
+		$startDate   = $timeframe->getStartDate();
 		$locationIds = $timeframe->getLocationIDs();
 		$itemIds     = $timeframe->getItemIDs();
 
-		if ( empty( $locationIds ) || empty( $itemIds ) ) {
-			self::deleteByTimeframeId( $timeframe->ID );
+		self::deleteByTimeframeId( $timeframe->ID );
+
+		if (
+			! in_array( $type, self::INDEXED_TYPES, true ) ||
+			! in_array( $timeframe->post_status, self::INDEXED_STATUSES, true ) ||
+			! $startDate || ! $locationIds || ! $itemIds
+		) {
 			return;
 		}
 
-		$rawStart = $timeframe->getStartDate();
-		if ( ! $rawStart ) {
-			self::deleteByTimeframeId( $timeframe->ID );
-			return;
-		}
+		$endDate = $timeframe->getRawEndDate();
 
-		$startDate = date( 'Y-m-d', $rawStart );
-		$rawEnd    = $timeframe->getRawEndDate();
-		$endDate   = $rawEnd ? date( 'Y-m-d', $rawEnd ) : null;
+		$wpdb->insert(
+			$wpdb->prefix . self::$indexTable,
+			array(
+				'timeframe_id' => $timeframe->ID,
+				'type'         => $type,
+				'start_date'   => date( 'Y-m-d', $startDate ),
+				'end_date'     => $endDate ? date( 'Y-m-d', $endDate ) : null,
+				'post_status'  => $timeframe->post_status,
+			)
+		);
 
-		global $wpdb;
-		$indexTable     = $wpdb->prefix . self::$indexTable;
-		$locationsTable = $wpdb->prefix . self::$locationsTable;
-		$itemsTable     = $wpdb->prefix . self::$itemsTable;
-
-		$wpdb->query( 'START TRANSACTION' );
-
-		try {
-			// Delete-then-reinsert inside the transaction for atomicity
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->delete( $indexTable, [ 'timeframe_id' => $timeframe->ID ], [ '%d' ] );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->delete( $locationsTable, [ 'timeframe_id' => $timeframe->ID ], [ '%d' ] );
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$wpdb->delete( $itemsTable, [ 'timeframe_id' => $timeframe->ID ], [ '%d' ] );
-
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-			$result = $wpdb->insert(
-				$indexTable,
-				[
-					'timeframe_id' => $timeframe->ID,
-					'type'         => $type,
-					'start_date'   => $startDate,
-					'end_date'     => $endDate,
-					'post_status'  => $timeframe->post_status,
-				],
-				[ '%d', '%d', '%s', '%s', '%s' ]
-			);
-
-			if ( $result === false ) {
-				throw new \RuntimeException( "Failed to insert timeframe {$timeframe->ID} into availability index" );
-			}
-
-			// Bulk-insert location junction rows
-			$locPlaceholders = implode( ', ', array_fill( 0, count( $locationIds ), '(%d, %d)' ) );
-			$locValues       = [];
-			foreach ( $locationIds as $locationId ) {
-				$locValues[] = $timeframe->ID;
-				$locValues[] = (int) $locationId;
-			}
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$locationsTable} (timeframe_id, location_id) VALUES {$locPlaceholders}", ...$locValues ) );
-
-			// Bulk-insert item junction rows
-			$itemPlaceholders = implode( ', ', array_fill( 0, count( $itemIds ), '(%d, %d)' ) );
-			$itemValues       = [];
-			foreach ( $itemIds as $itemId ) {
-				$itemValues[] = $timeframe->ID;
-				$itemValues[] = (int) $itemId;
-			}
-			// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.PreparedSQLPlaceholders.UnfinishedPrepare
-			$wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$itemsTable} (timeframe_id, item_id) VALUES {$itemPlaceholders}", ...$itemValues ) );
-
-			$wpdb->query( 'COMMIT' );
-
-		} catch ( \Throwable $e ) {
-			$wpdb->query( 'ROLLBACK' );
-		}
+		self::insertRelations( self::$locationsTable, 'location_id', $timeframe->ID, $locationIds );
+		self::insertRelations( self::$itemsTable, 'item_id', $timeframe->ID, $itemIds );
 	}
 
 	/**
-	 * Removes a timeframe from all three index tables.
+	 * Inserts the junction rows of one timeframe in a single query.
+	 *
+	 * @param string $table      Unprefixed junction table name.
+	 * @param string $column     Name of the related-id column.
+	 * @param int    $timeframeId
+	 * @param int[]  $relatedIds
 	 */
-	public static function deleteByTimeframeId( int $postId ): void {
+	private static function insertRelations( string $table, string $column, int $timeframeId, array $relatedIds ): void {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->delete( $wpdb->prefix . self::$indexTable, [ 'timeframe_id' => $postId ], [ '%d' ] );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->delete( $wpdb->prefix . self::$locationsTable, [ 'timeframe_id' => $postId ], [ '%d' ] );
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->delete( $wpdb->prefix . self::$itemsTable, [ 'timeframe_id' => $postId ], [ '%d' ] );
+
+		$rows = array();
+		foreach ( array_unique( array_map( 'intval', $relatedIds ) ) as $relatedId ) {
+			$rows[] = $wpdb->prepare( '(%d, %d)', $timeframeId, $relatedId );
+		}
+
+		$wpdb->query(
+			"INSERT IGNORE INTO {$wpdb->prefix}{$table} (timeframe_id, $column) VALUES " . implode( ', ', $rows )
+		);
 	}
 
 	/**
-	 * Removes all junction rows for a location that has been permanently deleted.
+	 * Removes a timeframe from all three tables.
+	 */
+	public static function deleteByTimeframeId( int $timeframeId ): void {
+		global $wpdb;
+
+		foreach ( array( self::$indexTable, self::$locationsTable, self::$itemsTable ) as $table ) {
+			$wpdb->delete( $wpdb->prefix . $table, array( 'timeframe_id' => $timeframeId ) );
+		}
+	}
+
+	/**
+	 * Drops the relations of a location that was permanently deleted.
 	 */
 	public static function removeLocation( int $locationId ): void {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->delete( $wpdb->prefix . self::$locationsTable, [ 'location_id' => $locationId ], [ '%d' ] );
+		$wpdb->delete( $wpdb->prefix . self::$locationsTable, array( 'location_id' => $locationId ) );
 	}
 
 	/**
-	 * Removes all junction rows for an item that has been permanently deleted.
+	 * Drops the relations of an item that was permanently deleted.
 	 */
 	public static function removeItem( int $itemId ): void {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching
-		$wpdb->delete( $wpdb->prefix . self::$itemsTable, [ 'item_id' => $itemId ], [ '%d' ] );
+		$wpdb->delete( $wpdb->prefix . self::$itemsTable, array( 'item_id' => $itemId ) );
 	}
 
 	/**
-	 * Returns index rows matching a location + item + date-range overlap.
+	 * Returns the index rows of all timeframes that apply to a location/item pair and
+	 * overlap the given date range.
 	 *
-	 * @param int    $locationId
-	 * @param int    $itemId
-	 * @param string $startDate  Window start in 'Y-m-d'
-	 * @param string $endDate    Window end in 'Y-m-d'
-	 * @param int[]  $types      Optional type whitelist (TimeframeCPT constants)
+	 * @param string   $startDate Range start, 'Y-m-d'.
+	 * @param string   $endDate   Range end, 'Y-m-d'.
+	 * @param int[]    $types
 	 * @param string[] $postStatuses
+	 *
 	 * @return \stdClass[]
 	 */
 	public static function getByLocationAndItemAndDateRange(
@@ -208,8 +190,8 @@ CREATE TABLE $itemsTable (
 		int $itemId,
 		string $startDate,
 		string $endDate,
-		array $types = [],
-		array $postStatuses = [ 'publish', 'confirmed', 'unconfirmed' ]
+		array $types = self::INDEXED_TYPES,
+		array $postStatuses = self::INDEXED_STATUSES
 	): array {
 		global $wpdb;
 
@@ -217,76 +199,59 @@ CREATE TABLE $itemsTable (
 		$locationsTable = $wpdb->prefix . self::$locationsTable;
 		$itemsTable     = $wpdb->prefix . self::$itemsTable;
 
-		$typeClause   = '';
-		$statusClause = '';
-		$extraValues  = [];
+		$typePlaceholders   = implode( ', ', array_fill( 0, count( $types ), '%d' ) );
+		$statusPlaceholders = implode( ', ', array_fill( 0, count( $postStatuses ), '%s' ) );
 
-		if ( ! empty( $types ) ) {
-			$typePlaceholders = implode( ', ', array_fill( 0, count( $types ), '%d' ) );
-			$typeClause       = "AND ai.type IN ($typePlaceholders)";
-			$extraValues      = array_merge( $extraValues, $types );
-		}
-
-		if ( ! empty( $postStatuses ) ) {
-			$statusPlaceholders = implode( ', ', array_fill( 0, count( $postStatuses ), '%s' ) );
-			$statusClause       = "AND ai.post_status IN ($statusPlaceholders)";
-			$extraValues        = array_merge( $extraValues, $postStatuses );
-		}
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$sql = "SELECT ai.*
-		        FROM {$indexTable} ai
-		        JOIN {$locationsTable} tl ON tl.timeframe_id = ai.timeframe_id
-		        JOIN {$itemsTable}     ti ON ti.timeframe_id = ai.timeframe_id
-		        WHERE tl.location_id = %d
-		          AND ti.item_id     = %d
-		          AND ai.start_date  <= %s
-		          AND (ai.end_date IS NULL OR ai.end_date >= %s)
-		          {$typeClause}
-		          {$statusClause}";
-
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery,WordPress.DB.DirectDatabaseQuery.NoCaching,WordPress.DB.PreparedSQL.NotPrepared
-		return $wpdb->get_results(
-			$wpdb->prepare( $sql, $locationId, $itemId, $endDate, $startDate, ...$extraValues )
+		$sql = $wpdb->prepare(
+			"SELECT ai.* FROM $indexTable ai
+			JOIN $locationsTable tl ON tl.timeframe_id = ai.timeframe_id
+			JOIN $itemsTable ti ON ti.timeframe_id = ai.timeframe_id
+			WHERE tl.location_id = %d
+				AND ti.item_id = %d
+				AND ai.start_date <= %s
+				AND (ai.end_date IS NULL OR ai.end_date >= %s)
+				AND ai.type IN ($typePlaceholders)
+				AND ai.post_status IN ($statusPlaceholders)",
+			$locationId,
+			$itemId,
+			$endDate,
+			$startDate,
+			...$types,
+			...$postStatuses
 		);
+
+		return $wpdb->get_results( $sql );
 	}
 
 	/**
-	 * Rebuilds the index from all published timeframe and booking posts.
-	 * Designed as a paginated AJAX upgrade task: returns true when done, next page number otherwise.
+	 * Rebuilds the index from all existing timeframes and bookings.
+	 * Paginated AJAX upgrade task: returns true when done, the next page otherwise.
+	 *
+	 * @return int|bool
 	 */
 	public static function rebuildFromAllTimeframes( int $page = 1 ) {
 		global $wpdb;
 
 		if ( $page === 1 ) {
-			// Ensure the tables exist for upgrades that haven't run activation()
+			// The tables do not exist yet on installations upgrading from an older version.
 			self::initTables();
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$wpdb->query( 'TRUNCATE TABLE ' . $wpdb->prefix . self::$indexTable );
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$wpdb->query( 'TRUNCATE TABLE ' . $wpdb->prefix . self::$locationsTable );
-			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-			$wpdb->query( 'TRUNCATE TABLE ' . $wpdb->prefix . self::$itemsTable );
+
+			foreach ( array( self::$indexTable, self::$locationsTable, self::$itemsTable ) as $table ) {
+				$wpdb->query( 'TRUNCATE TABLE ' . $wpdb->prefix . $table );
+			}
 		}
 
 		$response = \CommonsBooking\Repository\Timeframe::getAllPaginated(
 			$page,
 			10,
-			[
-				'post_type'   => [
-					TimeframeCPT::$postType,
-					BookingCPT::$postType,
-				],
-				'post_status' => [ 'publish', 'confirmed', 'unconfirmed' ],
-			]
+			array(
+				'post_type'   => self::getIndexedPostTypes(),
+				'post_status' => self::INDEXED_STATUSES,
+			)
 		);
 
 		foreach ( $response->posts as $post ) {
-			try {
-				self::upsertTimeframe( new Timeframe( $post ) );
-			} catch ( \Throwable $e ) {
-				// skip unindexable posts silently
-			}
+			self::upsertTimeframe( new Timeframe( $post ) );
 		}
 
 		return $response->done ? true : $page + 1;
