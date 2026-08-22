@@ -995,10 +995,6 @@ class Timeframe extends CustomPostType {
 		);
 		foreach ( $timeframes as $timeframe ) {
 			static::manageTimeframeMeta( $timeframe->ID );
-			// The item/location assignment may have changed, so reindex it.
-			\CommonsBooking\Repository\AvailabilityIndex::upsertTimeframe(
-				new \CommonsBooking\Model\Timeframe( $timeframe->ID )
-			);
 		}
 	}
 

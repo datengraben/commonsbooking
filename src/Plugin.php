@@ -58,9 +58,6 @@ class Plugin {
 		// Init booking codes table
 		BookingCodes::initBookingCodesTable();
 
-		// Init availability index tables
-		AvailabilityIndex::initTables();
-
 		self::clearCache();
 	}
 
@@ -791,12 +788,8 @@ class Plugin {
 		// Remove cache items on save.
 		add_action( 'wp_insert_post', array( $this, 'savePostActions' ), 10, 3 );
 
-		// Keep the availability index in sync. Priority 12 runs after the savePost()
-		// handlers of Timeframe, Item and Location, which sit at priority 11.
-		add_action( 'wp_insert_post', array( self::class, 'syncAvailabilityIndex' ), 12, 2 );
-		add_action( 'untrashed_post', array( self::class, 'syncAvailabilityIndex' ), 10, 1 );
-		add_action( 'wp_trash_post', array( self::class, 'cleanAvailabilityIndex' ), 10, 1 );
-		add_action( 'before_delete_post', array( self::class, 'cleanAvailabilityIndex' ), 10, 1 );
+		// Optional availability index. Registers its own hooks and owns its own tables.
+		AvailabilityIndex::register();
 		add_action( 'wp_enqueue_scripts', array( self::class, 'addWarmupAjaxToOutput' ) );
 		add_action( 'admin_enqueue_scripts', array( self::class, 'addWarmupAjaxToOutput' ) );
 
@@ -887,37 +880,6 @@ class Plugin {
 			$tags   = Wordpress::getRelatedPostIds( $post_id );
 			$tags[] = 'misc';
 			self::clearCache( $tags );
-		}
-	}
-
-	/**
-	 * Writes a saved or restored timeframe/booking into the availability index.
-	 * Posts that no longer qualify are dropped from the index by upsertTimeframe().
-	 */
-	public static function syncAvailabilityIndex( int $postId, ?\WP_Post $post = null ): void {
-		$post = $post ?: get_post( $postId );
-
-		if ( $post && in_array( $post->post_type, AvailabilityIndex::getIndexedPostTypes(), true ) ) {
-			AvailabilityIndex::upsertTimeframe( new \CommonsBooking\Model\Timeframe( $post ) );
-		}
-	}
-
-	/**
-	 * Removes trashed and deleted posts from the availability index. Deleting a location
-	 * or item only drops its relations, the timeframes themselves stay indexed.
-	 */
-	public static function cleanAvailabilityIndex( int $postId ): void {
-		$post = get_post( $postId );
-		if ( ! $post ) {
-			return;
-		}
-
-		if ( in_array( $post->post_type, AvailabilityIndex::getIndexedPostTypes(), true ) ) {
-			AvailabilityIndex::deleteByTimeframeId( $postId );
-		} elseif ( $post->post_type === Location::getPostType() ) {
-			AvailabilityIndex::removeLocation( $postId );
-		} elseif ( $post->post_type === Item::getPostType() ) {
-			AvailabilityIndex::removeItem( $postId );
 		}
 	}
 

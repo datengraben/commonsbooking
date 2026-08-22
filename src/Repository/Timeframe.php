@@ -349,6 +349,20 @@ class Timeframe extends PostRepository {
 		if ( $cacheItem ) {
 			return $cacheItem;
 		} else {
+			// Optional availability index, returns null while the feature is switched off.
+			$indexedIds = AvailabilityIndex::getPostIdsByType( $types, $items, $locations );
+			if ( $indexedIds !== null ) {
+				$indexedPosts = array_map( 'get_post', $indexedIds );
+
+				Plugin::setCacheItem(
+					$indexedIds,
+					Wordpress::getTags( $indexedPosts, $items, $locations ),
+					$customId
+				);
+
+				return $indexedIds;
+			}
+
 			global $wpdb;
 			$table_postmeta = $wpdb->prefix . 'postmeta';
 

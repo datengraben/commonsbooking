@@ -80,9 +80,6 @@ class Upgrade {
 		'2.9.0' => [
 			[ self::class, 'setMultiSelectTimeFrameDefault' ],
 		],
-		'2.11.0' => [
-			[ \CommonsBooking\Repository\AvailabilityIndex::class, 'rebuildFromAllTimeframes' ],
-		],
 	];
 
 	/**
