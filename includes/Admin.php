@@ -120,6 +120,40 @@ function commonsbooking_admin() {
 			'nonce'    => wp_create_nonce( 'cb_get_booking_code' ),
 		)
 	);
+
+	/**
+	 * Timeframe creation wizard (MVP).
+	 *
+	 * Provides the step grouping + labels for the guided timeframe editor. The
+	 * wizard is a pure front-end presentation layer over the existing CMB2
+	 * metabox, so no field, meta key or save logic is affected here.
+	 */
+	$cbWizardScreen = function_exists( 'get_current_screen' ) ? get_current_screen() : null;
+	if (
+		$cbWizardScreen &&
+		$cbWizardScreen->base === 'post' &&
+		$cbWizardScreen->post_type === \CommonsBooking\Wordpress\CustomPostType\Timeframe::getPostType()
+	) {
+		wp_localize_script(
+			'cb-scripts-admin',
+			'cb_timeframe_wizard',
+			array(
+				// Guided by default only when creating a new timeframe; editing keeps the full form.
+				'active'     => $cbWizardScreen->action === 'add',
+				'metaboxId'  => 'cmb2-metabox-' . \CommonsBooking\Wordpress\CustomPostType\Timeframe::getPostType() . '-custom-fields',
+				'steps'      => \CommonsBooking\Wordpress\CustomPostType\Timeframe::getWizardSteps(),
+				'i18n'       => array(
+					'back'    => esc_html__( 'Back', 'commonsbooking' ),
+					'next'    => esc_html__( 'Next', 'commonsbooking' ),
+					'finish'  => esc_html__( 'Ready to save', 'commonsbooking' ),
+					/* translators: 1: current step number, 2: total number of steps */
+					'stepOf'  => esc_html__( 'Step %1$d of %2$d', 'commonsbooking' ),
+					'expert'  => esc_html__( 'Switch to expert view', 'commonsbooking' ),
+					'guided'  => esc_html__( 'Switch to guided view', 'commonsbooking' ),
+				),
+			)
+		);
+	}
 }
 
 add_action( 'admin_enqueue_scripts', 'commonsbooking_admin' );
