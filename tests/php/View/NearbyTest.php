@@ -108,12 +108,13 @@ class NearbyTest extends CustomPostTypeTest {
 	}
 
 	public function testShortcode_rendersEmptyMessageWhenNothingNearby() {
+		// Reference point in the Gulf of Guinea - no locations anywhere near it.
 		$output = Nearby::shortcode(
 			array(
 				'type'         => 'locations',
-				'lat'          => (string) self::ORIGIN_LAT,
-				'lon'          => (string) self::ORIGIN_LON,
-				'max_distance' => '0.001',
+				'lat'          => '5.0',
+				'lon'          => '5.0',
+				'max_distance' => '5',
 			)
 		);
 		$this->assertStringContainsString( 'cb-nearby-empty', $output );
