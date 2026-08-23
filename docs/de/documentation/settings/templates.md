@@ -57,6 +57,18 @@ Dieses Feauture funktioniert aktuell nicht. Wir arbeiten an einer Lösung.
 Wenn du die Shortcodes [cb_items] oder [cb_locations] nutzt, erzeugt CommonsBooking entsprechende Listenansichten mit Vorschaubildern der Artikel
 und Standorte. In dieser Einstellung kannst du die Standardgröße dieser Vorschaubilder anpassen.
 
+##  Stationen & Artikel in der Nähe
+
+Diese Einstellungen steuern den [`[cb_nearby]`-Shortcode](../administration/shortcodes#stationen-oder-artikel-in-der-nahe), der ein Karussell der nächstgelegenen Stationen oder Artikel anzeigt. Die Entfernungen werden aus den Geo-Koordinaten der Stationen berechnet.
+
+* **Artikel in der Nähe auf Artikelseiten anzeigen** / **Stationen in der Nähe auf Stationsseiten anzeigen** – ist dies aktiviert, wird das Karussell automatisch unter jeder Artikel- bzw. Stationsseite angezeigt, ohne den Shortcode manuell einzufügen.
+* **Was auf Artikel- / Stationsseiten angezeigt wird** – ob das automatisch angezeigte Karussell Artikel oder Stationen in der Nähe auflistet.
+* **Maximale Entfernung (km)** – weiter entfernte Objekte werden nicht angezeigt. Wird auch als Standard für den Shortcode verwendet, wenn kein `max_distance`-Parameter angegeben ist.
+* **Maximale Anzahl an Ergebnissen** – wie viele Karten das Karussell höchstens enthält.
+* **Gleichzeitig sichtbare Karten** – wie viele Karten auf breiten Bildschirmen nebeneinander angezeigt werden.
+* **Globale Konfiguration überschreibt Shortcode-Parameter** – standardmäßig hat ein direkt am `[cb_nearby]`-Shortcode gesetzter Parameter Vorrang vor diesen globalen Einstellungen. Aktiviere dies, damit stattdessen die globalen Einstellungen gewinnen.
+* **Text, wenn nichts in der Nähe ist** – optionale eigene Meldung. Leer lassen, um den Standardtext zu verwenden.
+
 ##  Farben
 
 Sämtliche Farben in der Benutzeroberfläche sind anpassbar. Um Farben wieder auf die Standardwerte zurückzusetzen kannst du in der entsprechenden Farbe auf den "Leeren" Knopf drücken und anschließend deine Änderungen speichern. Jetzt sollte für das entsprechende Feld wieder der Standardwert eingestellt sein.
