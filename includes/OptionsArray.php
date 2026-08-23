@@ -542,6 +542,91 @@ your booking of {{item:post_title}} at {{location:post_title}} {{booking:formatt
 			),
 			/* image options end */
 
+			/* field group nearby locations / items */
+
+			'nearby' => array(
+				'title'  => commonsbooking_sanitizeHTML( __( 'Nearby locations & items', 'commonsbooking' ) ),
+				'id'     => 'nearby',
+				'desc'   => commonsbooking_sanitizeHTML( __( 'Configure the [cb_nearby] shortcode and whether a "nearby" carousel is shown automatically on item and location detail pages. Distances are computed from the geo coordinates of the locations.', 'commonsbooking' ) ),
+				'fields' => array(
+					array(
+						'name'    => commonsbooking_sanitizeHTML( __( 'Show nearby items on item detail pages', 'commonsbooking' ) ),
+						'id'      => 'nearby_enable_on_item',
+						'type'    => 'checkbox',
+						'desc'    => commonsbooking_sanitizeHTML( __( 'If enabled, a carousel of nearby objects is shown automatically below each item detail page.', 'commonsbooking' ) ),
+					),
+					array(
+						'name'    => commonsbooking_sanitizeHTML( __( 'What to show on item detail pages', 'commonsbooking' ) ),
+						'id'      => 'nearby_type_on_item',
+						'type'    => 'select',
+						'default' => 'items',
+						'options' => array(
+							'items'     => commonsbooking_sanitizeHTML( __( 'Nearby items', 'commonsbooking' ) ),
+							'locations' => commonsbooking_sanitizeHTML( __( 'Nearby locations', 'commonsbooking' ) ),
+						),
+					),
+					array(
+						'name'    => commonsbooking_sanitizeHTML( __( 'Show nearby locations on location detail pages', 'commonsbooking' ) ),
+						'id'      => 'nearby_enable_on_location',
+						'type'    => 'checkbox',
+						'desc'    => commonsbooking_sanitizeHTML( __( 'If enabled, a carousel of nearby objects is shown automatically below each location detail page.', 'commonsbooking' ) ),
+					),
+					array(
+						'name'    => commonsbooking_sanitizeHTML( __( 'What to show on location detail pages', 'commonsbooking' ) ),
+						'id'      => 'nearby_type_on_location',
+						'type'    => 'select',
+						'default' => 'locations',
+						'options' => array(
+							'locations' => commonsbooking_sanitizeHTML( __( 'Nearby locations', 'commonsbooking' ) ),
+							'items'     => commonsbooking_sanitizeHTML( __( 'Nearby items', 'commonsbooking' ) ),
+						),
+					),
+					array(
+						'name'       => commonsbooking_sanitizeHTML( __( 'Maximum distance (km)', 'commonsbooking' ) ),
+						'id'         => 'nearby_max_distance',
+						'type'       => 'text',
+						'desc'       => commonsbooking_sanitizeHTML( __( 'Objects farther away than this are not shown. Used as the default for the shortcode when no max_distance parameter is given.', 'commonsbooking' ) ),
+						'default'    => '20',
+						'attributes' => array(
+							'type' => 'number',
+						),
+					),
+					array(
+						'name'       => commonsbooking_sanitizeHTML( __( 'Maximum number of results', 'commonsbooking' ) ),
+						'id'         => 'nearby_max_results',
+						'type'       => 'text',
+						'desc'       => commonsbooking_sanitizeHTML( __( 'Maximum number of cards shown in the carousel.', 'commonsbooking' ) ),
+						'default'    => '9',
+						'attributes' => array(
+							'type' => 'number',
+						),
+					),
+					array(
+						'name'       => commonsbooking_sanitizeHTML( __( 'Cards visible at once', 'commonsbooking' ) ),
+						'id'         => 'nearby_visible',
+						'type'       => 'text',
+						'desc'       => commonsbooking_sanitizeHTML( __( 'How many cards are shown side by side in the carousel (on wide screens).', 'commonsbooking' ) ),
+						'default'    => '3',
+						'attributes' => array(
+							'type' => 'number',
+						),
+					),
+					array(
+						'name'    => commonsbooking_sanitizeHTML( __( 'Global configuration overrides shortcode parameters', 'commonsbooking' ) ),
+						'id'      => 'nearby_override_local',
+						'type'    => 'checkbox',
+						'desc'    => commonsbooking_sanitizeHTML( __( 'By default a parameter set directly on the [cb_nearby] shortcode takes precedence over these global settings. Enable this to make the global settings win instead.', 'commonsbooking' ) ),
+					),
+					array(
+						'name'    => commonsbooking_sanitizeHTML( __( 'Text shown when nothing is nearby', 'commonsbooking' ) ),
+						'id'      => 'nearby-no-results',
+						'type'    => 'text',
+						'desc'    => commonsbooking_sanitizeHTML( __( 'Optional. Leave empty to use the default message.', 'commonsbooking' ) ),
+					),
+				),
+			),
+			/* nearby end */
+
 			/* field group color setting */
 
 			'colorscheme' => array(

@@ -127,6 +127,28 @@ dort befinden
 
 ![](/img/shortcode-cb-locations.png)
 
+## Stationen oder Artikel in der Nähe
+
+Zeigt ein Karussell der nächstgelegenen Stationen oder Artikel relativ zu einem Bezugspunkt an. Die Entfernungen werden aus den Geo-Koordinaten der Stationen berechnet und (auf ganze Kilometer gerundet) auf jeder Karte angezeigt. Ist nichts innerhalb der maximalen Entfernung, wird stattdessen ein kurzer Hinweistext angezeigt.
+
+  * Shortcode: `[cb_nearby]`
+
+Wird der Shortcode auf einer Artikel- oder Stationsseite platziert, übernimmt er automatisch die Koordinaten des aktuellen Beitrags (eine Station nutzt ihre eigenen Koordinaten, ein Artikel die seiner buchbaren Stationen).
+
+### Parameter
+
+  * `type` – `locations` (Standard) oder `items`: was angezeigt wird.
+  * `max_distance` – maximale Entfernung in Kilometern.
+  * `max_results` – maximale Anzahl angezeigter Karten.
+  * `visible` – Anzahl gleichzeitig sichtbarer Karten auf breiten Bildschirmen.
+  * `post_id` – der Bezugsbeitrag, dessen Koordinaten verwendet werden (Standard: aktueller Beitrag).
+  * `lat` / `lon` – explizite Bezugskoordinaten, z. B. `[cb_nearby lat=50.94 lon=6.95]`.
+  * `lat_meta` / `lon_meta` – Namen von Meta-Feldern des aktuellen Beitrags, aus denen die Koordinaten gelesen werden.
+
+### Globale Aktivierung
+
+Unter **Einstellungen → Templates → Stationen & Artikel in der Nähe** kann das Karussell so aktiviert werden, dass es automatisch unter jeder Artikel- und/oder Stationsseite erscheint. Ein direkt am Shortcode gesetzter Parameter hat Vorrang vor der globalen Konfiguration; ist die Option **„Globale Konfiguration überschreibt Shortcode-Parameter"** aktiviert, gewinnen die globalen Einstellungen.
+
 ## Liste aller Buchungen
 
 Liste aller Buchungen, also eigene Buchungen des eingeloggten Nutzenden.

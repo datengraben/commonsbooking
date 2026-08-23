@@ -702,10 +702,30 @@ class Plugin {
 			[ 'cb-leaflet', 'cb-leaflet-markercluster' ],
 			self::packagedVersion( '@commonsbooking/frontend' )
 		);
+
+		// cb_nearby shortcode (standalone, enqueued on demand)
+		wp_register_style(
+			'cb-nearby',
+			COMMONSBOOKING_PLUGIN_ASSETS_URL . 'public/nearby/cb-nearby.css',
+			[ 'cb-styles-public' ],
+			COMMONSBOOKING_VERSION
+		);
+		wp_register_script(
+			'cb-nearby',
+			COMMONSBOOKING_PLUGIN_ASSETS_URL . 'public/nearby/cb-nearby.js',
+			[],
+			COMMONSBOOKING_VERSION,
+			true
+		);
 	}
 
 	public function registerShortcodes() {
 		add_shortcode( 'cb_search', array( SearchShortcode::class, 'execute' ) );
+		add_shortcode( 'cb_nearby', array( \CommonsBooking\View\Nearby::class, 'shortcode' ) );
+
+		// Optionally inject the nearby carousel below the item / location detail pages.
+		add_action( 'commonsbooking_after_item-single', array( \CommonsBooking\View\Nearby::class, 'renderOnItemSingle' ), 10, 1 );
+		add_action( 'commonsbooking_after_location-single', array( \CommonsBooking\View\Nearby::class, 'renderOnLocationSingle' ), 10, 1 );
 	}
 
 	/**

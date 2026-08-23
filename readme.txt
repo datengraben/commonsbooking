@@ -81,6 +81,9 @@ CommonsBooking was developed for the ["Commons Cargobike" movement](http://commo
 
 ## Changelog
 
+### Unreleased
+ENHANCED: New `[cb_nearby]` shortcode showing a carousel of nearby locations or items with computed distance in km. Can be enabled globally on item and location detail pages, supports a configurable maximum distance (local shortcode parameter or global setting, with an option to let the global setting override), and can be pointed at explicit `lat`/`lon` coordinates or coordinates read from post meta via `lat_meta`/`lon_meta`.
+
 ### 2.10.10 (23.03.2026)
 FIXED: Two users booking same item possible when two users tried to book the same time period (thx @nelarsen)
 FIXED: Location specific sending of booking start / end reminder (for location owners) always sent email, not only when it is checked at location (thx @poilu)
