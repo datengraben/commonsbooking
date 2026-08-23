@@ -20,6 +20,10 @@
  *
  * OPTIONS:
  *   --count=N   How many bookings to create (default 1).
+ *   --hours=H   Make each booking an H-hour slot instead of a full day.
+ *               The start hour rotates across the day per booking, so one run
+ *               covers many hours-of-day (handy for UTC/timezone testing).
+ *               Default 0 = full-day bookings.
  *   --verify    Check a few of them with Booking::isValid() and report.
  *   --cleanup   Delete everything this script ever created, then exit.
  *   --help      Show this help.
@@ -49,10 +53,11 @@ foreach ( $argv as $arg ) {
 	}
 }
 if ( isset( $options['help'] ) ) {
-	echo "Usage: php generate-bookings.php [--count=N] [--verify] [--cleanup] [--help]\n";
+	echo "Usage: php generate-bookings.php [--count=N] [--hours=H] [--verify] [--cleanup] [--help]\n";
 	exit( 0 );
 }
 $count  = max( 0, (int) ( $options['count'] ?? 1 ) );
+$hours  = max( 0, min( 23, (int) ( $options['hours'] ?? 0 ) ) ); // 0 = full day
 $verify = isset( $options['verify'] );
 
 // --- Load WordPress (unless we are already inside it). ---
@@ -94,20 +99,26 @@ final class CBGen {
 		return $id;
 	}
 
-	/** Bookable timeframe covering [today-1 .. today+days+1] for this location+item. */
-	public function timeframe( int $location, int $item, int $days ): int {
-		$today = strtotime( 'today midnight' );
-		$id    = $this->createTimeframe(
+	/**
+	 * Bookable timeframe covering [today-1 .. today+days+1] for this location+item.
+	 * $hours = 0 makes a full-day timeframe; $hours >= 1 makes an hourly one
+	 * (every hour of the day bookable), so hourly bookings fit inside it.
+	 */
+	public function timeframe( int $location, int $item, int $days, int $hours ): int {
+		$today  = strtotime( 'today midnight' );
+		$fullDay = ( $hours === 0 ) ? 'on' : '';
+		$grid    = ( $hours === 0 ) ? 0 : 1; // 1 = hourly grid
+		$id      = $this->createTimeframe(
 			$location,
 			$item,
 			strtotime( '-1 day', $today ),
 			strtotime( '+' . ( $days + 1 ) . ' days', $today ),
 			Timeframe::BOOKABLE_ID,
-			'on',
+			$fullDay,
 			'w',
-			0,
-			'8:00 AM',
-			'12:00 PM',
+			$grid,
+			$hours === 0 ? '8:00 AM' : '00:00',
+			$hours === 0 ? '12:00 PM' : '23:59',
 			'publish',
 			[ '1', '2', '3', '4', '5', '6', '7' ],
 			'',
@@ -117,22 +128,45 @@ final class CBGen {
 		return $id;
 	}
 
-	/** One full-day booking on day (today + $dayOffset). */
-	public function booking( int $location, int $item, int $dayOffset ): int {
-		$start = strtotime( "+$dayOffset days", strtotime( 'today midnight' ) );
-		$end   = strtotime( '+1 day midnight', $start ) - 1;
-		$id    = $this->createBooking(
+	/**
+	 * One booking on day (today + $dayOffset). $hours = 0 books the full day;
+	 * $hours >= 1 books an $hours-long slot whose start hour rotates across the
+	 * day per booking (so a run spans many hours-of-day for UTC testing).
+	 */
+	public function booking( int $location, int $item, int $dayOffset, int $hours ): int {
+		$day = strtotime( "+$dayOffset days", strtotime( 'today midnight' ) );
+
+		if ( $hours === 0 ) {
+			$start     = $day;
+			$end       = strtotime( '+1 day midnight', $day ) - 1;
+			$startTime = '12:00 AM';
+			$endTime   = '23:59';
+			$gridSize  = '';
+		} else {
+			$startHour = $dayOffset % ( 24 - $hours + 1 ); // keeps start+hours within the day
+			$start     = $day + $startHour * HOUR_IN_SECONDS;
+			$end       = $start + $hours * HOUR_IN_SECONDS - 1; // last second of the slot
+			$startTime = sprintf( '%02d:00', $startHour );
+			$endTime   = date( 'H:i', $end ); // e.g. 2h slot from 10:00 -> "11:59"
+			$gridSize  = (string) $hours;
+		}
+
+		$id = $this->createBooking(
 			$location,
 			$item,
 			$start,
 			$end,
-			'12:00 AM',
-			'23:59',
+			$startTime,
+			$endTime,
 			'confirmed',
 			CBGEN_AUTHOR,
 			'w',
 			3,
-			'CBGen Booking ' . $dayOffset
+			'CBGen Booking ' . $dayOffset,
+			0,
+			[ '1', '2', '3', '4', '5', '6', '7' ],
+			$gridSize,
+			$gridSize
 		);
 		update_post_meta( $id, CBGEN_MARKER, 1 );
 		return $id;
@@ -157,14 +191,15 @@ if ( isset( $options['cleanup'] ) ) {
 // --- Create the shared, valid related objects. ---
 $location  = $gen->location();
 $item      = $gen->item();
-$timeframe = $gen->timeframe( $location, $item, $count );
-echo "Location #$location, item #$item, bookable timeframe #$timeframe.\n";
+$timeframe = $gen->timeframe( $location, $item, $count, $hours );
+$mode      = $hours === 0 ? 'full-day' : $hours . 'h slots';
+echo "Location #$location, item #$item, bookable timeframe #$timeframe ($mode).\n";
 
 // --- Create the bookings. ---
 $start   = microtime( true );
 $created = [];
 for ( $i = 0; $i < $count; $i++ ) {
-	$created[] = $gen->booking( $location, $item, $i );
+	$created[] = $gen->booking( $location, $item, $i, $hours );
 }
 $elapsed = microtime( true ) - $start;
 printf( "Created %d booking(s) in %.2fs (%.1f/s).\n", $count, $elapsed, $count / max( $elapsed, 0.001 ) );

@@ -34,9 +34,20 @@ php scripts/generate-bookings.php --count=100 --verify
 | Option | Meaning |
 | --- | --- |
 | `--count=N` | Number of bookings to create (default 1). |
+| `--hours=H` | Make each booking an `H`-hour slot instead of a full day. The start hour rotates across the day per booking, so one run spans many hours-of-day — handy for UTC/timezone testing. Default `0` = full-day bookings. |
 | `--verify` | Check a few with `Booking::isValid()` and report. |
 | `--cleanup` | Delete everything this script ever created, then exit. |
 | `--help` | Show usage. |
+
+For UTC/timezone testing, create hourly-slot bookings:
+
+```bash
+# 24 one-hour bookings, one per hour-of-day across consecutive days
+php scripts/generate-bookings.php --count=24 --hours=1 --verify
+
+# 10 two-hour slots
+php scripts/generate-bookings.php --count=10 --hours=2 --verify
+```
 
 Change the author user id by editing the `CBGEN_AUTHOR` constant at the top of
 the script.
