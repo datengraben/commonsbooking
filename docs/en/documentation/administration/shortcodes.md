@@ -115,6 +115,38 @@ Displays a list of all published locations with the items that are located there
 
 ![](/img/shortcode-cb-locations.png)
 
+## Nearby locations or items
+
+Displays a carousel of the nearest locations or items relative to a reference point. Distances are computed from the geo coordinates of the locations and shown (rounded to whole kilometers) on each card. If nothing is within the maximum distance, a short text message is shown instead.
+
+  * Shortcode: `[cb_nearby]`
+
+When placed on an item or location detail page, the shortcode inherits the current post's coordinates automatically (a location uses its own coordinates, an item those of its bookable locations).
+
+### Parameters
+
+  * `type` – `locations` (default) or `items`: what to list.
+  * `max_distance` – maximum distance in kilometers. Objects farther away are not shown.
+  * `max_results` – maximum number of cards shown.
+  * `visible` – number of cards shown side by side on wide screens (the carousel moves through the rest).
+  * `post_id` – the reference post whose coordinates are used (defaults to the current post).
+  * `lat` / `lon` – explicit reference coordinates, e.g. `[cb_nearby lat=50.94 lon=6.95]`.
+  * `lat_meta` / `lon_meta` – names of meta fields on the current post to read the coordinates from. Useful for dynamic subpages that store a location in custom meta fields, e.g. `[cb_nearby lat_meta=my_lat lon_meta=my_lon]`.
+
+Examples:
+
+```
+[cb_nearby type=items max_distance=10]
+[cb_nearby type=locations lat=50.94 lon=6.95 max_distance=25 visible=2]
+[cb_nearby lat_meta=event_lat lon_meta=event_lon]
+```
+
+### Global activation
+
+Under **Settings → Templates → Nearby locations & items** the carousel can be enabled to appear automatically below every item and/or location detail page, with a configurable type, maximum distance, result count and number of visible cards.
+
+A parameter set directly on the shortcode takes precedence over the global configuration. If **"Global configuration overrides shortcode parameters"** is enabled, the global settings win instead.
+
 ## List of all bookings
 
 List of all bookings, i.e., own bookings of the logged-in user.

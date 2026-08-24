@@ -1,0 +1,113 @@
+/**
+ * Styling for the [cb_nearby] shortcode carousel.
+ *
+ * Standalone (hand-written) stylesheet, enqueued on demand by the shortcode.
+ * The cards reuse the existing .cb-list-header / .cb-list-info markup so they
+ * inherit the plugin's card look from public.css; this file only adds the
+ * carousel layout and the distance badge.
+ */
+
+.cb-nearby {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.cb-nearby .cb-nearby-viewport {
+	overflow: hidden;
+	flex: 1 1 auto;
+	width: 100%;
+}
+
+.cb-nearby .cb-nearby-track {
+	display: flex;
+	gap: var(--commonsbooking-spacer-medium, 1rem);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+	scroll-snap-type: x mandatory;
+	overflow-x: auto;
+	scroll-behavior: smooth;
+	-webkit-overflow-scrolling: touch;
+	scrollbar-width: none; /* Firefox */
+}
+
+.cb-nearby .cb-nearby-track::-webkit-scrollbar {
+	display: none; /* WebKit */
+}
+
+/* Show `--cb-nearby-visible` cards at once (default 3), set from the
+   data attribute by the script. Falls back to 3 without JS. */
+.cb-nearby .cb-nearby-item {
+	flex: 0 0 calc((100% - (var(--cb-nearby-visible, 3) - 1) * var(--commonsbooking-spacer-medium, 1rem)) / var(--cb-nearby-visible, 3));
+	scroll-snap-align: start;
+	box-sizing: border-box;
+	min-width: 0;
+}
+
+/* Responsive fallbacks when JS has not set the custom property. */
+@media (max-width: 900px) {
+	.cb-nearby .cb-nearby-item {
+		flex-basis: calc((100% - var(--commonsbooking-spacer-medium, 1rem)) / 2);
+	}
+}
+
+@media (max-width: 600px) {
+	.cb-nearby .cb-nearby-item {
+		flex-basis: 100%;
+	}
+}
+
+.cb-nearby .cb-nearby-item .cb-list-header {
+	height: 100%;
+}
+
+/* Distance badge */
+.cb-nearby .cb-nearby-distance {
+	display: inline-block;
+	margin-bottom: 0.25rem;
+	padding: 0.1rem 0.5rem;
+	font-size: 0.85em;
+	font-weight: 600;
+	line-height: 1.4;
+	border-radius: var(--commonsbooking-radius-pill, 999px);
+	background: var(--commonsbooking-color-primary, #3ba25b);
+	color: #fff;
+	white-space: nowrap;
+}
+
+/* Navigation buttons */
+.cb-nearby .cb-nearby-nav {
+	flex: 0 0 auto;
+	width: 2.25rem;
+	height: 2.25rem;
+	padding: 0;
+	font-size: 1.4rem;
+	line-height: 1;
+	cursor: pointer;
+	border: 1px solid var(--commonsbooking-color-primary, #3ba25b);
+	border-radius: 50%;
+	background: #fff;
+	color: var(--commonsbooking-color-primary, #3ba25b);
+	transition: background 0.15s ease, color 0.15s ease;
+}
+
+.cb-nearby .cb-nearby-nav:hover:not(:disabled) {
+	background: var(--commonsbooking-color-primary, #3ba25b);
+	color: #fff;
+}
+
+.cb-nearby .cb-nearby-nav:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+
+/* When JS is unavailable the buttons do nothing; hide them to avoid dead UI. */
+.cb-nearby:not(.cb-nearby-ready) .cb-nearby-nav {
+	display: none;
+}
+
+.cb-nearby-empty {
+	margin-top: var(--commonsbooking-spacer-medium, 1rem);
+}

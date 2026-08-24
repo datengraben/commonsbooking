@@ -49,6 +49,18 @@ This feature is currently not working. We are working on a solution.
 
 When using the shortcodes [cb_items] or [cb_locations] on a page, CommonsBooking generates corresponding list views with preview images of the items and locations. In this setting you can adjust the default size of these preview images.
 
+## Nearby locations & items
+
+These settings control the [`[cb_nearby]` shortcode](../administration/shortcodes#nearby-locations-or-items), which shows a carousel of the nearest locations or items. Distances are computed from the geo coordinates of the locations.
+
+* **Show nearby items on item detail pages** / **Show nearby locations on location detail pages** – when enabled, the carousel is shown automatically below every item and/or location detail page, without adding the shortcode manually.
+* **What to show on item / location detail pages** – whether the automatically shown carousel lists nearby items or nearby locations.
+* **Maximum distance (km)** – objects farther away than this are not shown. Also used as the default for the shortcode when no `max_distance` parameter is given.
+* **Maximum number of results** – how many cards the carousel contains at most.
+* **Cards visible at once** – how many cards are shown side by side on wide screens (the carousel moves through the rest).
+* **Global configuration overrides shortcode parameters** – by default a parameter set directly on the `[cb_nearby]` shortcode takes precedence over these global settings. Enable this to make the global settings win instead.
+* **Text shown when nothing is nearby** – optional custom message. Leave empty to use the default text.
+
 ## Color schemes
 
 All colors in the CommonsBooking user interface are customizable. To reset colors to their default values, you can click the "Clear" button in the corresponding color field and then save your changes. The default value should now be set for the respective field.
