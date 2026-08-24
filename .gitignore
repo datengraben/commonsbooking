@@ -7,10 +7,16 @@ assets/packaged
 .idea
 
 .phpunit.result.cache
+.cache-phpcs-free.cache
 tests/cypress/screenshots
 docs/.vitepress/dist
 /vendor-prefixed
 /bin/strauss.phar
+
+# Trimmed Composer manifest used by the SessionStart hook to install the test
+# toolchain without the token-gated phpstan package (see .claude/hooks).
+/.composer-test.json
+/.composer-test.lock
 
 # Pre-Build dist only sources
 assets/admin/js/admin.js
