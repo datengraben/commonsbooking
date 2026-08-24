@@ -257,4 +257,35 @@ class TimeframeTest extends CustomPostTypeTest {
 		$this->assertEmpty( get_post_meta( $tf->ID, \CommonsBooking\Model\Timeframe::META_LOCATION_CATEGORY_IDS, true ) );
 		$this->assertEmpty( get_post_meta( $tf->ID, \CommonsBooking\Model\Timeframe::META_ITEM_CATEGORY_IDS, true ) );
 	}
+
+	/**
+	 * The timeframe wizard is a presentation layer over the existing CMB2
+	 * fields. Every field id it references must actually exist in
+	 * getCustomFields(), otherwise the wizard would silently drop a field.
+	 */
+	public function testWizardStepsReferenceExistingFields() {
+		$steps = Timeframe::getWizardSteps();
+		$this->assertIsArray( $steps );
+		$this->assertNotEmpty( $steps );
+
+		$timeframeCPT = new Timeframe();
+		$method       = new \ReflectionMethod( Timeframe::class, 'getCustomFields' );
+		$method->setAccessible( true );
+		$fields   = $method->invoke( $timeframeCPT );
+		$fieldIds = array_column( $fields, 'id' );
+
+		foreach ( $steps as $step ) {
+			$this->assertArrayHasKey( 'label', $step );
+			$this->assertArrayHasKey( 'fields', $step );
+			$this->assertIsArray( $step['fields'] );
+
+			foreach ( $step['fields'] as $wizardFieldId ) {
+				$this->assertContains(
+					$wizardFieldId,
+					$fieldIds,
+					sprintf( 'Wizard references unknown timeframe field id "%s".', $wizardFieldId )
+				);
+			}
+		}
+	}
 }

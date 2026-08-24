@@ -428,6 +428,106 @@ class Timeframe extends CustomPostType {
 	}
 
 	/**
+	 * Returns the step configuration for the (MVP) timeframe creation wizard.
+	 *
+	 * This is a pure presentation layer: it only groups already-existing CMB2
+	 * fields (see {@see self::getCustomFields()}) into ordered, human-friendly
+	 * steps. It intentionally does NOT define, rename or redefine any field,
+	 * meta key, default or validation - the data model stays the single source
+	 * of truth in getCustomFields().
+	 *
+	 * Each step references fields by their existing CMB2 field id. Any field
+	 * that is not listed here is automatically moved into the last step by the
+	 * wizard front-end, so no field can ever be hidden by accident.
+	 *
+	 * @return array<int, array{id:string, label:string, desc:string, fields:string[]}>
+	 */
+	public static function getWizardSteps(): array {
+		$steps = array(
+			array(
+				'id'     => 'what-where',
+				'label'  => esc_html__( 'What & where', 'commonsbooking' ),
+				'desc'   => esc_html__( 'Choose the type of this timeframe and which item(s) and location(s) it applies to.', 'commonsbooking' ),
+				'fields' => array(
+					'type',
+					\CommonsBooking\Model\Timeframe::META_LOCATION_SELECTION_TYPE,
+					\CommonsBooking\Model\Timeframe::META_LOCATION_CATEGORY_IDS,
+					\CommonsBooking\Model\Timeframe::META_LOCATION_ID,
+					\CommonsBooking\Model\Timeframe::META_LOCATION_ID_LIST,
+					\CommonsBooking\Model\Timeframe::META_ITEM_SELECTION_TYPE,
+					\CommonsBooking\Model\Timeframe::META_ITEM_CATEGORY_IDS,
+					\CommonsBooking\Model\Timeframe::META_ITEM_ID,
+					\CommonsBooking\Model\Timeframe::META_ITEM_ID_LIST,
+				),
+			),
+			array(
+				'id'     => 'booking-rules',
+				'label'  => esc_html__( 'Booking rules', 'commonsbooking' ),
+				'desc'   => esc_html__( 'Set how far in advance and for how long the item can be booked, and who is allowed to book it.', 'commonsbooking' ),
+				'fields' => array(
+					'title-bookings-config',
+					\CommonsBooking\Model\Timeframe::META_MAX_DAYS,
+					\CommonsBooking\Model\Timeframe::META_BOOKING_START_DAY_OFFSET,
+					\CommonsBooking\Model\Timeframe::META_TIMEFRAME_ADVANCE_BOOKING_DAYS,
+					\CommonsBooking\Model\Timeframe::META_ALLOWED_USER_ROLES,
+				),
+			),
+			array(
+				'id'     => 'time-of-day',
+				'label'  => esc_html__( 'Time of day', 'commonsbooking' ),
+				'desc'   => esc_html__( 'Decide whether bookings run for whole days or within a daily time slot.', 'commonsbooking' ),
+				'fields' => array(
+					'title-timeframe-config',
+					'full-day',
+					'grid',
+					'start-time',
+					'end-time',
+				),
+			),
+			array(
+				'id'     => 'repetition',
+				'label'  => esc_html__( 'Availability & repetition', 'commonsbooking' ),
+				'desc'   => esc_html__( 'Set the date range and, if needed, how the timeframe repeats.', 'commonsbooking' ),
+				'fields' => array(
+					\CommonsBooking\Model\Timeframe::META_REPETITION,
+					'_cmb2_holiday',
+					'title-timeframe-rep-config',
+					\CommonsBooking\Model\Timeframe::META_MANUAL_SELECTION,
+					\CommonsBooking\Model\Timeframe::REPETITION_START,
+					'weekdays',
+					\CommonsBooking\Model\Timeframe::REPETITION_END,
+				),
+			),
+			array(
+				'id'     => 'codes-advanced',
+				'label'  => esc_html__( 'Booking codes & more', 'commonsbooking' ),
+				'desc'   => esc_html__( 'Optional booking codes and any remaining settings. You can leave these at their defaults.', 'commonsbooking' ),
+				'fields' => array(
+					'comment',
+					'title-timeframe-booking-codes',
+					\CommonsBooking\Model\Timeframe::META_CREATE_BOOKING_CODES,
+					\CommonsBooking\Model\Timeframe::META_SHOW_BOOKING_CODES,
+					'direct-email-booking-codes-list',
+					\CommonsBooking\View\BookingCodes::CRON_EMAIL_CODES,
+					'booking-codes-list',
+				),
+			),
+		);
+
+		/**
+		 * Filter the timeframe creation wizard steps.
+		 *
+		 * Allows add-ons to re-group, relabel or reorder the wizard steps
+		 * without touching the underlying field/data-model definition.
+		 *
+		 * @since 2.11.0
+		 *
+		 * @param array $steps Ordered list of wizard steps.
+		 */
+		return apply_filters( 'commonsbooking_timeframe_wizard_steps', $steps );
+	}
+
+	/**
 	 * Returns custom (meta) fields for Costum Post Type Timeframe.
 	 *
 	 * @return array

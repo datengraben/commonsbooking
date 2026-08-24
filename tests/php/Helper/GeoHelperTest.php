@@ -51,6 +51,16 @@ class GeoHelperTest extends BaseTestCase {
 		$this->assertThatKarlMarxLocationIsProperlyGeoCoded( $address );
 	}
 
+	/**
+	 * Integration test that hits the real Nominatim service.
+	 *
+	 * Tagged `external-http` so it is skipped by default (the group is excluded
+	 * in phpunit.xml.dist) and only runs on explicit opt-in, by requesting the
+	 * external-http group on the phpunit command line. The mocked default
+	 * coverage lives in {@see self::testThatGeoCoding_worksOffline()}.
+	 *
+	 * @group external-http
+	 */
 	public function testThatGeoCoding_worksOnline() {
 		GeoHelper::resetGeoCoder();
 

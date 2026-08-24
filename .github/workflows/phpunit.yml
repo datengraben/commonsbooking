@@ -12,6 +12,7 @@ on:
   pull_request:
     branches:
       - 'master'
+      - 'release/**'
     paths-ignore:
       - 'docs/**'
 
@@ -88,6 +89,18 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./build/logs/clover.xml
+
+    # Integration tests make real external HTTP requests (e.g. to Nominatim).
+    # They are tagged @group external-http and excluded from the default run.
+    # Run them only on pull requests targeting a release branch, and only once
+    # (single PHP/core cell) to stay within the external services' usage limits.
+    - name: Run external HTTP integration tests (release PRs only)
+      if: >-
+        github.event_name == 'pull_request' &&
+        startsWith(github.base_ref, 'release/') &&
+        matrix.php == '8.1' &&
+        matrix.core.name == 'latest'
+      run: php vendor/bin/phpunit --group external-http --no-coverage
   rerun-on-failure:
     needs: phpunit
     if: failure() && fromJSON(github.run_attempt) < 3
