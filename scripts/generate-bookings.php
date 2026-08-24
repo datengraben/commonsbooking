@@ -19,14 +19,18 @@
  *   php scripts/generate-bookings.php --count=100 --verify
  *
  * OPTIONS:
- *   --count=N   How many bookings to create (default 1).
- *   --hours=H   Make each booking an H-hour slot instead of a full day.
- *               The start hour rotates across the day per booking, so one run
- *               covers many hours-of-day (handy for UTC/timezone testing).
- *               Default 0 = full-day bookings.
- *   --verify    Check a few of them with Booking::isValid() and report.
- *   --cleanup   Delete everything this script ever created, then exit.
- *   --help      Show this help.
+ *   --count=N       How many bookings to create (default 1).
+ *   --hours=H       Make each booking an H-hour slot instead of a full day.
+ *                   The start hour rotates across the day per booking, so one run
+ *                   covers many hours-of-day (handy for UTC/timezone testing).
+ *                   Default 0 = full-day bookings.
+ *   --locations=N   Spread the bookings across N locations (default 1).
+ *   --lat=Y --lon=X Give the locations coordinates centred on this point.
+ *   --distancekm=D  Scatter the locations randomly within D km of the centre
+ *                   (default 0 = all exactly at the centre). Needs --lat/--lon.
+ *   --verify        Check a few bookings with Booking::isValid() and report.
+ *   --cleanup       Delete everything this script ever created, then exit.
+ *   --help          Show this help.
  *
  * Note: this is the simple, readable path (~14 DB writes per booking). Great
  * up to a few thousand; for 100k it will take a while but still works.
@@ -53,12 +57,25 @@ foreach ( $argv as $arg ) {
 	}
 }
 if ( isset( $options['help'] ) ) {
-	echo "Usage: php generate-bookings.php [--count=N] [--hours=H] [--verify] [--cleanup] [--help]\n";
+	echo "Usage: php generate-bookings.php [--count=N] [--hours=H] [--locations=N]\n" .
+		"                                 [--lat=Y --lon=X [--distancekm=D]]\n" .
+		"                                 [--verify] [--cleanup] [--help]\n";
 	exit( 0 );
 }
-$count  = max( 0, (int) ( $options['count'] ?? 1 ) );
-$hours  = max( 0, min( 23, (int) ( $options['hours'] ?? 0 ) ) ); // 0 = full day
-$verify = isset( $options['verify'] );
+$count     = max( 0, (int) ( $options['count'] ?? 1 ) );
+$hours     = max( 0, min( 23, (int) ( $options['hours'] ?? 0 ) ) ); // 0 = full day
+$locations = max( 1, (int) ( $options['locations'] ?? 1 ) );
+$verify    = isset( $options['verify'] );
+
+// Geo: --lat + --lon set the center; --distancekm scatters around it (0 = exactly
+// at center). Both lat and lon must be given, otherwise no coordinates are set.
+$hasCenter  = isset( $options['lat'], $options['lon'] );
+$centerLat  = (float) ( $options['lat'] ?? 0 );
+$centerLon  = (float) ( $options['lon'] ?? 0 );
+$distanceKm = max( 0.0, (float) ( $options['distancekm'] ?? 0 ) );
+if ( ! $hasCenter && ( isset( $options['lat'] ) || isset( $options['lon'] ) || isset( $options['distancekm'] ) ) ) {
+	echo "Note: geo options ignored -- pass both --lat and --lon to place locations.\n";
+}
 
 // --- Load WordPress (unless we are already inside it). ---
 if ( ! defined( 'ABSPATH' ) ) {
@@ -87,8 +104,12 @@ use CommonsBooking\Wordpress\CustomPostType\Timeframe;
 final class CBGen {
 	use \CommonsBooking\Tests\CPTCreationTrait;
 
-	public function location(): int {
-		$id = $this->createLocation( 'CBGen Location', 'publish', [], CBGEN_AUTHOR );
+	public function location( int $index = 0, ?float $lat = null, ?float $lon = null ): int {
+		$id = $this->createLocation( 'CBGen Location ' . $index, 'publish', [], CBGEN_AUTHOR );
+		if ( $lat !== null && $lon !== null ) {
+			update_post_meta( $id, 'geo_latitude', $lat );
+			update_post_meta( $id, 'geo_longitude', $lon );
+		}
 		update_post_meta( $id, CBGEN_MARKER, 1 );
 		return $id;
 	}
@@ -188,17 +209,49 @@ if ( isset( $options['cleanup'] ) ) {
 	exit( 0 );
 }
 
-// --- Create the shared, valid related objects. ---
-$location  = $gen->location();
-$item      = $gen->item();
-$timeframe = $gen->timeframe( $location, $item, $count, $hours );
-$mode      = $hours === 0 ? 'full-day' : $hours . 'h slots';
-echo "Location #$location, item #$item, bookable timeframe #$timeframe ($mode).\n";
+/**
+ * A random point within $distanceKm of ($lat, $lon). Uses a simple flat-earth
+ * approximation, which is plenty accurate for test data over a city/region.
+ *
+ * @return array{0:float,1:float} [ latitude, longitude ]
+ */
+function cbgen_random_geo( float $lat, float $lon, float $distanceKm ): array {
+	if ( $distanceKm <= 0 ) {
+		return [ round( $lat, 6 ), round( $lon, 6 ) ];
+	}
+	$radiusKm = $distanceKm * sqrt( mt_rand() / mt_getrandmax() ); // sqrt = even spread over area
+	$bearing  = ( mt_rand() / mt_getrandmax() ) * 2 * M_PI;
+	$kmPerDeg = 111.32; // km per degree of latitude
+	$newLat   = $lat + ( $radiusKm * cos( $bearing ) ) / $kmPerDeg;
+	$newLon   = $lon + ( $radiusKm * sin( $bearing ) ) / ( $kmPerDeg * cos( deg2rad( $lat ) ) );
+	return [
+		round( max( -90, min( 90, $newLat ) ), 6 ),
+		round( max( -180, min( 180, $newLon ) ), 6 ),
+	];
+}
 
-// --- Create the bookings. ---
+// --- Create the shared item and the located locations (each with a timeframe). ---
+$item        = $gen->item();
+$locationIds = [];
+for ( $i = 0; $i < $locations; $i++ ) {
+	if ( $hasCenter ) {
+		[ $lat, $lon ] = cbgen_random_geo( $centerLat, $centerLon, $distanceKm );
+	} else {
+		$lat = $lon = null;
+	}
+	$loc = $gen->location( $i, $lat, $lon );
+	$gen->timeframe( $loc, $item, $count, $hours );
+	$locationIds[] = $loc;
+}
+$mode = $hours === 0 ? 'full-day' : $hours . 'h slots';
+$geo  = $hasCenter ? sprintf( ' around %.5f,%.5f within %gkm', $centerLat, $centerLon, $distanceKm ) : '';
+echo "Item #$item, $locations location(s)$geo, bookable timeframes ($mode).\n";
+
+// --- Create the bookings, spread across the locations. ---
 $start   = microtime( true );
 $created = [];
 for ( $i = 0; $i < $count; $i++ ) {
+	$location  = $locationIds[ $i % $locations ]; // round-robin; day $i keeps them non-overlapping
 	$created[] = $gen->booking( $location, $item, $i, $hours );
 }
 $elapsed = microtime( true ) - $start;

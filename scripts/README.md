@@ -35,9 +35,20 @@ php scripts/generate-bookings.php --count=100 --verify
 | --- | --- |
 | `--count=N` | Number of bookings to create (default 1). |
 | `--hours=H` | Make each booking an `H`-hour slot instead of a full day. The start hour rotates across the day per booking, so one run spans many hours-of-day — handy for UTC/timezone testing. Default `0` = full-day bookings. |
+| `--locations=N` | Spread the bookings across `N` locations (default 1). |
+| `--lat=Y --lon=X` | Give the locations coordinates centred on this point. |
+| `--distancekm=D` | Scatter the locations randomly within `D` km of the centre (default `0` = all exactly at the centre). Needs `--lat`/`--lon`. |
 | `--verify` | Check a few with `Booking::isValid()` and report. |
 | `--cleanup` | Delete everything this script ever created, then exit. |
 | `--help` | Show usage. |
+
+Place bookings across a map (e.g. for map/geo testing) — 20 locations
+scattered within 15 km of central Berlin, 200 bookings spread over them:
+
+```bash
+php scripts/generate-bookings.php --count=200 --locations=20 \
+  --lat=52.52 --lon=13.405 --distancekm=15 --verify
+```
 
 For UTC/timezone testing, create hourly-slot bookings:
 
