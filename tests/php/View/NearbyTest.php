@@ -55,7 +55,16 @@ class NearbyTest extends CustomPostTypeTest {
 	}
 
 	public function testResolveOrigin_explicitLatLonWins() {
-		$origin = $this->invokeStatic( 'resolveOrigin', array( array( 'lat' => '48.0', 'lon' => '11.0' ), 0 ) );
+		$origin = $this->invokeStatic(
+			'resolveOrigin',
+			array(
+				array(
+					'lat' => '48.0',
+					'lon' => '11.0',
+				),
+				0,
+			)
+		);
 		$this->assertEquals( 48.0, $origin['lat'] );
 		$this->assertEquals( 11.0, $origin['lon'] );
 	}
@@ -67,7 +76,13 @@ class NearbyTest extends CustomPostTypeTest {
 
 		$origin = $this->invokeStatic(
 			'resolveOrigin',
-			array( array( 'lat_meta' => 'custom_lat', 'lon_meta' => 'custom_lon' ), $postId )
+			array(
+				array(
+					'lat_meta' => 'custom_lat',
+					'lon_meta' => 'custom_lon',
+				),
+				$postId,
+			)
 		);
 		$this->assertEqualsWithDelta( 48.1372, $origin['lat'], 0.0001 );
 		$this->assertEqualsWithDelta( 11.5755, $origin['lon'], 0.0001 );
@@ -86,8 +101,15 @@ class NearbyTest extends CustomPostTypeTest {
 	}
 
 	public function testGetNearbyLocations_filtersByDistanceAndExcludesOrigin() {
-		$origin = array( 'lat' => self::ORIGIN_LAT, 'lon' => self::ORIGIN_LON );
-		$config = array( 'max_distance' => 50.0, 'max_results' => 9, 'post_id' => $this->originLocationId );
+		$origin = array(
+			'lat' => self::ORIGIN_LAT,
+			'lon' => self::ORIGIN_LON,
+		);
+		$config = array(
+			'max_distance' => 50.0,
+			'max_results' => 9,
+			'post_id' => $this->originLocationId,
+		);
 
 		$results = $this->invokeStatic( 'getNearbyLocations', array( $origin, $config ) );
 		$ids     = array_column( $results, 'id' );
@@ -98,8 +120,15 @@ class NearbyTest extends CustomPostTypeTest {
 	}
 
 	public function testGetNearbyItems_mapsLocationsToItems() {
-		$origin = array( 'lat' => self::ORIGIN_LAT, 'lon' => self::ORIGIN_LON );
-		$config = array( 'max_distance' => 50.0, 'max_results' => 9, 'post_id' => 0 );
+		$origin = array(
+			'lat' => self::ORIGIN_LAT,
+			'lon' => self::ORIGIN_LON,
+		);
+		$config = array(
+			'max_distance' => 50.0,
+			'max_results' => 9,
+			'post_id' => 0,
+		);
 
 		$results = $this->invokeStatic( 'getNearbyItems', array( $origin, $config ) );
 		$ids     = array_column( $results, 'id' );

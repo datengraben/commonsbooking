@@ -437,9 +437,9 @@ class Nearby extends View {
 	/**
 	 * Renders the shortcode template for the given ranked result set.
 	 *
-	 * @param string                                      $type
+	 * @param string                                     $type
 	 * @param array<int,array{id: int, distance: float}> $results
-	 * @param int                                         $visible
+	 * @param int                                        $visible
 	 *
 	 * @return string
 	 */

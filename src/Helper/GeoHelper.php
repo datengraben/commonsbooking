@@ -64,8 +64,8 @@ class GeoHelper {
 	 * @return float Distance in kilometers.
 	 */
 	public static function getDistanceInKm( float $lat1, float $lon1, float $lat2, float $lon2 ): float {
-		$lat1Rad = deg2rad( $lat1 );
-		$lat2Rad = deg2rad( $lat2 );
+		$lat1Rad  = deg2rad( $lat1 );
+		$lat2Rad  = deg2rad( $lat2 );
 		$deltaLat = deg2rad( $lat2 - $lat1 );
 		$deltaLon = deg2rad( $lon2 - $lon1 );
 
@@ -88,11 +88,11 @@ class GeoHelper {
 	 * distance and optionally capped.
 	 *
 	 * @param array<int|string,array{lat: float|string, lon: float|string}> $candidates Map of post id => coordinates.
-	 * @param float                                                          $originLat  Origin latitude in decimal degrees.
-	 * @param float                                                          $originLon  Origin longitude in decimal degrees.
-	 * @param float|null                                                     $maxDistanceKm Maximum distance in km, or null for no limit.
-	 * @param int|null                                                       $maxResults    Maximum number of results, or null for no limit.
-	 * @param array<int|string>                                              $excludeIds    Candidate ids to exclude (e.g. the origin post).
+	 * @param float                                                         $originLat  Origin latitude in decimal degrees.
+	 * @param float                                                         $originLon  Origin longitude in decimal degrees.
+	 * @param float|null                                                    $maxDistanceKm Maximum distance in km, or null for no limit.
+	 * @param int|null                                                      $maxResults    Maximum number of results, or null for no limit.
+	 * @param array<int|string>                                             $excludeIds    Candidate ids to exclude (e.g. the origin post).
 	 *
 	 * @return array<int,array{id: int|string, distance: float}> Ordered list, nearest first.
 	 */

@@ -80,10 +80,22 @@ class GeoHelperTest extends BaseTestCase {
 
 	public function testRankByDistance_filtersSortsAndCaps() {
 		$candidates = array(
-			10 => array( 'lat' => 50.9413035, 'lon' => 6.9581379978318 ), // origin itself (0 km)
-			11 => array( 'lat' => 50.9375, 'lon' => 6.9700 ),            // ~1 km
-			12 => array( 'lat' => 52.5162746, 'lon' => 13.3777041 ),      // ~477 km (out of range)
-			13 => array( 'lat' => 50.9500, 'lon' => 6.9600 ),            // ~1 km
+			10 => array(
+				'lat' => 50.9413035,
+				'lon' => 6.9581379978318,
+			), // origin itself (0 km)
+			11 => array(
+				'lat' => 50.9375,
+				'lon' => 6.9700,
+			),            // ~1 km
+			12 => array(
+				'lat' => 52.5162746,
+				'lon' => 13.3777041,
+			),      // ~477 km (out of range)
+			13 => array(
+				'lat' => 50.9500,
+				'lon' => 6.9600,
+			),            // ~1 km
 		);
 
 		$ranked = GeoHelper::rankByDistance( $candidates, 50.9413035, 6.9581379978318, 50.0, 2, array( 10 ) );
@@ -98,8 +110,14 @@ class GeoHelperTest extends BaseTestCase {
 
 	public function testRankByDistance_withoutMaxDistanceKeepsAll() {
 		$candidates = array(
-			11 => array( 'lat' => 50.9375, 'lon' => 6.9700 ),
-			12 => array( 'lat' => 52.5162746, 'lon' => 13.3777041 ),
+			11 => array(
+				'lat' => 50.9375,
+				'lon' => 6.9700,
+			),
+			12 => array(
+				'lat' => 52.5162746,
+				'lon' => 13.3777041,
+			),
 		);
 
 		$ranked = GeoHelper::rankByDistance( $candidates, 50.9413035, 6.9581379978318, null, null, array() );
