@@ -6,7 +6,7 @@
 > notification and presentation surfaces a visitor, booking user or manager
 > actually touches.
 >
-> It is built in four movements:
+> It is built in six movements:
 >
 > 1. **Use cases** — a conceptual overview of *what* someone customizes.
 > 2. **Use cases × domain objects** — the same use cases, re-read against the
@@ -15,11 +15,17 @@
 >    action legitimately belongs in each.
 > 4. **The hierarchy** — a single tree that lets you follow any use case
 >    downward through the layers, from intent to hook.
+> 5. **The intertwining** — where use cases share seams (analysis, with graphs).
+> 6. **Proposals (RFC)** — extension points that do *not* yet exist, kept
+>    separate from the reference above.
 >
-> Throughout, hooks that **exist today** in the codebase are marked `✔`, and
-> hooks that are **conceptual gaps** (natural extension points that are not yet
-> emitted) are marked `◻`. The gap markers describe *where* a hook would belong
-> in this scheme; they are proposals for discussion, not existing API.
+> **Scope & status.** §0–§5 are a **reference for the hooks that exist today**
+> in the codebase (all marked `✔`), verified against `src/`, `templates/` and
+> `includes/`. They document the extension surface of the current `2.10.x`
+> line and add no code. Ideas for hooks that do **not** yet exist are kept out
+> of the reference and collected in **§6 (RFC — not implemented)**, marked `◻`;
+> those are proposals for a future minor (`2.11.0`), subject to design review,
+> and are **not** part of the plugin's API.
 
 ---
 
@@ -149,7 +155,8 @@ in `src/Model` and registered as custom post types in
 
 CommonsBooking is organized in five layers. A hook is only well-placed if it
 lives in the layer that owns the decision it exposes. This section states, per
-layer, *what belongs there* and *which existing/gap hooks sit there.*
+layer, *what belongs there* and *which hooks the current code emits there.*
+Proposed extension points for layers that are thin today are gathered in §6.
 
 ### L1 — Data & persistence layer
 `Wordpress/CustomPostType/*`, `Wordpress/PostStatus/*`, `Repository/*`, `Model/*`
@@ -164,8 +171,6 @@ later renders.
 | `commonsbooking_custom_metadata` | filter | ✔ | Extra CMB2 metadata registered on objects |
 | `commonsbooking_booking_filter` | filter | ✔ | Which bookings a query returns |
 | `commonsbooking_disableCache` | filter | ✔ | Whether the object/query cache is bypassed |
-| `commonsbooking_saved_<object>` (item/location/timeframe/booking) | action | ◻ | React after a domain object is persisted |
-| `commonsbooking_query_args_<object>` | filter | ◻ | Reshape repository query args before fetch |
 
 ### L2 — Domain & service layer
 `Service/*` (Booking, BookingCodes, BookingRule, Holiday, iCalendar, Scheduler,
@@ -185,9 +190,6 @@ the system.
 | `commonsbooking_mail_sent` | action | ✔ | React after a message is sent |
 | `commonsbooking_before_send_location_reminder_mail` | filter | ✔ | Gate/shape location reminder mails |
 | `commonsbooking_emailcodes_icalevent_title` | filter | ✔ | iCal event title in code mails |
-| `commonsbooking_booking_state_changed` | action | ◻ | Single unified transition event (confirm/cancel/hold) |
-| `commonsbooking_bookable_slots` | filter | ◻ | Adjust computed availability before render |
-| `commonsbooking_booking_code` | filter | ◻ | Override generated code format |
 
 ### L3 — Presentation & view layer
 `View/*`, `templates/*`, `CB/CB.php` (template tags), `includes/Template.php`,
@@ -211,10 +213,6 @@ single-page templates, and the `[cb ...]` template-tag system. This is where the
 | `commonsbooking_before_/after_item-calendar-header` | action | ✔ | Wrap the item calendar header |
 | `commonsbooking_before_/after_location-calendar-header` | action | ✔ | Wrap the location calendar header |
 | `commonsbooking_before_/after_timeframe-calendar` | action | ✔ | Wrap the availability calendar |
-| `commonsbooking_shortcode_atts_<tag>` | filter | ◻ | Normalize shortcode attributes |
-| `commonsbooking_<listing>_query` / `_results` | filter | ◻ | Reorder/filter item & location listings and map markers |
-| `commonsbooking_before_/after_shortcode-items` (and other list/table/map templates) | action | ◻ | Wrap listing regions not yet bracketed |
-| `commonsbooking_calendar_day_classes` | filter | ◻ | Per-day CSS/state hints |
 
 ### L4 — Access & role layer
 `includes/Users.php`
@@ -231,19 +229,18 @@ subscriber-only views).
 | `commonsbooking_admin_roles` | filter | ✔ | Roles counted as admin |
 | `commonsbooking_manager_roles` | filter | ✔ | Roles counted as manager |
 | `commonsbooking_privileged_roles` | filter | ✔ | Roles counted as privileged |
-| `commonsbooking_can_book` | filter | ◻ | Per-user/per-item bookability gate |
 
 ### L5 — Integration & API layer
 `API/*` (REST routes, GBFS), user data exporters/erasers, WPML bridges
 
-Owns external representations. Hooks here keep the **outside view consistent**
-with the customized on-site UX.
+Owns external representations. Today this layer exposes no CommonsBooking-owned
+UX filters — the only extension points are the external WPML bridges the plugin
+calls into. Proposed `commonsbooking_api_*` filters that would let the REST/GBFS
+views mirror on-site overrides are gathered in §6.
 
 | Hook | Kind | Status | What it governs |
 |---|---|---|---|
 | *(WPML)* `wpml_switch_language_for_email` / `wpml_reset_language_after_mailing` | action | ✔ (external) | Per-recipient email language |
-| `commonsbooking_api_item_response` / `_location_response` | filter | ◻ | Shape REST/GBFS payloads |
-| `commonsbooking_api_availability` | filter | ◻ | Shape the availability route output |
 
 ---
 
@@ -254,31 +251,23 @@ layers to the concrete **hooks** that realize it. Read top-to-bottom to see how 
 single customization goal descends through the application.
 
 ```
-CommonsBooking UX extension surface
+CommonsBooking UX extension surface  ·  existing hooks only (proposals: §6)
 │
 ├── UC-1 · Discover & browse the commons
-│    ├── L1 Data ....... commonsbooking_booking_filter ✔ · query_args_<object> ◻
+│    ├── L1 Data ....... commonsbooking_booking_filter ✔
 │    ├── L3 Present ..... shortcodes cb_items / cb_locations / cb_map / cb_search
 │    │                     ├─ commonsbooking_get_template_part ✔      (swap card template)
-│    │                     ├─ commonsbooking_tag_{item|location}_* ✔  (relabel fields)
-│    │                     ├─ commonsbooking_<listing>_query|_results ◻ (reorder/filter)
-│    │                     └─ before/after shortcode-items|locations|map ◻ (wrap region)
+│    │                     └─ commonsbooking_tag_{item|location}_* ✔  (relabel fields)
 │    └── L4 Access ...... commonsbooking_isCurrentUserSubscriber ✔    (who sees what)
 │
 ├── UC-2 · Check availability & start a booking
-│    ├── L2 Service ..... commonsbooking_bookable_slots ◻             (compute availability)
-│    ├── L3 Present ..... timeframe-calendar template
-│    │                     ├─ commonsbooking_before/after_timeframe-calendar ✔
-│    │                     ├─ commonsbooking_before/after_item|location-calendar-header ✔
-│    │                     ├─ commonsbooking_mobile_calendar_month_count ✔ (reach)
-│    │                     └─ commonsbooking_calendar_day_classes ◻    (per-day state)
-│    └── L4 Access ...... commonsbooking_can_book ◻                    (may this user book?)
+│    └── L3 Present ..... timeframe-calendar template
+│                          ├─ commonsbooking_before/after_timeframe-calendar ✔
+│                          ├─ commonsbooking_before/after_item|location-calendar-header ✔
+│                          └─ commonsbooking_mobile_calendar_month_count ✔ (reach)
 │
 ├── UC-3 · Move a booking through its lifecycle
 │    ├── L1 Data ........ save_post_cb_bookings / post_updated (WP core wiring)
-│    │                     └─ commonsbooking_saved_booking ◻          (react to persist)
-│    ├── L2 Service ..... commonsbooking_booking_state_changed ◻      (confirm/cancel/hold)
-│    │                     └─ commonsbooking_booking_code ◻           (code format)
 │    └── L3 Present ..... commonsbooking_before/after_booking-single ✔ (notice & code region)
 │
 ├── UC-4 · Communicate with people
@@ -305,10 +294,14 @@ CommonsBooking UX extension surface
 │                          └─ commonsbooking_{admin|manager|privileged}_roles ✔
 │
 └── UC-7 · Integrate with the outside
-     ├── L1 Data ........ commonsbooking_disableCache ✔ · commonsbooking_custom_metadata ✔
-     └── L5 Integration . commonsbooking_api_{item|location}_response ◻
-                          └─ commonsbooking_api_availability ◻
+     └── L1 Data ........ commonsbooking_disableCache ✔ · commonsbooking_custom_metadata ✔
 ```
+
+> Some use cases currently bottom out only in the presentation or data layer —
+> UC-2's availability *computation*, UC-3's *state transitions*, and UC-7's
+> *API payloads* have no dedicated hook yet. Those are exactly the gaps §6
+> proposes to fill; today they are reached indirectly (e.g. re-styling the
+> rendered calendar rather than the computed slots).
 
 ### How to use this hierarchy
 
@@ -320,9 +313,9 @@ CommonsBooking UX extension surface
   live in L2, "who may see/do" lives in L4, "what data exists" lives in L1.
 - **Keeping an integration in sync?** Whatever you override in L1–L4, mirror it
   in L5 so the REST/GBFS/export views agree with the on-site UX.
-- **Hitting a `◻` gap?** That marks a spot where this scheme says a hook
-  *should* exist but the code does not yet emit one. Those are the natural
-  candidates for the next round of extension-API work — proposals, not promises.
+- **Need a hook that isn't listed?** The reference above is exhaustive for the
+  current release. If the extension point you want is missing, check §6 — it may
+  already be a tracked proposal — otherwise it is new design work.
 
 ---
 
@@ -333,8 +326,13 @@ not parallel lanes — they **share seams**. The value of a hook often comes
 precisely from the fact that two use cases meet at it. The graphs below make the
 overlaps explicit.
 
-> The rendered graphs are embedded below as images; the Mermaid source that
-> generated each is kept in a collapsible block beneath it for maintenance.
+> **This section is analysis, not API.** The seams below are conceptual and
+> reference *both* shipped hooks (`✔`) and the proposed extension points from §6
+> (`◻`, shown dashed in the second graph). It explains where customization
+> concerns overlap; it does not itself add or promise any hook.
+>
+> The rendered graphs are embedded as images; the Mermaid source that generated
+> each is kept in a collapsible block beneath it for maintenance.
 
 ### 5.1 The overlap graph — where use cases meet
 
@@ -418,10 +416,14 @@ arrows arrive at one node, the use cases intertwine at that hook.
 <details>
 <summary>Diagram source (Mermaid)</summary>
 
+Solid nodes are hooks that ship today (`✔`); dashed nodes are proposed
+extension points (`◻`, see §6).
+
 ```mermaid
 flowchart TB
   classDef uc fill:#1f6feb,stroke:#0b3d91,color:#fff;
   classDef node fill:#eef6ff,stroke:#4c8dff,color:#083b7a;
+  classDef prop fill:#fff8f0,stroke:#c46a1f,color:#5b4500,stroke-dasharray:5 4;
 
   UC1(UC-1):::uc
   UC2(UC-2):::uc
@@ -432,43 +434,51 @@ flowchart TB
   UC7(UC-7):::uc
 
   subgraph L3[L3 · Presentation]
-    TPL["template &amp; tag system"]:::node
-    CAL["calendar + headers"]:::node
-    SINGLE["before/after *-single"]:::node
+    TPL["template &amp; tag system ✔"]:::node
+    CAL["calendar + headers ✔"]:::node
+    SINGLE["before/after *-single ✔"]:::node
   end
   subgraph L2[L2 · Service]
-    SLOTS["bookable_slots ◻"]:::node
-    STATE["booking_state_changed ◻"]:::node
     MAIL["mail_* hooks ✔"]:::node
+    SLOTS["bookable_slots ◻"]:::prop
+    STATE["booking_state_changed ◻"]:::prop
   end
   subgraph L1[L1 · Data]
-    QUERY["booking_filter / query ✔◻"]:::node
     CACHE["cache · custom_metadata ✔"]:::node
+    BFILTER["booking_filter ✔"]:::node
+    QUERY["query_args ◻"]:::prop
   end
   subgraph L4[L4 · Access]
-    ROLE["role checks / can_book ✔◻"]:::node
+    ROLE["role checks ✔"]:::node
+    CANBOOK["can_book ◻"]:::prop
   end
   subgraph L5[L5 · Integration]
-    API["api responses ◻"]:::node
     LANG["email language ✔"]:::node
+    API["api responses ◻"]:::prop
   end
 
-  UC1 --> TPL & CAL & QUERY & CACHE & ROLE
-  UC2 --> CAL & TPL & SLOTS & CACHE & ROLE
-  UC3 --> SINGLE & TPL & STATE & QUERY & ROLE
-  UC4 --> STATE & MAIL & LANG
+  UC1 --> TPL & CAL & BFILTER & CACHE & ROLE
+  UC2 --> CAL & TPL & CACHE
+  UC2 -.-> SLOTS & CANBOOK
+  UC3 --> SINGLE & TPL & BFILTER
+  UC3 -.-> STATE
+  UC4 --> MAIL & LANG
+  UC4 -.-> STATE
   UC5 --> TPL & SINGLE
   UC6 --> ROLE
-  UC7 --> QUERY & CACHE & SLOTS & API & LANG
+  UC7 --> CACHE & BFILTER
+  UC7 -.-> QUERY & API
 ```
 
 </details>
 
-Nodes with the most incoming arrows are the **load-bearing seams**: the template
-& tag system (L3), the role gate (L4), and the booking-state / query pair
-(L1↔L2). These are the places where a single hook customization ripples across
-several use cases at once — powerful to hook, and the ones to touch most
-carefully.
+Among the **shipping** hooks, the ones carrying the most use cases — the
+**load-bearing seams** — are the template & tag system (L3), the role gate (L4),
+and the cache / `booking_filter` pair (L1). These are where a single
+customization ripples across several use cases at once: powerful to hook, and
+the ones to touch most carefully. The dashed service seams (booking-state,
+bookable-slots) *would* become load-bearing once added — which is what makes
+them the highest-value items in §6.
 
 ### 5.3 What the intertwining means for an extender
 
@@ -476,12 +486,42 @@ carefully.
   re-labels a field in the browse card *and* the booking page *and* the calendar
   header — because UC-1, UC-3 and UC-5 share that seam. One change, consistent
   everywhere.
-- **Respect the tightest seam.** The booking-state → message seam (UC-3↔UC-4)
-  means anything you do on cancellation is felt by the mailer. React on the
-  *state* seam, not in two disconnected places.
+- **Respect the tightest seam.** Booking-state → message (UC-3↔UC-4): anything
+  you do on cancellation is felt by the mailer. Today you reach it via the
+  `mail_*` filters plus `save_post` wiring; a single `booking_state_changed`
+  action (§6) would make it one clean place to react instead of two.
 - **Keep cross-cuts honest.** The role gate (UC-6) and the cache/metadata seam
   (UC-7) touch almost everything; a change there is never local. Verify it
   against every use case that shares the seam before shipping.
+
+---
+
+## 6. Proposed extension points (RFC — not implemented)
+
+> **Status: proposal, not API.** Nothing in this section exists in the codebase.
+> These are the natural gaps the map above exposes — candidates for a future
+> **`2.11.0`** minor (new backwards-compatible hooks). Each needs its own design
+> review and PR; names and signatures are provisional. They are collected here so
+> the reference (§0–§5) stays a truthful record of what ships today.
+
+| Proposed hook | Kind | Layer | Unlocks | Why it's wanted |
+|---|---|---|---|---|
+| `commonsbooking_bookable_slots` | filter | L2 | UC-2 | Adjust *computed* availability before it renders, instead of re-styling the finished calendar. |
+| `commonsbooking_booking_state_changed` | action | L2 | UC-3, UC-4 | One unified transition event (confirm/cancel/hold) — the single clean place to react, replacing `mail_*` + `save_post` juggling. |
+| `commonsbooking_can_book` | filter | L4 | UC-2, UC-6 | Per-user / per-item bookability gate for custom eligibility rules. |
+| `commonsbooking_api_item_response` / `_location_response` | filter | L5 | UC-7 | Let REST/GBFS payloads mirror on-site overrides. |
+| `commonsbooking_api_availability` | filter | L5 | UC-7 | Same, for the availability route. |
+| `commonsbooking_<listing>_query` / `_results` | filter | L3 | UC-1 | Reorder/filter item & location listings and map markers without overriding whole templates. |
+| `commonsbooking_calendar_day_classes` | filter | L3 | UC-2 | Per-day CSS/state hints on the calendar. |
+| `commonsbooking_shortcode_atts_<tag>` | filter | L3 | UC-1 | Normalize/extend shortcode attributes in one place. |
+| `commonsbooking_before_/after_shortcode-items` (+ list/table/map templates) | action | L3 | UC-1 | Bracket the listing regions that aren't wrapped yet (parity with the single-page actions). |
+| `commonsbooking_booking_code` | filter | L2 | UC-3 | Override the generated booking-code format. |
+| `commonsbooking_query_args_<object>` | filter | L1 | UC-1, UC-7 | Reshape repository query args before fetch. |
+| `commonsbooking_saved_<object>` | action | L1 | UC-3 | React after a domain object is persisted, per post type. |
+
+**Suggested first slice** (highest ripple, per §5): `booking_state_changed` and
+`bookable_slots` — the two dashed service seams that would each carry multiple
+use cases. Everything else can follow incrementally.
 
 ---
 
@@ -513,7 +553,7 @@ and the `before_/after_` actions for `item-single`, `location-single`,
 
 - `✔` — hook is emitted in the current codebase (verified in `src/`,
   `templates/`, `includes/`).
-- `◻` — conceptual gap: a natural extension point in this scheme that the code
-  does not yet emit. Proposal for discussion, not existing API.
+- `◻` — proposed extension point, **not implemented**; consolidated in §6 and
+  targeting a future `2.11.0` minor. Not part of the current API.
 - **Filter** — reshapes a value (`apply_filters`).
 - **Action** — announces an event or brackets a rendered region (`do_action`).
