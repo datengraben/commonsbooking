@@ -201,7 +201,7 @@ class GBFSDiscoveryCheck {
 			return false;
 		}
 
-		$header = str_getcsv( (string) array_shift( $lines ) );
+		$header = str_getcsv( (string) array_shift( $lines ), ',', '"', '' );
 		$colIdx = null;
 		foreach ( $header as $i => $name ) {
 			if ( preg_match( '/auto-?discovery/i', (string) $name ) ) {
@@ -219,7 +219,7 @@ class GBFSDiscoveryCheck {
 			if ( '' === trim( $line ) ) {
 				continue;
 			}
-			$row = str_getcsv( $line );
+			$row = str_getcsv( $line, ',', '"', '' );
 			if ( ! isset( $row[ $colIdx ] ) ) {
 				continue;
 			}
