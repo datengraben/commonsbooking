@@ -14,6 +14,16 @@
 			<directory>tests/php</directory>
 		</testsuite>
 	</testsuites>
+	<!--
+		Integration tests that make real external HTTP requests are tagged
+		@group external-http and excluded by default. Run them explicitly by
+		requesting the external-http group on the phpunit command line.
+	-->
+	<groups>
+		<exclude>
+			<group>external-http</group>
+		</exclude>
+	</groups>
     <php>
         <ini name="xdebug.mode" value="coverage" />
     </php>
