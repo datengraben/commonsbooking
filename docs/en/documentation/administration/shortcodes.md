@@ -125,3 +125,24 @@ Users in the administrator role see all bookings here.
   * Import to digital calendar via [iCalendar](../manage-bookings/icalendar-feed) format possible
 
 ![](/img/shortcode-cb-bookings.png)
+
+## Booking recommendations ("Book again")
+
+Shows personalised recommendations for the logged-in user:
+
+  * **Book again**: items the user has booked before that currently have a free slot in the selected time window.
+  * **Did you try …**: items that share a category with the user's previously booked items and are free in the same window.
+
+The shortcode outputs nothing for logged-out users or when there is nothing to suggest.
+
+  * Shortcode: `[cb_book_again]`
+  * Parameters:
+    * `window`: Availability window to check. One of `today`, `tomorrow` or `week` (a rolling 7 days). Defaults to `week`.
+
+      Example:
+      ```
+      [cb_book_again window=today]
+      ```
+    * `max`: Maximum number of items to show per section (defaults to `6`).
+    * `book-again`: Set to `no` to hide the "Book again" section.
+    * `similar`: Set to `no` to hide the "Did you try …" section.

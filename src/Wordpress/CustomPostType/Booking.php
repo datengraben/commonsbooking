@@ -56,6 +56,9 @@ class Booking extends Timeframe {
 		// Listing of bookings for current user
 		add_shortcode( 'cb_bookings', array( \CommonsBooking\View\Booking::class, 'shortcode' ) );
 
+		// "Book again" / "Did you try …" recommendations for current user
+		add_shortcode( 'cb_book_again', array( \CommonsBooking\View\BookAgain::class, 'shortcode' ) );
+
 		// Add type filter to backend list view
 		// add_action( 'restrict_manage_posts', array( static::class, 'addAdminTypeFilter' ) );
 		add_action( 'restrict_manage_posts', array( static::class, 'addAdminItemFilter' ) );
