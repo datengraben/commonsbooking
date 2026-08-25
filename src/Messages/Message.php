@@ -3,7 +3,6 @@
 namespace CommonsBooking\Messages;
 
 use CommonsBooking\Model\MessageRecipient;
-use CommonsBooking\PHPMailer\PHPMailer\PHPMailer;
 use WP_Error;
 use function commonsbooking_parse_template;
 
@@ -362,7 +361,10 @@ abstract class Message {
 			add_action(
 				'phpmailer_init',
 				/**
-				 * @var $phpmailer PHPMailer
+				 * The $phpmailer instance is provided by WordPress core (the bundled
+				 * \PHPMailer\PHPMailer\PHPMailer), so we do not need our own copy of the library.
+				 *
+				 * @var \PHPMailer\PHPMailer\PHPMailer $phpmailer
 				 */
 				function ( $phpmailer ) {
 					// Check the $wp_mail_attachments global for any attachment data, and reset it for good measure.
