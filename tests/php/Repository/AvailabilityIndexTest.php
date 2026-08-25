@@ -282,6 +282,32 @@ class AvailabilityIndexTest extends CustomPostTypeTest {
 		$this->assertNull( $this->indexRow( $timeframeId ) );
 	}
 
+	/**
+	 * Booking::cancel() writes the status with raw SQL to keep the meta intact, so none of
+	 * the save hooks fire. It has to sync the index itself, otherwise the row keeps saying
+	 * "confirmed" for a booking that is canceled.
+	 */
+	public function testCancelingABookingUpdatesTheIndexedStatus() {
+		$bookingId = $this->createBooking(
+			$this->locationId,
+			$this->itemId,
+			strtotime( '+1 day', time() ),
+			strtotime( '+2 days', time() )
+		);
+		$this->rebuildAll();
+
+		$this->assertEquals( 'confirmed', $this->indexRow( $bookingId )->post_status );
+
+		( new \CommonsBooking\Model\Booking( $bookingId ) )->cancel();
+		wp_cache_flush();
+
+		$this->assertEquals(
+			'canceled',
+			$this->indexRow( $bookingId )->post_status,
+			'the index still reports the booking as confirmed after cancelling'
+		);
+	}
+
 	// ---------------------------------------------------------------- D. deletion
 
 	public function testDeleteByTimeframeIdClearsAllTables() {
