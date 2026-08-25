@@ -57,6 +57,58 @@ class GeoHelperTest extends BaseTestCase {
 		$address = GeoHelper::getAddressData( 'Karl-Marx-Straße 1, 12043 Berlin' );
 		$this->assertThatKarlMarxLocationIsProperlyGeoCoded( $address );
 	}
+
+	/**
+	 * Exercises the real NominatimGeoCodeService with a faked WordPress HTTP
+	 * response (via the pre_http_request filter) so no real network request is
+	 * made. This proves the service parses a Nominatim `jsonv2` response into a
+	 * Location without depending on the external service.
+	 */
+	public function testGeoCodingThroughWordPressHttpApi() {
+		GeoHelper::resetGeoCoder();
+
+		$place = array(
+			'licence'      => 'Data © OpenStreetMap contributors',
+			'osm_type'     => 'way',
+			'osm_id'       => 123456,
+			'lat'          => '52.4863573',
+			'lon'          => '13.4247667',
+			'category'     => 'highway',
+			'type'         => 'residential',
+			'display_name' => 'Karl-Marx-Straße 1, 12043 Berlin, Germany',
+			'boundingbox'  => array( '52.4863', '52.4864', '13.4247', '13.4248' ),
+			'address'      => array(
+				'road'         => 'Karl-Marx-Straße',
+				'house_number' => '1',
+				'postcode'     => '12043',
+				'city'         => 'Berlin',
+				'country'      => 'Germany',
+				'country_code' => 'de',
+			),
+		);
+
+		$filter = function () use ( $place ) {
+			return array(
+				'headers'       => array( 'content-type' => 'application/json' ),
+				'body'          => wp_json_encode( array( $place ) ),
+				'response'      => array(
+					'code'    => 200,
+					'message' => 'OK',
+				),
+				'cookies'       => array(),
+				'http_response' => null,
+			);
+		};
+		add_filter( 'pre_http_request', $filter, 10, 3 );
+
+		try {
+			$address = GeoHelper::getAddressData( 'Karl-Marx-Straße 1, 12043 Berlin' );
+		} finally {
+			remove_filter( 'pre_http_request', $filter, 10 );
+		}
+
+		$this->assertThatKarlMarxLocationIsProperlyGeoCoded( $address );
+	}
 	private function assertThatKarlMarxLocationIsProperlyGeoCoded( Location $address ): void {
 		$this->assertEquals( 'Karl-Marx-Straße', $address->getStreetName() );
 		$this->assertEquals( '1', $address->getStreetNumber() );
