@@ -666,6 +666,67 @@ class AvailabilityIndexTest extends CustomPostTypeTest {
 		$this->assertEquals( $this->normalise( $withoutIndex ), $this->normalise( $withIndex ) );
 	}
 
+	/**
+	 * Model\Calendar is the single production consumer of the index: the calendar view, the
+	 * availability REST route and the GBFS station status all build one, and it resolves its
+	 * timeframes through Repository\Timeframe::getInRange(), which narrows the ids with
+	 * getPostIdsByType() - the one seam the index is wired into.
+	 *
+	 * This asserts the whole path produces identical availability either way.
+	 */
+	public function testCalendarAvailabilityIsIdenticalWithIndexOnAndOff() {
+		// Relative to now, because Calendar works on real dates.
+		$this->createTimeframe(
+			$this->locationId,
+			$this->itemId,
+			strtotime( '-10 days' ),
+			strtotime( '+30 days' ),
+			TimeframeCPT::BOOKABLE_ID
+		);
+		$this->createBooking(
+			$this->locationId,
+			$this->itemId,
+			strtotime( '+2 days' ),
+			strtotime( '+3 days' )
+		);
+
+		$slots = function () {
+			$calendar = new \CommonsBooking\Model\Calendar(
+				new \CommonsBooking\Model\Day( date( 'Y-m-d', strtotime( '-1 day' ) ) ),
+				new \CommonsBooking\Model\Day( date( 'Y-m-d', strtotime( '+5 days' ) ) ),
+				array( $this->locationId ),
+				array( $this->itemId )
+			);
+
+			return array_map(
+				function ( $slot ) {
+					return $slot->start . '|' . $slot->end;
+				},
+				$calendar->getAvailabilitySlots()
+			);
+		};
+
+		$this->disableIndex();
+		Plugin::clearCache();
+		$withoutIndex = $slots();
+
+		$this->enableIndex();
+		Plugin::clearCache();
+
+		// Without this the test could pass vacuously, with both runs falling back.
+		$this->assertTrue( AvailabilityIndex::isReadable(), 'the index is not serving reads' );
+		$this->assertNotNull(
+			AvailabilityIndex::getPostIdsByType( array(), array( $this->itemId ), array( $this->locationId ) ),
+			'the calendar query falls back instead of using the index'
+		);
+
+		$withIndex = $slots();
+
+		// Guard against both paths silently returning nothing.
+		$this->assertNotEmpty( $withoutIndex, 'fixture produced no availability slots' );
+		$this->assertEquals( $withoutIndex, $withIndex );
+	}
+
 	// ---------------------------------------------------------------- I. rebuild
 
 	public function testRebuildPopulatesFromExistingPosts() {
