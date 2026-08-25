@@ -157,7 +157,6 @@ class AvailabilityIndexTest extends CustomPostTypeTest {
 
 		$this->assertNotNull( $row );
 		$this->assertEquals( TimeframeCPT::BOOKABLE_ID, (int) $row->type );
-		$this->assertEquals( 'publish', $row->post_status );
 		$this->assertEquals( array( $this->locationId ), $this->locationIdsOf( $timeframeId ) );
 		$this->assertEquals( array( $this->itemId ), $this->itemIdsOf( $timeframeId ) );
 	}
@@ -259,10 +258,7 @@ class AvailabilityIndexTest extends CustomPostTypeTest {
 		);
 		$this->rebuildAll();
 
-		$row = $this->indexRow( $timeframeId );
-
-		$this->assertNotNull( $row );
-		$this->assertEquals( 'canceled', $row->post_status );
+		$this->assertNotNull( $this->indexRow( $timeframeId ) );
 	}
 
 	public function testDoesNotIndexTimeframeWithoutRelations() {
@@ -283,11 +279,12 @@ class AvailabilityIndexTest extends CustomPostTypeTest {
 	}
 
 	/**
-	 * Booking::cancel() writes the status with raw SQL to keep the meta intact, so none of
-	 * the save hooks fire. It has to sync the index itself, otherwise the row keeps saying
-	 * "confirmed" for a booking that is canceled.
+	 * The index does not store the post status, so cancelling a booking needs no index
+	 * write at all - wp_posts stays the authority and the status filter further down the
+	 * read path drops it. Booking::cancel() writes the status with raw SQL and fires no
+	 * hooks, which is exactly why the index must not depend on it.
 	 */
-	public function testCancelingABookingUpdatesTheIndexedStatus() {
+	public function testCanceledBookingStopsBlockingAvailability() {
 		$bookingId = $this->createBooking(
 			$this->locationId,
 			$this->itemId,
@@ -295,17 +292,30 @@ class AvailabilityIndexTest extends CustomPostTypeTest {
 			strtotime( '+2 days', time() )
 		);
 		$this->rebuildAll();
+		Plugin::clearCache();
 
-		$this->assertEquals( 'confirmed', $this->indexRow( $bookingId )->post_status );
+		$query = function () {
+			return $this->normalise(
+				wp_list_pluck(
+					\CommonsBooking\Repository\Timeframe::get(
+						array( $this->locationId ),
+						array( $this->itemId ),
+						array( TimeframeCPT::BOOKING_ID )
+					),
+					'ID'
+				)
+			);
+		};
+
+		$this->assertContains( $bookingId, $query(), 'the booking should block the slot' );
 
 		( new \CommonsBooking\Model\Booking( $bookingId ) )->cancel();
 		wp_cache_flush();
+		Plugin::clearCache();
 
-		$this->assertEquals(
-			'canceled',
-			$this->indexRow( $bookingId )->post_status,
-			'the index still reports the booking as confirmed after cancelling'
-		);
+		// Still in the index - the index has no opinion on status - but filtered out.
+		$this->assertNotNull( $this->indexRow( $bookingId ) );
+		$this->assertNotContains( $bookingId, $query(), 'a canceled booking must not block the slot' );
 	}
 
 	// ---------------------------------------------------------------- D. deletion

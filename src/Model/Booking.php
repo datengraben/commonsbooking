@@ -13,7 +13,6 @@ use CommonsBooking\Helper\Helper;
 use CommonsBooking\Settings\Settings;
 use CommonsBooking\Repository\Timeframe;
 use CommonsBooking\Messages\BookingMessage;
-use CommonsBooking\Repository\AvailabilityIndex;
 use CommonsBooking\Repository\BookingCodes;
 use CommonsBooking\Service\iCalendar;
 use DateTime;
@@ -111,12 +110,6 @@ class Booking extends \CommonsBooking\Model\Timeframe {
 		$wpdb->query( $sql );
 
 		update_post_meta( $this->post->ID, 'cancellation_time', current_time( 'timestamp' ) );
-
-		// The direct update above bypasses wp_update_post(), so none of the save hooks run
-		// and the availability index would keep the previous status. Drop the stale post
-		// cache first, otherwise the sync would read the old status back.
-		clean_post_cache( $this->post->ID );
-		AvailabilityIndex::onSavePost( $this->post->ID );
 
 		$this->sendCancellationMail();
 	}

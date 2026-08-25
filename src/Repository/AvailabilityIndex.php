@@ -71,11 +71,6 @@ class AvailabilityIndex {
 	private const SKIP_STATUSES = [ 'auto-draft', 'trash' ];
 
 	/**
-	 * Statuses that count towards availability, used as the default of the date range lookup.
-	 */
-	public const AVAILABILITY_STATUSES = [ 'publish', 'confirmed', 'unconfirmed' ];
-
-	/**
 	 * The single integration point of the write path. Called from Plugin::init().
 	 */
 	public static function register(): void {
@@ -206,10 +201,12 @@ class AvailabilityIndex {
 	 * Returns the index rows of all timeframes that apply to a location/item pair and overlap
 	 * the given date range.
 	 *
-	 * @param string   $startDate Range start, 'Y-m-d'.
-	 * @param string   $endDate   Range end, 'Y-m-d'.
-	 * @param int[]    $types
-	 * @param string[] $postStatuses
+	 * Like getPostIdsByType(), the post status is not considered here: wp_posts is the
+	 * authority on it and already indexes it. Callers filter on it downstream.
+	 *
+	 * @param string $startDate Range start, 'Y-m-d'.
+	 * @param string $endDate   Range end, 'Y-m-d'.
+	 * @param int[]  $types
 	 *
 	 * @return \stdClass[]
 	 */
@@ -218,8 +215,7 @@ class AvailabilityIndex {
 		int $itemId,
 		string $startDate,
 		string $endDate,
-		array $types = self::INDEXED_TYPES,
-		array $postStatuses = self::AVAILABILITY_STATUSES
+		array $types = self::INDEXED_TYPES
 	): array {
 		global $wpdb;
 
@@ -227,8 +223,7 @@ class AvailabilityIndex {
 		$locationsTable = $wpdb->prefix . self::$locationsTable;
 		$itemsTable     = $wpdb->prefix . self::$itemsTable;
 
-		$typePlaceholders   = implode( ', ', array_fill( 0, count( $types ), '%d' ) );
-		$statusPlaceholders = implode( ', ', array_fill( 0, count( $postStatuses ), '%s' ) );
+		$typePlaceholders = implode( ', ', array_fill( 0, count( $types ), '%d' ) );
 
 		return $wpdb->get_results(
 			$wpdb->prepare(
@@ -239,14 +234,12 @@ class AvailabilityIndex {
 					AND ti.item_id = %d
 					AND ai.start_date <= %s
 					AND (ai.end_date IS NULL OR ai.end_date >= %s)
-					AND ai.type IN ($typePlaceholders)
-					AND ai.post_status IN ($statusPlaceholders)",
+					AND ai.type IN ($typePlaceholders)",
 				$locationId,
 				$itemId,
 				$endDate,
 				$startDate,
-				...$types,
-				...$postStatuses
+				...$types
 			)
 		);
 	}
@@ -282,7 +275,6 @@ class AvailabilityIndex {
 				'type'         => $type,
 				'start_date'   => date( 'Y-m-d', $startDate ),
 				'end_date'     => $endDate ? date( 'Y-m-d', $endDate ) : null,
-				'post_status'  => $timeframe->post_status,
 			)
 		);
 
@@ -418,7 +410,6 @@ class AvailabilityIndex {
 			type tinyint(3) unsigned NOT NULL,
 			start_date date NOT NULL,
 			end_date date DEFAULT NULL,
-			post_status varchar(20) NOT NULL DEFAULT 'publish',
 			PRIMARY KEY (id),
 			UNIQUE KEY timeframe_id (timeframe_id),
 			KEY type_date (type, start_date, end_date),
