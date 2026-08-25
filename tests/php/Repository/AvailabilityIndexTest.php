@@ -161,11 +161,11 @@ class AvailabilityIndexTest extends CustomPostTypeTest {
 		$this->assertEquals( array( $this->itemId ), $this->itemIdsOf( $timeframeId ) );
 	}
 
-	public function testStoresNullEndDateForOpenEndedTimeframe() {
+	public function testStoresNullEndDatetimeForOpenEndedTimeframe() {
 		$timeframeId = $this->createBookableTimeframe( $this->locationId, $this->itemId, '+1 day', null );
 		$this->rebuildAll();
 
-		$this->assertNull( $this->indexRow( $timeframeId )->end_date );
+		$this->assertNull( $this->indexRow( $timeframeId )->end_datetime );
 	}
 
 	public function testKeepsOneIndexRowPerTimeframeAndOneRowPerRelation() {
@@ -398,75 +398,96 @@ class AvailabilityIndexTest extends CustomPostTypeTest {
 
 	// ---------------------------------------------------------------- F. date range query
 
-	public function testDateRangeQueryReturnsOverlappingTimeframe() {
+	/**
+	 * @return int[]
+	 */
+	private function idsInRange( string $from, string $to ): array {
+		return $this->normalise(
+			AvailabilityIndex::getPostIdsByType(
+				array(),
+				array( $this->itemId ),
+				array( $this->locationId ),
+				strtotime( $from, strtotime( self::CURRENT_DATE ) ),
+				strtotime( $to, strtotime( self::CURRENT_DATE ) )
+			)
+		);
+	}
+
+	public function testRangeQueryReturnsOverlappingTimeframe() {
 		$timeframeId = $this->createBookableTimeframe( $this->locationId, $this->itemId, '+1 day', '+10 days' );
 		$this->rebuildAll();
 
-		$rows = AvailabilityIndex::getByLocationAndItemAndDateRange(
-			$this->locationId,
-			$this->itemId,
-			date( 'Y-m-d', strtotime( '+2 days', strtotime( self::CURRENT_DATE ) ) ),
-			date( 'Y-m-d', strtotime( '+5 days', strtotime( self::CURRENT_DATE ) ) )
-		);
-
-		$this->assertEquals( array( $timeframeId ), $this->normalise( wp_list_pluck( $rows, 'timeframe_id' ) ) );
+		$this->assertContains( $timeframeId, $this->idsInRange( '+2 days', '+5 days' ) );
 	}
 
-	public function testDateRangeQueryExcludesNonOverlappingTimeframe() {
-		$this->createBookableTimeframe( $this->locationId, $this->itemId, '+1 day', '+5 days' );
-		$this->rebuildAll();
-
-		$rows = AvailabilityIndex::getByLocationAndItemAndDateRange(
-			$this->locationId,
-			$this->itemId,
-			date( 'Y-m-d', strtotime( '+20 days', strtotime( self::CURRENT_DATE ) ) ),
-			date( 'Y-m-d', strtotime( '+25 days', strtotime( self::CURRENT_DATE ) ) )
-		);
-
-		$this->assertSame( array(), $rows );
-	}
-
-	public function testDateRangeQueryIncludesOpenEndedTimeframe() {
-		$timeframeId = $this->createBookableTimeframe( $this->locationId, $this->itemId, '+1 day', null );
-		$this->rebuildAll();
-
-		$rows = AvailabilityIndex::getByLocationAndItemAndDateRange(
-			$this->locationId,
-			$this->itemId,
-			date( 'Y-m-d', strtotime( '+300 days', strtotime( self::CURRENT_DATE ) ) ),
-			date( 'Y-m-d', strtotime( '+310 days', strtotime( self::CURRENT_DATE ) ) )
-		);
-
-		$this->assertEquals( array( $timeframeId ), $this->normalise( wp_list_pluck( $rows, 'timeframe_id' ) ) );
-	}
-
-	public function testDateRangeQueryIncludesTimeframeEndingOnWindowStart() {
+	public function testRangeQueryExcludesTimeframeEndingBeforeTheRange() {
 		$timeframeId = $this->createBookableTimeframe( $this->locationId, $this->itemId, '+1 day', '+5 days' );
 		$this->rebuildAll();
 
-		$boundary = date( 'Y-m-d', strtotime( '+5 days', strtotime( self::CURRENT_DATE ) ) );
-		$rows     = AvailabilityIndex::getByLocationAndItemAndDateRange(
-			$this->locationId,
-			$this->itemId,
-			$boundary,
-			$boundary
-		);
-
-		$this->assertEquals( array( $timeframeId ), $this->normalise( wp_list_pluck( $rows, 'timeframe_id' ) ) );
+		$this->assertNotContains( $timeframeId, $this->idsInRange( '+20 days', '+25 days' ) );
 	}
 
-	public function testDateRangeQueryDoesNotLeakAcrossLocations() {
-		$this->createBookableTimeframe( $this->locationId, $this->itemId );
+	public function testRangeQueryExcludesTimeframeStartingAfterTheRange() {
+		$timeframeId = $this->createBookableTimeframe( $this->locationId, $this->itemId, '+20 days', '+25 days' );
 		$this->rebuildAll();
 
-		$rows = AvailabilityIndex::getByLocationAndItemAndDateRange(
-			$this->secondLocationId,
-			$this->itemId,
-			date( 'Y-m-d', strtotime( self::CURRENT_DATE ) ),
-			date( 'Y-m-d', strtotime( '+30 days', strtotime( self::CURRENT_DATE ) ) )
+		$this->assertNotContains( $timeframeId, $this->idsInRange( '+1 day', '+5 days' ) );
+	}
+
+	public function testRangeQueryIncludesOpenEndedTimeframe() {
+		$timeframeId = $this->createBookableTimeframe( $this->locationId, $this->itemId, '+1 day', null );
+		$this->rebuildAll();
+
+		$this->assertContains( $timeframeId, $this->idsInRange( '+300 days', '+310 days' ) );
+	}
+
+	public function testRangeQueryDoesNotLeakAcrossLocations() {
+		$timeframeId = $this->createBookableTimeframe( $this->locationId, $this->itemId );
+		$this->rebuildAll();
+
+		$other = $this->normalise(
+			AvailabilityIndex::getPostIdsByType(
+				array(),
+				array( $this->itemId ),
+				array( $this->secondLocationId ),
+				strtotime( self::CURRENT_DATE ),
+				strtotime( '+30 days', strtotime( self::CURRENT_DATE ) )
+			)
 		);
 
-		$this->assertSame( array(), $rows );
+		$this->assertNotContains( $timeframeId, $other );
+	}
+
+	/**
+	 * The columns are datetime, not date, so a timeframe that ends at midday is excluded
+	 * from a range starting later that same day - exactly as the timestamp comparison in
+	 * getTimerangeQuery() does it. Truncating to whole days got this wrong.
+	 */
+	public function testRangeQueryRespectsTimeOfDay() {
+		$end         = strtotime( '+5 days 12:00', strtotime( self::CURRENT_DATE ) );
+		$timeframeId = $this->createTimeframe(
+			$this->locationId,
+			$this->itemId,
+			strtotime( '+1 day', strtotime( self::CURRENT_DATE ) ),
+			$end,
+			TimeframeCPT::BOOKABLE_ID
+		);
+		$this->rebuildAll();
+
+		$ids = function ( int $from ) {
+			return $this->normalise(
+				AvailabilityIndex::getPostIdsByType(
+					array(),
+					array( $this->itemId ),
+					array( $this->locationId ),
+					$from,
+					strtotime( '+40 days', strtotime( self::CURRENT_DATE ) )
+				)
+			);
+		};
+
+		$this->assertContains( $timeframeId, $ids( $end - HOUR_IN_SECONDS ), 'range starting before the end must match' );
+		$this->assertNotContains( $timeframeId, $ids( $end + HOUR_IN_SECONDS ), 'range starting after the end must not match' );
 	}
 
 	// ---------------------------------------------------------------- G. parity

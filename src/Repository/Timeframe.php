@@ -884,17 +884,27 @@ class Timeframe extends PostRepository {
 		} else {
 			$posts = [];
 
-			// Get Post-IDs considering types, items and locations
-			$postIds = self::getPostIdsByType( $types, $items, $locations );
+			// The index resolves the date range as well, so when it answers the range must
+			// not be applied a second time further down. On a fallback nothing changes.
+			$indexedIds = AvailabilityIndex::getPostIdsByType( $types, $items, $locations, $minTimestamp, $maxTimestamp );
 
-			if ( $postIds ) {
-				$posts = self::getPostsByBaseParams(
-					null,
-					$minTimestamp,
-					$maxTimestamp,
-					$postIds,
-					$postStatus
-				);
+			if ( $indexedIds !== null ) {
+				if ( $indexedIds ) {
+					$posts = self::getPostsByBaseParams( null, null, null, $indexedIds, $postStatus );
+				}
+			} else {
+				// Get Post-IDs considering types, items and locations
+				$postIds = self::getPostIdsByType( $types, $items, $locations );
+
+				if ( $postIds ) {
+					$posts = self::getPostsByBaseParams(
+						null,
+						$minTimestamp,
+						$maxTimestamp,
+						$postIds,
+						$postStatus
+					);
+				}
 			}
 
 			// if returnAsModel == TRUE the result is a timeframe model instead of a WordPress object

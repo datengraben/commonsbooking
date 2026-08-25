@@ -149,9 +149,19 @@ class AvailabilityIndex {
 	 * $items or $locations means "any", exactly as in the query it replaces, and the post
 	 * status is deliberately not filtered here either.
 	 *
+	 * When a timestamp range is given the overlap is resolved here too, with the same
+	 * semantics as Repository\Timeframe::getTimerangeQuery(): a timeframe matches when it
+	 * starts before the range ends and either ends after the range starts or is open ended.
+	 *
 	 * @return int[]|null Null when the feature is off, so the caller falls back.
 	 */
-	public static function getPostIdsByType( array $types = array(), array $items = array(), array $locations = array() ): ?array {
+	public static function getPostIdsByType(
+		array $types = array(),
+		array $items = array(),
+		array $locations = array(),
+		?int $minTimestamp = null,
+		?int $maxTimestamp = null
+	): ?array {
 		if ( ! self::isReadable() ) {
 			return null;
 		}
@@ -189,59 +199,24 @@ class AvailabilityIndex {
 			);
 		}
 
-		$ids = $wpdb->get_col(
-			"SELECT DISTINCT ai.timeframe_id FROM $indexTable ai" . $joins .
-			' WHERE ai.type IN (' . implode( ', ', $types ) . ')'
-		);
+		$where = ' WHERE ai.type IN (' . implode( ', ', $types ) . ')';
+
+		// Timeframe starts before the requested range ends.
+		if ( $maxTimestamp !== null ) {
+			$where .= $wpdb->prepare( ' AND ai.start_datetime <= %s', self::toDatetime( $maxTimestamp ) );
+		}
+
+		// Timeframe ends after the requested range starts, or never ends at all.
+		if ( $minTimestamp !== null ) {
+			$where .= $wpdb->prepare(
+				' AND ( ai.end_datetime IS NULL OR ai.end_datetime >= %s )',
+				self::toDatetime( $minTimestamp )
+			);
+		}
+
+		$ids = $wpdb->get_col( "SELECT DISTINCT ai.timeframe_id FROM $indexTable ai" . $joins . $where );
 
 		return array_map( 'intval', $ids );
-	}
-
-	/**
-	 * Returns the index rows of all timeframes that apply to a location/item pair and overlap
-	 * the given date range.
-	 *
-	 * Like getPostIdsByType(), the post status is not considered here: wp_posts is the
-	 * authority on it and already indexes it. Callers filter on it downstream.
-	 *
-	 * @param string $startDate Range start, 'Y-m-d'.
-	 * @param string $endDate   Range end, 'Y-m-d'.
-	 * @param int[]  $types
-	 *
-	 * @return \stdClass[]
-	 */
-	public static function getByLocationAndItemAndDateRange(
-		int $locationId,
-		int $itemId,
-		string $startDate,
-		string $endDate,
-		array $types = self::INDEXED_TYPES
-	): array {
-		global $wpdb;
-
-		$indexTable     = $wpdb->prefix . self::$indexTable;
-		$locationsTable = $wpdb->prefix . self::$locationsTable;
-		$itemsTable     = $wpdb->prefix . self::$itemsTable;
-
-		$typePlaceholders = implode( ', ', array_fill( 0, count( $types ), '%d' ) );
-
-		return $wpdb->get_results(
-			$wpdb->prepare(
-				"SELECT ai.* FROM $indexTable ai
-				JOIN $locationsTable tl ON tl.timeframe_id = ai.timeframe_id
-				JOIN $itemsTable ti ON ti.timeframe_id = ai.timeframe_id
-				WHERE tl.location_id = %d
-					AND ti.item_id = %d
-					AND ai.start_date <= %s
-					AND (ai.end_date IS NULL OR ai.end_date >= %s)
-					AND ai.type IN ($typePlaceholders)",
-				$locationId,
-				$itemId,
-				$endDate,
-				$startDate,
-				...$types
-			)
-		);
 	}
 
 	/**
@@ -273,13 +248,25 @@ class AvailabilityIndex {
 			array(
 				'timeframe_id' => $timeframe->ID,
 				'type'         => $type,
-				'start_date'   => date( 'Y-m-d', $startDate ),
-				'end_date'     => $endDate ? date( 'Y-m-d', $endDate ) : null,
+				'start_datetime' => self::toDatetime( $startDate ),
+				'end_datetime'   => $endDate ? self::toDatetime( $endDate ) : null,
 			)
 		);
 
 		self::insertRelations( self::$locationsTable, 'location_id', $timeframe->ID, $locationIds );
 		self::insertRelations( self::$itemsTable, 'item_id', $timeframe->ID, $itemIds );
+	}
+
+	/**
+	 * Renders a timestamp the way the index stores it.
+	 *
+	 * UTC on purpose: these columns are internal and never displayed, so keeping them
+	 * independent of the site timezone means a timezone change cannot silently reorder
+	 * rows that were written earlier. Comparisons stay equivalent to comparing the
+	 * timestamps themselves, since the conversion is monotonic.
+	 */
+	private static function toDatetime( int $timestamp ): string {
+		return gmdate( 'Y-m-d H:i:s', $timestamp );
 	}
 
 	/**
@@ -408,12 +395,12 @@ class AvailabilityIndex {
 			id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
 			timeframe_id bigint(20) unsigned NOT NULL,
 			type tinyint(3) unsigned NOT NULL,
-			start_date date NOT NULL,
-			end_date date DEFAULT NULL,
+			start_datetime datetime NOT NULL,
+			end_datetime datetime DEFAULT NULL,
 			PRIMARY KEY (id),
 			UNIQUE KEY timeframe_id (timeframe_id),
-			KEY type_date (type, start_date, end_date),
-			KEY date_range (start_date, end_date)
+			KEY type_range (type, start_datetime, end_datetime),
+			KEY range_lookup (start_datetime, end_datetime)
 		) $charsetCollate;
 		CREATE TABLE $locationsTable (
 			timeframe_id bigint(20) unsigned NOT NULL,
