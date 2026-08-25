@@ -5,8 +5,6 @@ namespace CommonsBooking\View;
 
 use CommonsBooking\Model\Timeframe;
 use CommonsBooking\Settings\Settings;
-use CommonsBooking\ScssPhp\ScssPhp\Compiler;
-use CommonsBooking\ScssPhp\ScssPhp\ValueConverter;
 use Exception;
 
 /**
@@ -172,47 +170,117 @@ abstract class View {
 	}
 
 	/**
-	 * Compiles the user defined color scheme from settings (templates) using SCSSPHP and returns it
+	 * Transient key under which the compiled color scheme CSS is cached.
+	 */
+	public const COLOR_CSS_TRANSIENT = 'commonsbooking_colorscheme_css';
+
+	/**
+	 * Returns the user defined color scheme as CSS.
+	 *
+	 * The color scheme only changes when the template options are saved
+	 * (see OptionsTab::savePostOptions(), which drops the cache), so the compiled result is
+	 * cached in a transient instead of being recompiled on every front-end request. The cache
+	 * is bypassed while WP_DEBUG is on, matching the asset cache-busting in commonsbooking_public().
 	 *
 	 * @return string|false
 	 */
 	public static function getColorCSS() {
-		$compiler    = new Compiler();
-		$var_import  = COMMONSBOOKING_PLUGIN_DIR . 'assets/global/sass/partials/_variables.scss';
-		$import_path = COMMONSBOOKING_PLUGIN_DIR . 'assets/public/sass/partials/';
-		$compiler->setImportPaths( $import_path );
-
-		$variables = [
-			'color-primary' => Settings::getOption( 'commonsbooking_options_templates', 'colorscheme_primarycolor' ),
-			'color-secondary' => Settings::getOption( 'commonsbooking_options_templates', 'colorscheme_secondarycolor' ),
-			'color-buttons'   => Settings::getOption( 'commonsbooking_options_templates', 'colorscheme_buttoncolor' ),
-			'color-accept' => Settings::getOption( 'commonsbooking_options_templates', 'colorscheme_acceptcolor' ),
-			'color-cancel' => Settings::getOption( 'commonsbooking_options_templates', 'colorscheme_cancelcolor' ),
-			'color-holiday' => Settings::getOption( 'commonsbooking_options_templates', 'colorscheme_holidaycolor' ),
-			'color-greyedout' => Settings::getOption( 'commonsbooking_options_templates', 'colorscheme_greyedoutcolor' ),
-			'color-bg' => Settings::getOption( 'commonsbooking_options_templates', 'colorscheme_backgroundcolor' ),
-			'color-noticebg' => Settings::getOption( 'commonsbooking_options_templates', 'colorscheme_noticebackgroundcolor' ),
-			'color-lighttext' => Settings::getOption( 'commonsbooking_options_templates', 'colorscheme_lighttext' ),
-			'color-darktext' => Settings::getOption( 'commonsbooking_options_templates', 'colorscheme_darktext' ),
-		];
-
-		foreach ( $variables as &$variable ) { // iterate over array, convert valid values.
-			if ( $variable ) {  // values are only converted when set so ValueParser does not throw an error
-				$variable = ValueConverter::parseValue( $variable );
-			} else {
-				return false; // do not return CSS when no values are set
+		if ( ! WP_DEBUG ) {
+			$cached = get_transient( self::COLOR_CSS_TRANSIENT );
+			if ( $cached !== false ) {
+				// An empty string is the cached sentinel for "no custom color scheme".
+				return $cached === '' ? false : $cached;
 			}
 		}
 
-		$compiler->replaceVariables( $variables );
-		$content = '@import "' . $var_import . '";';
-		$result  = $compiler->compileString( $content );
-		$css     = $result->getCss();
+		$css = self::compileColorCSS();
 
-		if ( ! empty( $css ) ) {
-			return $css;
-		} else {
-			return false;
+		if ( ! WP_DEBUG ) {
+			set_transient( self::COLOR_CSS_TRANSIENT, $css === false ? '' : $css );
 		}
+
+		return $css;
+	}
+
+	/**
+	 * Builds the user defined color scheme as a `:root` block of CSS custom properties.
+	 *
+	 * The base stylesheet already consumes these values through var(--commonsbooking-color-*),
+	 * so the color scheme is nothing more than a set of custom-property overrides. It is emitted
+	 * directly in PHP instead of running the SCSSPHP compiler at runtime. Only the properties the
+	 * user controls are written; the fixed values (font sizes, spacers, radius, …) stay in the
+	 * built public.css. The derived properties (error, success, gray-background) mirror the aliases
+	 * in assets/global/sass/partials/_variables.scss, which remains the source of truth for the build.
+	 *
+	 * @return string|false
+	 */
+	private static function compileColorCSS() {
+		// Template color options mapped to the CSS custom properties they define.
+		$optionProperties = [
+			'colorscheme_primarycolor'          => [ '--commonsbooking-color-primary' ],
+			'colorscheme_secondarycolor'        => [ '--commonsbooking-color-secondary' ],
+			'colorscheme_buttoncolor'           => [ '--commonsbooking-color-buttons' ],
+			'colorscheme_acceptcolor'           => [ '--commonsbooking-color-accept', '--commonsbooking-color-success' ],
+			'colorscheme_cancelcolor'           => [ '--commonsbooking-color-cancel', '--commonsbooking-color-error' ],
+			'colorscheme_holidaycolor'          => [ '--commonsbooking-color-holiday' ],
+			'colorscheme_greyedoutcolor'        => [ '--commonsbooking-color-greyedout' ],
+			'colorscheme_backgroundcolor'       => [ '--commonsbooking-color-bg', '--commonsbooking-color-gray-background' ],
+			'colorscheme_noticebackgroundcolor' => [ '--commonsbooking-color-noticebg' ],
+			'colorscheme_lighttext'             => [ '--commonsbooking-textcolor-light' ],
+			'colorscheme_darktext'              => [ '--commonsbooking-textcolor-dark' ],
+		];
+
+		$declarations = [];
+		foreach ( $optionProperties as $option => $properties ) {
+			$value = self::sanitizeCssColor( Settings::getOption( 'commonsbooking_options_templates', $option ) );
+			if ( $value === null ) {
+				return false; // do not return CSS unless every color is set to a valid value
+			}
+			foreach ( $properties as $property ) {
+				$declarations[] = "\t$property: $value;";
+			}
+		}
+
+		return ":root {\n" . implode( "\n", $declarations ) . "\n}\n";
+	}
+
+	/**
+	 * Validates a user supplied color for safe inline CSS output.
+	 *
+	 * Accepts hex colors (as produced by the CMB2 color picker, with optional alpha) and the
+	 * rgb()/rgba()/hsl()/hsla() and named-color forms. Returns null for empty or unrecognized
+	 * values, both so the caller can bail out when a color is unset and to prevent CSS injection
+	 * through a stored option value.
+	 *
+	 * @param mixed $value
+	 *
+	 * @return string|null
+	 */
+	private static function sanitizeCssColor( $value ) {
+		if ( ! is_string( $value ) ) {
+			return null;
+		}
+
+		$value = trim( $value );
+		if ( $value === '' ) {
+			return null;
+		}
+
+		// Hex: #rgb, #rgba, #rrggbb, #rrggbbaa
+		if ( preg_match( '/^#(?:[0-9a-fA-F]{3,4}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/', $value ) ) {
+			return $value;
+		}
+
+		// Functional notation with only numeric/percentage components.
+		if ( preg_match( '/^(?:rgb|rgba|hsl|hsla)\(\s*[0-9.,%\s\/]+\)$/i', $value ) ) {
+			return $value;
+		}
+
+		// Plain CSS named color keyword.
+		if ( preg_match( '/^[a-zA-Z]+$/', $value ) ) {
+			return $value;
+		}
+
+		return null;
 	}
 }
