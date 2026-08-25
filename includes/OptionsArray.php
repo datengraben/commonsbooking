@@ -1547,6 +1547,32 @@ This item has been booked by {{user:first_name}} {{user:last_name}} ( {{user:use
 					),
 				],
 			),
+			'availability_index' => array(
+				'title'  => esc_html__( 'Availability index (experimental)', 'commonsbooking' ),
+				'desc'   => commonsbooking_sanitizeHTML(
+					__(
+						'Speeds up calendar and availability queries by keeping the timeframes in a dedicated index table, instead of scanning the serialized post meta.<br>
+						Switching this on creates the index tables and fills them once. Switching it off removes them again, so you can try this out and go back at any time.',
+						'commonsbooking'
+					)
+				),
+				'id'     => 'availability_index_group',
+				'fields' => [
+					array(
+						'name' => esc_html__( 'Enable availability index', 'commonsbooking' ),
+						'desc' => esc_html__( 'Save this page after changing the checkbox, then rebuild the index below.', 'commonsbooking' ),
+						'id'   => 'availability_index_enabled',
+						'type' => 'checkbox',
+					),
+					array(
+						'name'          => esc_html__( 'Rebuild index', 'commonsbooking' ),
+						'desc'          => esc_html__( 'Fills the index from all existing timeframes and bookings. Needed after enabling it, and whenever timeframes were changed without going through the plugin (direct database imports, for example).', 'commonsbooking' ),
+						'id'            => 'availability_index_rebuild',
+						'type'          => 'title',
+						'render_row_cb' => array( \CommonsBooking\View\AvailabilityIndex::class, 'renderRebuildButton' ),
+					),
+				],
+			),
 			'icalfeed' => array(
 				'title' => esc_html__( 'iCalendar Feed', 'commonsbooking' ),
 				'desc'  => commonsbooking_sanitizeHTML(

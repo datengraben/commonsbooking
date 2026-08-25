@@ -16,6 +16,7 @@ use CommonsBooking\Service\Scheduler;
 use CommonsBooking\Service\iCalendar;
 use CommonsBooking\Service\Upgrade;
 use CommonsBooking\Settings\Settings;
+use CommonsBooking\Repository\AvailabilityIndex;
 use CommonsBooking\Repository\BookingCodes;
 use CommonsBooking\View\Dashboard;
 use CommonsBooking\View\MassOperations;
@@ -786,6 +787,9 @@ class Plugin {
 
 		// Remove cache items on save.
 		add_action( 'wp_insert_post', array( $this, 'savePostActions' ), 10, 3 );
+
+		// Optional availability index. Registers its own hooks and owns its own tables.
+		AvailabilityIndex::register();
 		add_action( 'wp_enqueue_scripts', array( self::class, 'addWarmupAjaxToOutput' ) );
 		add_action( 'admin_enqueue_scripts', array( self::class, 'addWarmupAjaxToOutput' ) );
 
