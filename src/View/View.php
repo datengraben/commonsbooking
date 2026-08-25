@@ -172,11 +172,44 @@ abstract class View {
 	}
 
 	/**
-	 * Compiles the user defined color scheme from settings (templates) using SCSSPHP and returns it
+	 * Transient key under which the compiled color scheme CSS is cached.
+	 */
+	public const COLOR_CSS_TRANSIENT = 'commonsbooking_colorscheme_css';
+
+	/**
+	 * Returns the user defined color scheme as CSS.
+	 *
+	 * The color scheme only changes when the template options are saved
+	 * (see OptionsTab::savePostOptions(), which drops the cache), so the compiled result is
+	 * cached in a transient instead of being recompiled on every front-end request. The cache
+	 * is bypassed while WP_DEBUG is on, matching the asset cache-busting in commonsbooking_public().
 	 *
 	 * @return string|false
 	 */
 	public static function getColorCSS() {
+		if ( ! WP_DEBUG ) {
+			$cached = get_transient( self::COLOR_CSS_TRANSIENT );
+			if ( $cached !== false ) {
+				// An empty string is the cached sentinel for "no custom color scheme".
+				return $cached === '' ? false : $cached;
+			}
+		}
+
+		$css = self::compileColorCSS();
+
+		if ( ! WP_DEBUG ) {
+			set_transient( self::COLOR_CSS_TRANSIENT, $css === false ? '' : $css );
+		}
+
+		return $css;
+	}
+
+	/**
+	 * Compiles the user defined color scheme from settings (templates) using SCSSPHP and returns it
+	 *
+	 * @return string|false
+	 */
+	private static function compileColorCSS() {
 		$compiler    = new Compiler();
 		$var_import  = COMMONSBOOKING_PLUGIN_DIR . 'assets/global/sass/partials/_variables.scss';
 		$import_path = COMMONSBOOKING_PLUGIN_DIR . 'assets/public/sass/partials/';
