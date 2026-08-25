@@ -480,7 +480,8 @@ class AvailabilityIndex {
 		);
 
 		foreach ( $response->posts as $post ) {
-			self::upsertTimeframe( new Timeframe( $post ) );
+			// getAllPaginated() already casts to Model\Timeframe / Model\Booking.
+			self::upsertTimeframe( $post instanceof Timeframe ? $post : new Timeframe( $post ) );
 		}
 
 		if ( $response->done ) {
