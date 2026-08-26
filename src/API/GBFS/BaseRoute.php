@@ -33,10 +33,6 @@ class BaseRoute extends \CommonsBooking\API\BaseRoute {
 		$response->ttl            = 60;
 		$response->version        = '3.1-RC2';
 
-		if ( WP_DEBUG ) {
-			$this->validateData( $response );
-		}
-
 		return new WP_REST_Response( $response, 200 );
 	}
 
