@@ -69,7 +69,14 @@ return array(
 						'<a target="_blank" href="' . esc_url( 'https://www.wielebenwir.de/verein/unterstutzen' ) . '">',
 						'</a>'
 					),
-				'fields' => array(),
+				'fields' => array(
+					array(
+						'name' => commonsbooking_sanitizeHTML( __( 'VfL Verein membership', 'commonsbooking' ) ),
+						'desc' => commonsbooking_sanitizeHTML( __( 'I am a member of VfL Verein. Enabling this shows member-only support resources on the CommonsBooking dashboard.', 'commonsbooking' ) ),
+						'id'   => 'is_vfl_member',
+						'type' => 'checkbox',
+					),
+				),
 			),
 		),
 	),
