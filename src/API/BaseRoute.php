@@ -8,8 +8,6 @@ use RuntimeException;
 
 use CommonsBooking\Repository\ApiShares;
 use CommonsBooking\Settings\Settings;
-use CommonsBooking\Opis\JsonSchema\Validator;
-use CommonsBooking\Opis\JsonSchema\Errors\ErrorFormatter;
 use WP_REST_Controller;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -90,58 +88,6 @@ class BaseRoute extends WP_REST_Controller {
 	}
 
 	/**
-	 * Validates data against defined schema.
-	 *
-	 * If WP_DEBUG is enabled, prints schema errors or any exceptions that may occur to error_log.
-	 *
-	 * @param object $data instance of stdclass or object to validate.
-	 */
-	public function validateData( $data ) {
-		$validator = new Validator();
-
-		// Opis does not fetch remote $ref targets in getSchemaJson() main schema.
-		// Map schema URLs to local filesystem paths
-		$resolver = $validator->resolver();
-		$resolver->registerPrefix( self::SCHEMA_URL, self::SCHEMA_PATH );
-
-		try {
-			$result = $validator->validate( $data, $this->getSchemaJson() );
-			if ( $result->hasError() ) {
-				if ( WP_DEBUG ) {
-
-					// Get the error
-					$error = $result->error();
-
-					// Create an error formatter
-					$formatter = new ErrorFormatter();
-
-					// Print helper
-					$print = function ( $value ) {
-						echo wp_json_encode( $value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
-					};
-
-					$print(
-						array(
-							'errors'    => $formatter->formatOutput( $error, 'basic' ),
-							'response'  => $data,
-						)
-					);
-
-					die;
-				}
-			}
-		} catch ( Exception $e ) {
-			// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			if ( WP_DEBUG ) {
-				error_log( 'Problem while trying to access wp rest endpoint url for schema ' . $this->schemaUrl );
-				error_log( $e );
-				die;
-			}
-			// phpcs:enable
-		}
-	}
-
-	/**
 	 * Returns schema json for current route.
 	 *
 	 * @throws RuntimeException On missing schema files.
@@ -206,15 +152,16 @@ class BaseRoute extends WP_REST_Controller {
 	}
 
 	/**
-	 * Validates data against schema (when WP_DEBUG) and returns REST response.
+	 * Returns REST response for the given data.
 	 *
-	 * @param object $data The response data to validate and return.
+	 * Response shape is verified against the JSON schema in the test suite
+	 * (see the API schema-conformance tests) rather than at runtime, so the
+	 * schema validator is not shipped with the plugin.
+	 *
+	 * @param object $data The response data.
 	 * @return WP_REST_Response
 	 */
 	protected function respond_with_validation( $data ): WP_REST_Response {
-		if ( WP_DEBUG ) {
-			$this->validateData( $data );
-		}
 		return new WP_REST_Response( $data, 200 );
 	}
 }
