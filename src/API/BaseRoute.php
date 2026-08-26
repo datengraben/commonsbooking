@@ -8,8 +8,6 @@ use RuntimeException;
 
 use CommonsBooking\Repository\ApiShares;
 use CommonsBooking\Settings\Settings;
-use CommonsBooking\Opis\JsonSchema\Validator;
-use CommonsBooking\Opis\JsonSchema\Errors\ErrorFormatter;
 use WP_REST_Controller;
 use WP_REST_Response;
 use WP_REST_Server;
@@ -90,55 +88,42 @@ class BaseRoute extends WP_REST_Controller {
 	}
 
 	/**
-	 * Validates data against defined schema.
+	 * Validates data against the defined schema and logs any mismatch.
 	 *
-	 * If WP_DEBUG is enabled, prints schema errors or any exceptions that may occur to error_log.
+	 * The schema validator (opis/json-schema) is a development-only dependency,
+	 * so this is a no-op unless it is installed (e.g. in a development or CI
+	 * environment) - the validator is not shipped with the plugin. It never
+	 * interrupts the response: a schema mismatch or error is written to the
+	 * error log only. Response conformance is enforced in the test suite (see
+	 * the API schema-conformance tests).
 	 *
 	 * @param object $data instance of stdclass or object to validate.
 	 */
 	public function validateData( $data ) {
-		$validator = new Validator();
+		if ( ! class_exists( \Opis\JsonSchema\Validator::class ) ) {
+			return;
+		}
+
+		$validator = new \Opis\JsonSchema\Validator();
 
 		// Opis does not fetch remote $ref targets in getSchemaJson() main schema.
 		// Map schema URLs to local filesystem paths
-		$resolver = $validator->resolver();
-		$resolver->registerPrefix( self::SCHEMA_URL, self::SCHEMA_PATH );
+		$validator->resolver()->registerPrefix( self::SCHEMA_URL, self::SCHEMA_PATH );
 
+		// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_error_log
 		try {
 			$result = $validator->validate( $data, $this->getSchemaJson() );
 			if ( $result->hasError() ) {
-				if ( WP_DEBUG ) {
-
-					// Get the error
-					$error = $result->error();
-
-					// Create an error formatter
-					$formatter = new ErrorFormatter();
-
-					// Print helper
-					$print = function ( $value ) {
-						echo wp_json_encode( $value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES );
-					};
-
-					$print(
-						array(
-							'errors'    => $formatter->formatOutput( $error, 'basic' ),
-							'response'  => $data,
-						)
-					);
-
-					die;
-				}
+				$formatter = new \Opis\JsonSchema\Errors\ErrorFormatter();
+				error_log(
+					'CommonsBooking API response does not match schema ' . $this->schemaUrl . ': '
+					. wp_json_encode( $formatter->formatOutput( $result->error(), 'basic' ), JSON_UNESCAPED_SLASHES )
+				);
 			}
 		} catch ( Exception $e ) {
-			// phpcs:disable WordPress.PHP.DevelopmentFunctions.error_log_error_log
-			if ( WP_DEBUG ) {
-				error_log( 'Problem while trying to access wp rest endpoint url for schema ' . $this->schemaUrl );
-				error_log( $e );
-				die;
-			}
-			// phpcs:enable
+			error_log( 'CommonsBooking: could not validate API response against schema ' . $this->schemaUrl . ': ' . $e->getMessage() );
 		}
+		// phpcs:enable
 	}
 
 	/**
