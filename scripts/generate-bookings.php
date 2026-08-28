@@ -29,6 +29,9 @@
  *   --lat=Y --lon=X Give the locations coordinates centred on this point.
  *   --distancekm=D  Scatter the locations randomly within D km of the centre
  *                   (default 0 = all exactly at the centre). Needs --lat/--lon.
+ *   --seed=N        Seed the random geo placement so runs are reproducible.
+ *   --dataset=FILE  Ignore the options above and build exactly what the JSON
+ *                   manifest FILE describes (see tests/benchmark/fixtures/).
  *   --verify        Check a few bookings with Booking::isValid() and report.
  *   --cleanup       Delete everything this script ever created, then exit.
  *   --help          Show this help.
@@ -58,8 +61,8 @@ foreach ( $argv as $arg ) {
 }
 if ( isset( $options['help'] ) ) {
 	echo "Usage: php generate-bookings.php [--count=N] [--hours=H] [--locations=N]\n" .
-		"                                 [--lat=Y --lon=X [--distancekm=D]]\n" .
-		"                                 [--verify] [--cleanup] [--help]\n";
+		"                                 [--lat=Y --lon=X [--distancekm=D]] [--seed=N]\n" .
+		"                                 [--dataset=FILE] [--verify] [--cleanup] [--help]\n";
 	exit( 0 );
 }
 $count     = max( 0, (int) ( $options['count'] ?? 1 ) );
@@ -111,12 +114,19 @@ if ( isset( $options['cleanup'] ) ) {
 }
 
 // --- Generate. ---
-$mode = $hours === 0 ? 'full-day' : $hours . 'h slots';
-$geo  = $hasCenter ? sprintf( ' around %.5f,%.5f within %gkm', $centerLat, $centerLon, $distanceKm ) : '';
-echo "Generating $count booking(s) over $locations location(s)$geo ($mode)...\n";
-
-$start   = microtime( true );
-$created = $gen->generate( $count, $hours, $locations, $centerLat, $centerLon, $distanceKm );
+$start = microtime( true );
+if ( isset( $options['dataset'] ) ) {
+	// Static data source: build exactly what the manifest file describes.
+	$manifest = BookingGenerator::readManifest( (string) $options['dataset'] );
+	echo "Generating from dataset {$options['dataset']} (" . json_encode( $manifest ) . ")...\n";
+	$created = $gen->generateFromManifest( $manifest );
+} else {
+	$seed = isset( $options['seed'] ) ? (int) $options['seed'] : null;
+	$mode = $hours === 0 ? 'full-day' : $hours . 'h slots';
+	$geo  = $hasCenter ? sprintf( ' around %.5f,%.5f within %gkm', $centerLat, $centerLon, $distanceKm ) : '';
+	echo "Generating $count booking(s) over $locations location(s)$geo ($mode)...\n";
+	$created = $gen->generate( $count, $hours, $locations, $centerLat, $centerLon, $distanceKm, $seed );
+}
 $elapsed = microtime( true ) - $start;
 printf( "Created %d booking(s) in %.2fs (%.1f/s).\n", count( $created ), $elapsed, count( $created ) / max( $elapsed, 0.001 ) );
 

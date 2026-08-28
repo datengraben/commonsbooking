@@ -7,33 +7,38 @@ use CommonsBooking\Repository\Booking;
 use CommonsBooking\Tests\BookingGenerator;
 
 /**
- * Benchmarks a booking query against a dynamically generated data source.
+ * Benchmarks a booking query against a static, file-defined data source.
  *
- * setUp() uses the shared BookingGenerator (the same one behind the
- * scripts/generate-bookings.php CLI) to create a full year of bookings spread
- * over several geo-located locations. benchGetByTimerange() then measures a
- * whole-year booking lookup over that data set, so the benchmark reflects real,
- * populated-database performance rather than an empty install.
+ * The data set is described by tests/benchmark/fixtures/benchmark-dataset.json
+ * and built in setUp() through the shared BookingGenerator (the same one behind
+ * the scripts/generate-bookings.php CLI). The manifest's fixed "seed" makes the
+ * generated data deterministic, so the PR branch and master build byte-for-byte
+ * the same data set and the benchmark compares code, not random data.
+ * benchGetByTimerange() then measures a whole-year booking lookup over it, so
+ * the benchmark reflects a real, populated database rather than an empty install.
  *
  * @BeforeMethods({"setUp"})
  * @AfterMethods({"tearDown"})
  */
 class BookingGeneratorBench {
 
-	const BOOKINGS  = 365; // one booking per day for a year
-	const LOCATIONS = 10;  // spread across this many locations
-	const USER_ID   = 1;
+	const DATASET = __DIR__ . '/fixtures/benchmark-dataset.json';
+	const USER_ID = 1;
 
 	/** @var BookingGenerator */
 	private $generator;
+
+	/** @var array Parsed dataset manifest. */
+	private $manifest;
 
 	/**
 	 * @Iterations(3)
 	 * @Revs(5)
 	 */
 	public function benchGetByTimerange(): void {
-		$start = strtotime( '-1 day', strtotime( 'today midnight' ) );
-		$end   = strtotime( '+' . ( self::BOOKINGS + 1 ) . ' days', strtotime( 'today midnight' ) );
+		$today = strtotime( 'today midnight' );
+		$start = strtotime( '-1 day', $today );
+		$end   = strtotime( '+' . ( $this->manifest['count'] + 1 ) . ' days', $today );
 		Booking::getByTimerange( $start, $end );
 	}
 
@@ -55,15 +60,9 @@ class BookingGeneratorBench {
 		$randomSlug = fn( $override, $slug, $post_id, $post_status, $post_type, $post_parent ) => Helper::generateRandomString();
 		add_filter( 'pre_wp_unique_post_slug', $randomSlug, 10, 6 );
 
+		$this->manifest  = BookingGenerator::readManifest( self::DATASET );
 		$this->generator = new BookingGenerator( self::USER_ID );
-		$this->generator->generate(
-			self::BOOKINGS,
-			0,                // full-day bookings
-			self::LOCATIONS,
-			52.52,            // centre latitude (Berlin)
-			13.405,           // centre longitude
-			15.0              // scatter within 15 km
-		);
+		$this->generator->generateFromManifest( $this->manifest );
 
 		wp_defer_term_counting( false );
 		wp_defer_comment_counting( false );

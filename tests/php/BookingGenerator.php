@@ -33,6 +33,52 @@ class BookingGenerator {
 	}
 
 	/**
+	 * Read a JSON dataset manifest and return its parameters, with defaults
+	 * filled in for any missing keys. A manifest describes what to generate:
+	 *
+	 *   { "count": 365, "hours": 0, "locations": 10,
+	 *     "lat": 52.52, "lon": 13.405, "distancekm": 15, "seed": 42 }
+	 *
+	 * @return array{count:int,hours:int,locations:int,lat:?float,lon:?float,distancekm:float,seed:?int}
+	 */
+	public static function readManifest( string $path ): array {
+		$json = is_readable( $path ) ? file_get_contents( $path ) : false;
+		if ( $json === false ) {
+			throw new \RuntimeException( "Cannot read dataset manifest: $path" );
+		}
+		$m = json_decode( $json, true );
+		if ( ! is_array( $m ) ) {
+			throw new \RuntimeException( "Invalid JSON in dataset manifest: $path" );
+		}
+		return [
+			'count'      => (int) ( $m['count'] ?? 1 ),
+			'hours'      => (int) ( $m['hours'] ?? 0 ),
+			'locations'  => (int) ( $m['locations'] ?? 1 ),
+			'lat'        => isset( $m['lat'] ) ? (float) $m['lat'] : null,
+			'lon'        => isset( $m['lon'] ) ? (float) $m['lon'] : null,
+			'distancekm' => (float) ( $m['distancekm'] ?? 0 ),
+			'seed'       => isset( $m['seed'] ) ? (int) $m['seed'] : null,
+		];
+	}
+
+	/**
+	 * Generate from a manifest array (as returned by readManifest()).
+	 *
+	 * @return int[] The created booking ids.
+	 */
+	public function generateFromManifest( array $m ): array {
+		return $this->generate(
+			$m['count'],
+			$m['hours'] ?? 0,
+			$m['locations'] ?? 1,
+			$m['lat'] ?? null,
+			$m['lon'] ?? null,
+			$m['distancekm'] ?? 0,
+			$m['seed'] ?? null
+		);
+	}
+
+	/**
 	 * Create the whole data set: one item, $locations location(s), a bookable
 	 * timeframe per location, and $count bookings spread across the locations.
 	 *
@@ -42,6 +88,8 @@ class BookingGenerator {
 	 * @param float|null $lat        Centre latitude (with $lon) for the locations.
 	 * @param float|null $lon        Centre longitude (with $lat) for the locations.
 	 * @param float      $distanceKm Random scatter radius around the centre.
+	 * @param int|null   $seed       Seed the RNG so the random geo placement is
+	 *                               reproducible (same file -> same coordinates).
 	 *
 	 * @return int[] The created booking ids.
 	 */
@@ -51,8 +99,12 @@ class BookingGenerator {
 		int $locations = 1,
 		?float $lat = null,
 		?float $lon = null,
-		float $distanceKm = 0
+		float $distanceKm = 0,
+		?int $seed = null
 	): array {
+		if ( $seed !== null ) {
+			mt_srand( $seed ); // deterministic geo scatter
+		}
 		$locations = max( 1, $locations );
 		$item      = $this->item();
 

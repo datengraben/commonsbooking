@@ -1,0 +1,10 @@
+{
+  "_comment": "Static dataset for BookingGeneratorBench. Edit these numbers to change the benchmarked data. 'seed' fixes the random location placement so PR and master build identical data.",
+  "count": 365,
+  "hours": 0,
+  "locations": 10,
+  "lat": 52.52,
+  "lon": 13.405,
+  "distancekm": 15,
+  "seed": 42
+}

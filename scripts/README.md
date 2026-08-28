@@ -20,6 +20,25 @@ The same `BookingGenerator` is used as a data source in the benchmark suite
 (`tests/benchmark/BookingGeneratorBench.php`), which the CI benchmark workflow
 runs — so the CLI seed data and the benchmarked data come from one place.
 
+### Static dataset files
+
+Instead of passing flags you can point at a JSON manifest describing the data
+set. This is what the benchmark uses (`tests/benchmark/fixtures/benchmark-dataset.json`)
+so its data is the same every run:
+
+```json
+{ "count": 365, "hours": 0, "locations": 10,
+  "lat": 52.52, "lon": 13.405, "distancekm": 15, "seed": 42 }
+```
+
+`seed` fixes the random location placement, so the same file always produces the
+same coordinates (important for the benchmark: PR and master then build identical
+data). Reproduce the exact benchmark data locally with:
+
+```bash
+php scripts/generate-bookings.php --dataset=tests/benchmark/fixtures/benchmark-dataset.json --verify
+```
+
 ### Running it
 
 With this repo's `wp-env`:
