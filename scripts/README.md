@@ -33,7 +33,8 @@ so its data is the same every run:
 
 Add `"spread": N` to place the bookings within ±`N` days of `start` (past and
 future) instead of marching forward from it — capacity is `(2·N + 1) × locations`
-bookings.
+bookings. Add `"random": true` to scatter them randomly across that window
+(seeded, still non-overlapping) rather than filling it evenly.
 
 `start` anchors the dates (booking range is `start` .. `start`+`count` days; the
 covering timeframe is derived from that) and `seed` fixes the random location
@@ -69,6 +70,7 @@ php scripts/generate-bookings.php --count=100 --verify
 | `--locations=N` | Spread the bookings across `N` locations (default 1). |
 | `--start=DATE` | Anchor the bookings to start on `DATE` (e.g. `2026-01-01`) instead of today. |
 | `--spread=N` | Place bookings within ±`N` days of the start date (past *and* future) instead of marching forward. Capacity is `(2·N + 1) × locations` bookings. |
+| `--random` | With `--spread`, scatter bookings randomly across the window (seeded via `--seed`, still non-overlapping) instead of filling it evenly. |
 | `--lat=Y --lon=X` | Give the locations coordinates centred on this point. |
 | `--distancekm=D` | Scatter the locations randomly within `D` km of the centre (default `0` = all exactly at the centre). Needs `--lat`/`--lon`. |
 | `--verify` | Check a few with `Booking::isValid()` and report. |

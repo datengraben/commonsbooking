@@ -88,6 +88,7 @@ class BookingGenerator {
 			'distancekm' => (float) ( $m['distancekm'] ?? 0 ),
 			'seed'       => isset( $m['seed'] ) ? (int) $m['seed'] : null,
 			'spread'     => isset( $m['spread'] ) ? (int) $m['spread'] : null,
+			'random'     => (bool) ( $m['random'] ?? false ),
 		];
 	}
 
@@ -106,7 +107,8 @@ class BookingGenerator {
 			$m['lon'] ?? null,
 			$m['distancekm'] ?? 0,
 			$m['seed'] ?? null,
-			$m['spread'] ?? null
+			$m['spread'] ?? null,
+			$m['random'] ?? false
 		);
 	}
 
@@ -125,6 +127,10 @@ class BookingGenerator {
 	 * @param int|null   $spread     If set, place bookings within +/- $spread days
 	 *                               of the start date instead of marching forward.
 	 *                               Capacity is (2*spread + 1) * locations bookings.
+	 * @param bool       $random     With $spread, scatter the bookings randomly
+	 *                               across the window (seeded, still non-overlapping)
+	 *                               instead of filling it evenly. No effect without
+	 *                               $spread.
 	 *
 	 * @return int[] The created booking ids.
 	 */
@@ -136,7 +142,8 @@ class BookingGenerator {
 		?float $lon = null,
 		float $distanceKm = 0,
 		?int $seed = null,
-		?int $spread = null
+		?int $spread = null,
+		bool $random = false
 	): array {
 		if ( $seed !== null ) {
 			mt_srand( $seed ); // deterministic geo scatter
@@ -148,6 +155,9 @@ class BookingGenerator {
 		// (day, location) pair is unique -> no overlaps -> valid by construction.
 		if ( $spread === null ) {
 			// Forward: one booking per day, marching from the start date.
+			if ( $random ) {
+				trigger_error( 'BookingGenerator: "random" has no effect without "spread"; ignoring.', E_USER_NOTICE );
+			}
 			$minDay = 0;
 			$maxDay = max( 0, $count - 1 );
 			$place  = fn( int $i ) => [ $i, $i % $locations ];
@@ -165,7 +175,21 @@ class BookingGenerator {
 			}
 			$minDay = -$spread;
 			$maxDay = $spread;
-			$place  = fn( int $i ) => [ ( $i % $window ) - $spread, intdiv( $i, $window ) % $locations ];
+			if ( $random ) {
+				// Shuffle the window's (day, location) cells and take them in that
+				// order, so bookings land on a random subset -- still one per cell.
+				$cells = [];
+				for ( $d = -$spread; $d <= $spread; $d++ ) {
+					for ( $l = 0; $l < $locations; $l++ ) {
+						$cells[] = [ $d, $l ];
+					}
+				}
+				$this->seededShuffle( $cells );
+				$n     = max( 1, count( $cells ) );
+				$place = fn( int $i ) => $cells[ $i % $n ];
+			} else {
+				$place = fn( int $i ) => [ ( $i % $window ) - $spread, intdiv( $i, $window ) % $locations ];
+			}
 		}
 
 		$locationIds = [];
@@ -283,6 +307,17 @@ class BookingGenerator {
 		);
 		update_post_meta( $id, self::MARKER, 1 );
 		return $id;
+	}
+
+	/**
+	 * Fisher-Yates shuffle using the (optionally seeded) RNG, so a run with a
+	 * fixed seed always produces the same order.
+	 */
+	private function seededShuffle( array &$items ): void {
+		for ( $i = count( $items ) - 1; $i > 0; $i-- ) {
+			$j = mt_rand( 0, $i );
+			[ $items[ $i ], $items[ $j ] ] = [ $items[ $j ], $items[ $i ] ];
+		}
 	}
 
 	/**
