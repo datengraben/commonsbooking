@@ -61,8 +61,13 @@ jobs:
       id: composer-cache
       uses: actions/cache@v5
       with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        # Cache the prefixed dependencies too: Strauss regenerates vendor-prefixed
+        # on every composer install via post-install-cmd, but its output only
+        # changes when composer.lock or the Strauss config in composer.json changes.
+        path: |
+          vendor
+          vendor-prefixed
+        key: ${{ runner.os }}-php-${{ hashFiles('composer.lock', 'composer.json') }}
         restore-keys: |
           ${{ runner.os }}-php-
 
@@ -70,13 +75,13 @@ jobs:
       if: matrix.php == '8.1'
       run: |
         bash bin/install-wp-tests.sh wordpress_test root root localhost ${{ matrix.core.version }}
-        composer install --prefer-dist --no-progress
+        composer install --prefer-dist --no-progress ${{ steps.composer-cache.outputs.cache-hit == 'true' && '--no-scripts' || '' }}
 
     - name: Install dependencies (other PHP versions)
       if: matrix.php != '8.1'
       run: |
         bash bin/install-wp-tests.sh wordpress_test root root localhost ${{ matrix.core.version }}
-        composer install --prefer-dist --no-progress --ignore-platform-reqs
+        composer install --prefer-dist --no-progress --ignore-platform-reqs ${{ steps.composer-cache.outputs.cache-hit == 'true' && '--no-scripts' || '' }}
 
     - name: Run test suite
       run: |

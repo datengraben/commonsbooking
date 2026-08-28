@@ -25,8 +25,21 @@ jobs:
           extensions: uopz
 
 
+      - name: Cache Composer packages
+        id: composer-cache
+        uses: actions/cache@v5
+        with:
+          # Cache vendor-prefixed so Strauss (run on composer install) is skipped
+          # when composer.lock and the Strauss config in composer.json are unchanged.
+          path: |
+            vendor
+            vendor-prefixed
+          key: ${{ runner.os }}-php-${{ hashFiles('composer.lock', 'composer.json') }}
+          restore-keys: |
+            ${{ runner.os }}-php-
+
       - name: Install dependencies
-        run: composer install --prefer-dist --no-progress --ignore-platform-reqs
+        run: composer install --prefer-dist --no-progress --ignore-platform-reqs ${{ steps.composer-cache.outputs.cache-hit == 'true' && '--no-scripts' || '' }}
 
       - name: Run phpcbf
         run: ./vendor/bin/phpcbf -q --parallel=1 src templates includes tests commonsbooking.php

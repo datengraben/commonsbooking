@@ -20,16 +20,21 @@ runs:
 
     - name: Cache Composer packages
       id: composer-cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
-        path: vendor
-        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        # Cache the Strauss-generated vendor-prefixed tree alongside vendor.
+        # A dedicated "-nodev" key namespace keeps this --no-dev install from
+        # colliding with the dev-dependency caches used by the test workflows.
+        path: |
+          vendor
+          vendor-prefixed
+        key: ${{ runner.os }}-php-nodev-${{ hashFiles('composer.lock', 'composer.json') }}
         restore-keys: |
-          ${{ runner.os }}-php-
+          ${{ runner.os }}-php-nodev-
 
     - name: Install dependencies
       run: |
-        composer install --no-dev --prefer-dist --no-progress
+        composer install --no-dev --prefer-dist --no-progress ${{ steps.composer-cache.outputs.cache-hit == 'true' && '--no-scripts' || '' }}
       shell: bash
 
     - uses: actions/setup-node@v4
