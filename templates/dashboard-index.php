@@ -16,9 +16,13 @@
 				<div class="cb_welcome-panel-column cb_welcome-panel-last">
 					<h3><?php echo esc_html__( 'Support', 'commonsbooking' ); ?></h3>
 					<ul>
+						<li style="font-size:1.1em;margin-bottom:8px;"><strong><a href="https://support.commonsbooking.org" target="_blank"><span class="dashicons dashicons-sos"></span> <?php echo esc_html__( 'Support ticket system', 'commonsbooking' ); ?></a></strong></li>
 						<li><a href="https://commonsbooking.org/documentation" target="_blank"><?php echo esc_html__( 'Documentation & Tutorials', 'commonsbooking' ); ?></a></li>
 						<li><a href="mailto:mail@commonsbooking.org?body=%0D%0A%0D%0A-----------%0D%0A%0D%0AInstallations-URL: <?php echo home_url(); ?>%0D%0A%0D%0ACB-Version: <?php echo commonsbooking_sanitizeHTML( COMMONSBOOKING_VERSION ); ?>" target="_blank"><?php echo esc_html__( 'Support E-Mail', 'commonsbooking' ); ?></a></li>
 						<li><a href="https://commonsbooking.org/contact/" target="_blank"><?php echo __( 'Contact & Newsletter', 'commonsbooking' ); ?></a></li>
+						<?php if ( \CommonsBooking\Settings\Settings::getOption( 'commonsbooking_options_main', 'is_vfl_member' ) === 'on' ) { ?>
+							<li><a href="https://example.com" target="_blank"><span class="dashicons dashicons-lock"></span> <?php echo esc_html__( 'VfL member support area', 'commonsbooking' ); ?></a></li>
+						<?php } ?>
 					</ul>
 				<p>			<?php echo esc_html__( 'CommonsBooking Version', 'commonsbooking' ) . ' ' . commonsbooking_sanitizeHTML( COMMONSBOOKING_VERSION . ' ' . COMMONSBOOKING_VERSION_COMMENT ); ?></p>
 				</div><!-- .cb_welcome-panel-column -->
@@ -62,6 +66,14 @@
 			</div><!-- .cb_welcome-panel-column-container -->
 		</div> <!-- .cb_welcome-panel-content -->
 	</div> <!-- .cb_welcome-panel -->
+	<?php if ( \CommonsBooking\Service\Membership::currentUserIsMember() ) { ?>
+	<div id="cb_welcome-panel" class="cb_welcome-panel">
+		<div class="cb_welcome-panel-content">
+			<h3><?php echo esc_html__( 'VfL announcements', 'commonsbooking' ); ?></h3>
+			<?php echo commonsbooking_sanitizeHTML( \CommonsBooking\View\Announcements::renderList() ); ?>
+		</div>
+	</div>
+	<?php } ?>
 	<div id="cb_welcome-panel" class="cb_welcome-panel">
 		<div class="cb_welcome-panel-content">
 			<div class="cb_welcome-panel-column-container">

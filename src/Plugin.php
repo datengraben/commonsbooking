@@ -10,6 +10,7 @@ use CommonsBooking\Map\LocationMapAdmin;
 use CommonsBooking\Map\SearchShortcode;
 use CommonsBooking\Model\Booking;
 use CommonsBooking\Model\BookingCode;
+use CommonsBooking\Service\AnnouncementsFeed;
 use CommonsBooking\Service\BookingRuleApplied;
 use CommonsBooking\Service\Cache;
 use CommonsBooking\Service\Scheduler;
@@ -17,6 +18,7 @@ use CommonsBooking\Service\iCalendar;
 use CommonsBooking\Service\Upgrade;
 use CommonsBooking\Settings\Settings;
 use CommonsBooking\Repository\BookingCodes;
+use CommonsBooking\View\Announcements;
 use CommonsBooking\View\Dashboard;
 use CommonsBooking\View\MassOperations;
 use CommonsBooking\Wordpress\CustomPostType\CustomPostType;
@@ -762,6 +764,13 @@ class Plugin {
 
 		// loads the Scheduler
 		add_action( 'init', array( Scheduler::class, 'initHooks' ), 40 );
+
+		// schedule + handle the VfL member announcements background refresh
+		add_action( 'init', array( AnnouncementsFeed::class, 'initHooks' ), 40 );
+
+		// VfL member announcements: dashboard widget + admin banner (members only)
+		add_action( 'wp_dashboard_setup', array( Announcements::class, 'registerDashboardWidget' ) );
+		add_action( 'admin_notices', array( Announcements::class, 'renderAdminBanners' ) );
 
 		// handle the booking forms, needs to happen after taxonomy registration so that we can access the taxonomy
 		add_action( 'init', array( self::class, 'handleBookingForms' ), 50 );
