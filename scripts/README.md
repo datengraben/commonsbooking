@@ -10,9 +10,15 @@ item, and one bookable timeframe that covers them. Each booking sits on its own
 day, so they never overlap and are valid by construction
 (`\CommonsBooking\Model\Booking::isValid()`).
 
-It reuses the plugin's own test factory (`tests/php/CPTCreationTrait.php`) for
-everything, so generated data matches what the plugin expects. Run
-`composer install` in the plugin directory first so that factory is loadable.
+The actual generating lives in a reusable class,
+`tests/php/BookingGenerator.php`, which in turn builds everything through the
+plugin's own test factory (`tests/php/CPTCreationTrait.php`), so generated data
+matches what the plugin expects. This script is just the command-line wrapper.
+Run `composer install` in the plugin directory first so that class is loadable.
+
+The same `BookingGenerator` is used as a data source in the benchmark suite
+(`tests/benchmark/BookingGeneratorBench.php`), which the CI benchmark workflow
+runs — so the CLI seed data and the benchmarked data come from one place.
 
 ### Running it
 
