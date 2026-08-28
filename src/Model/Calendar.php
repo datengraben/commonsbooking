@@ -75,6 +75,13 @@ class Calendar {
 			true,
 			[ 'confirmed', 'publish' ]
 		);
+
+		// Prime the meta cache for the whole timeframe set once, so the many
+		// getMeta() reads performed per day/slot while building the weeks are
+		// served from the object cache instead of one query each. This also
+		// covers the case where $this->timeframes was restored from the plugin
+		// cache as serialized posts, whose meta is not otherwise primed.
+		Wordpress::primePostMetaCache( $this->timeframes );
 	}
 
 	/**
