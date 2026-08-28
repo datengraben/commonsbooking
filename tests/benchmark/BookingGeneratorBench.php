@@ -36,9 +36,9 @@ class BookingGeneratorBench {
 	 * @Revs(5)
 	 */
 	public function benchGetByTimerange(): void {
-		$today = strtotime( 'today midnight' );
-		$start = strtotime( '-1 day', $today );
-		$end   = strtotime( '+' . ( $this->manifest['count'] + 1 ) . ' days', $today );
+		$base  = $this->generator->baseDay(); // honours the manifest's "start"
+		$start = strtotime( '-1 day', $base );
+		$end   = strtotime( '+' . ( $this->manifest['count'] + 1 ) . ' days', $base );
 		Booking::getByTimerange( $start, $end );
 	}
 

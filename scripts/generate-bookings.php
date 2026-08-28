@@ -26,6 +26,8 @@
  *                   covers many hours-of-day (handy for UTC/timezone testing).
  *                   Default 0 = full-day bookings.
  *   --locations=N   Spread the bookings across N locations (default 1).
+ *   --start=DATE    Anchor the bookings to start on DATE (e.g. 2026-01-01)
+ *                   instead of today. The range is DATE .. DATE+count days.
  *   --lat=Y --lon=X Give the locations coordinates centred on this point.
  *   --distancekm=D  Scatter the locations randomly within D km of the centre
  *                   (default 0 = all exactly at the centre). Needs --lat/--lon.
@@ -60,7 +62,7 @@ foreach ( $argv as $arg ) {
 	}
 }
 if ( isset( $options['help'] ) ) {
-	echo "Usage: php generate-bookings.php [--count=N] [--hours=H] [--locations=N]\n" .
+	echo "Usage: php generate-bookings.php [--count=N] [--hours=H] [--locations=N] [--start=DATE]\n" .
 		"                                 [--lat=Y --lon=X [--distancekm=D]] [--seed=N]\n" .
 		"                                 [--dataset=FILE] [--verify] [--cleanup] [--help]\n";
 	exit( 0 );
@@ -122,9 +124,11 @@ if ( isset( $options['dataset'] ) ) {
 	$created = $gen->generateFromManifest( $manifest );
 } else {
 	$seed = isset( $options['seed'] ) ? (int) $options['seed'] : null;
+	$gen->setBaseDay( $options['start'] ?? null ); // null = today
+	$from = date( 'Y-m-d', $gen->baseDay() );
 	$mode = $hours === 0 ? 'full-day' : $hours . 'h slots';
 	$geo  = $hasCenter ? sprintf( ' around %.5f,%.5f within %gkm', $centerLat, $centerLon, $distanceKm ) : '';
-	echo "Generating $count booking(s) over $locations location(s)$geo ($mode)...\n";
+	echo "Generating $count booking(s) from $from over $locations location(s)$geo ($mode)...\n";
 	$created = $gen->generate( $count, $hours, $locations, $centerLat, $centerLon, $distanceKm, $seed );
 }
 $elapsed = microtime( true ) - $start;

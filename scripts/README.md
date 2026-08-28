@@ -27,13 +27,15 @@ set. This is what the benchmark uses (`tests/benchmark/fixtures/benchmark-datase
 so its data is the same every run:
 
 ```json
-{ "count": 365, "hours": 0, "locations": 10,
+{ "start": "2026-01-01", "count": 365, "hours": 0, "locations": 10,
   "lat": 52.52, "lon": 13.405, "distancekm": 15, "seed": 42 }
 ```
 
-`seed` fixes the random location placement, so the same file always produces the
-same coordinates (important for the benchmark: PR and master then build identical
-data). Reproduce the exact benchmark data locally with:
+`start` anchors the dates (booking range is `start` .. `start`+`count` days; the
+covering timeframe is derived from that) and `seed` fixes the random location
+placement, so the same file always produces the same data — identical on every
+run and every branch, which is what the benchmark needs. Reproduce the exact
+benchmark data locally with:
 
 ```bash
 php scripts/generate-bookings.php --dataset=tests/benchmark/fixtures/benchmark-dataset.json --verify

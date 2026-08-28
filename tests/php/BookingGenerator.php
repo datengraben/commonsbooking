@@ -28,18 +28,46 @@ class BookingGenerator {
 	/** User id that owns the generated posts. */
 	private int $author;
 
+	/** Midnight timestamp that booking #0 sits on. Null = today. */
+	private ?int $baseDay = null;
+
 	public function __construct( int $author = 1 ) {
 		$this->author = $author;
+	}
+
+	/**
+	 * Anchor the generated data to a specific start date instead of "today".
+	 * Accepts anything strtotime() understands (e.g. "2026-01-01") or a unix
+	 * timestamp; null resets to today. The booking range is [start .. start+count]
+	 * days and the timeframe range is derived to cover it.
+	 *
+	 * @param string|int|null $start
+	 */
+	public function setBaseDay( $start ): void {
+		if ( $start === null || $start === '' ) {
+			$this->baseDay = null;
+			return;
+		}
+		$ts = is_numeric( $start ) ? (int) $start : strtotime( (string) $start );
+		if ( $ts === false ) {
+			throw new \RuntimeException( "Invalid start date: $start" );
+		}
+		$this->baseDay = strtotime( 'midnight', $ts ); // full-day math needs a midnight anchor
+	}
+
+	/** The midnight timestamp booking #0 sits on (today unless setBaseDay() was called). */
+	public function baseDay(): int {
+		return $this->baseDay ?? strtotime( 'today midnight' );
 	}
 
 	/**
 	 * Read a JSON dataset manifest and return its parameters, with defaults
 	 * filled in for any missing keys. A manifest describes what to generate:
 	 *
-	 *   { "count": 365, "hours": 0, "locations": 10,
+	 *   { "start": "2026-01-01", "count": 365, "hours": 0, "locations": 10,
 	 *     "lat": 52.52, "lon": 13.405, "distancekm": 15, "seed": 42 }
 	 *
-	 * @return array{count:int,hours:int,locations:int,lat:?float,lon:?float,distancekm:float,seed:?int}
+	 * @return array{start:?string,count:int,hours:int,locations:int,lat:?float,lon:?float,distancekm:float,seed:?int}
 	 */
 	public static function readManifest( string $path ): array {
 		$json = is_readable( $path ) ? file_get_contents( $path ) : false;
@@ -51,6 +79,7 @@ class BookingGenerator {
 			throw new \RuntimeException( "Invalid JSON in dataset manifest: $path" );
 		}
 		return [
+			'start'      => isset( $m['start'] ) ? (string) $m['start'] : null,
 			'count'      => (int) ( $m['count'] ?? 1 ),
 			'hours'      => (int) ( $m['hours'] ?? 0 ),
 			'locations'  => (int) ( $m['locations'] ?? 1 ),
@@ -67,6 +96,7 @@ class BookingGenerator {
 	 * @return int[] The created booking ids.
 	 */
 	public function generateFromManifest( array $m ): array {
+		$this->setBaseDay( $m['start'] ?? null );
 		return $this->generate(
 			$m['count'],
 			$m['hours'] ?? 0,
@@ -156,7 +186,7 @@ class BookingGenerator {
 	 * (every hour of the day bookable), so hourly bookings fit inside it.
 	 */
 	public function timeframe( int $location, int $item, int $days, int $hours ): int {
-		$today   = strtotime( 'today midnight' );
+		$today   = $this->baseDay();
 		$fullDay = ( $hours === 0 ) ? 'on' : '';
 		$grid    = ( $hours === 0 ) ? 0 : 1; // 1 = hourly grid
 		$id      = $this->createTimeframe(
@@ -185,7 +215,7 @@ class BookingGenerator {
 	 * day per booking (so a run spans many hours-of-day for UTC testing).
 	 */
 	public function booking( int $location, int $item, int $dayOffset, int $hours ): int {
-		$day = strtotime( "+$dayOffset days", strtotime( 'today midnight' ) );
+		$day = strtotime( "+$dayOffset days", $this->baseDay() );
 
 		if ( $hours === 0 ) {
 			$start     = $day;

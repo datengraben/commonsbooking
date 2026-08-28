@@ -1,5 +1,6 @@
 {
-  "_comment": "Static dataset for BookingGeneratorBench. Edit these numbers to change the benchmarked data. 'seed' fixes the random location placement so PR and master build identical data.",
+  "_comment": "Static dataset for BookingGeneratorBench. Edit these numbers to change the benchmarked data. 'start' anchors the dates and 'seed' fixes the random location placement, so the data is identical on every run and on every branch.",
+  "start": "2026-01-01",
   "count": 365,
   "hours": 0,
   "locations": 10,
