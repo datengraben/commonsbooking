@@ -31,6 +31,10 @@ so its data is the same every run:
   "lat": 52.52, "lon": 13.405, "distancekm": 15, "seed": 42 }
 ```
 
+Add `"spread": N` to place the bookings within ±`N` days of `start` (past and
+future) instead of marching forward from it — capacity is `(2·N + 1) × locations`
+bookings.
+
 `start` anchors the dates (booking range is `start` .. `start`+`count` days; the
 covering timeframe is derived from that) and `seed` fixes the random location
 placement, so the same file always produces the same data — identical on every
@@ -63,6 +67,8 @@ php scripts/generate-bookings.php --count=100 --verify
 | `--count=N` | Number of bookings to create (default 1). |
 | `--hours=H` | Make each booking an `H`-hour slot instead of a full day. The start hour rotates across the day per booking, so one run spans many hours-of-day — handy for UTC/timezone testing. Default `0` = full-day bookings. |
 | `--locations=N` | Spread the bookings across `N` locations (default 1). |
+| `--start=DATE` | Anchor the bookings to start on `DATE` (e.g. `2026-01-01`) instead of today. |
+| `--spread=N` | Place bookings within ±`N` days of the start date (past *and* future) instead of marching forward. Capacity is `(2·N + 1) × locations` bookings. |
 | `--lat=Y --lon=X` | Give the locations coordinates centred on this point. |
 | `--distancekm=D` | Scatter the locations randomly within `D` km of the centre (default `0` = all exactly at the centre). Needs `--lat`/`--lon`. |
 | `--verify` | Check a few with `Booking::isValid()` and report. |

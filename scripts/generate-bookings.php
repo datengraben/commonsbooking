@@ -28,6 +28,9 @@
  *   --locations=N   Spread the bookings across N locations (default 1).
  *   --start=DATE    Anchor the bookings to start on DATE (e.g. 2026-01-01)
  *                   instead of today. The range is DATE .. DATE+count days.
+ *   --spread=N      Place bookings within +/- N days of the start date (past and
+ *                   future) instead of marching forward. Capacity is
+ *                   (2*N + 1) * locations bookings.
  *   --lat=Y --lon=X Give the locations coordinates centred on this point.
  *   --distancekm=D  Scatter the locations randomly within D km of the centre
  *                   (default 0 = all exactly at the centre). Needs --lat/--lon.
@@ -62,8 +65,9 @@ foreach ( $argv as $arg ) {
 	}
 }
 if ( isset( $options['help'] ) ) {
-	echo "Usage: php generate-bookings.php [--count=N] [--hours=H] [--locations=N] [--start=DATE]\n" .
-		"                                 [--lat=Y --lon=X [--distancekm=D]] [--seed=N]\n" .
+	echo "Usage: php generate-bookings.php [--count=N] [--hours=H] [--locations=N]\n" .
+		"                                 [--start=DATE] [--spread=N] [--seed=N]\n" .
+		"                                 [--lat=Y --lon=X [--distancekm=D]]\n" .
 		"                                 [--dataset=FILE] [--verify] [--cleanup] [--help]\n";
 	exit( 0 );
 }
@@ -123,13 +127,14 @@ if ( isset( $options['dataset'] ) ) {
 	echo "Generating from dataset {$options['dataset']} (" . json_encode( $manifest ) . ")...\n";
 	$created = $gen->generateFromManifest( $manifest );
 } else {
-	$seed = isset( $options['seed'] ) ? (int) $options['seed'] : null;
+	$seed   = isset( $options['seed'] ) ? (int) $options['seed'] : null;
+	$spread = isset( $options['spread'] ) ? (int) $options['spread'] : null;
 	$gen->setBaseDay( $options['start'] ?? null ); // null = today
-	$from = date( 'Y-m-d', $gen->baseDay() );
-	$mode = $hours === 0 ? 'full-day' : $hours . 'h slots';
-	$geo  = $hasCenter ? sprintf( ' around %.5f,%.5f within %gkm', $centerLat, $centerLon, $distanceKm ) : '';
-	echo "Generating $count booking(s) from $from over $locations location(s)$geo ($mode)...\n";
-	$created = $gen->generate( $count, $hours, $locations, $centerLat, $centerLon, $distanceKm, $seed );
+	$around = $spread === null ? "from " . date( 'Y-m-d', $gen->baseDay() ) : "within +/-$spread days of " . date( 'Y-m-d', $gen->baseDay() );
+	$mode   = $hours === 0 ? 'full-day' : $hours . 'h slots';
+	$geo    = $hasCenter ? sprintf( ' around %.5f,%.5f within %gkm', $centerLat, $centerLon, $distanceKm ) : '';
+	echo "Generating $count booking(s) $around over $locations location(s)$geo ($mode)...\n";
+	$created = $gen->generate( $count, $hours, $locations, $centerLat, $centerLon, $distanceKm, $seed, $spread );
 }
 $elapsed = microtime( true ) - $start;
 printf( "Created %d booking(s) in %.2fs (%.1f/s).\n", count( $created ), $elapsed, count( $created ) / max( $elapsed, 0.001 ) );

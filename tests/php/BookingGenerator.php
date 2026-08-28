@@ -87,6 +87,7 @@ class BookingGenerator {
 			'lon'        => isset( $m['lon'] ) ? (float) $m['lon'] : null,
 			'distancekm' => (float) ( $m['distancekm'] ?? 0 ),
 			'seed'       => isset( $m['seed'] ) ? (int) $m['seed'] : null,
+			'spread'     => isset( $m['spread'] ) ? (int) $m['spread'] : null,
 		];
 	}
 
@@ -104,7 +105,8 @@ class BookingGenerator {
 			$m['lat'] ?? null,
 			$m['lon'] ?? null,
 			$m['distancekm'] ?? 0,
-			$m['seed'] ?? null
+			$m['seed'] ?? null,
+			$m['spread'] ?? null
 		);
 	}
 
@@ -120,6 +122,9 @@ class BookingGenerator {
 	 * @param float      $distanceKm Random scatter radius around the centre.
 	 * @param int|null   $seed       Seed the RNG so the random geo placement is
 	 *                               reproducible (same file -> same coordinates).
+	 * @param int|null   $spread     If set, place bookings within +/- $spread days
+	 *                               of the start date instead of marching forward.
+	 *                               Capacity is (2*spread + 1) * locations bookings.
 	 *
 	 * @return int[] The created booking ids.
 	 */
@@ -130,13 +135,38 @@ class BookingGenerator {
 		?float $lat = null,
 		?float $lon = null,
 		float $distanceKm = 0,
-		?int $seed = null
+		?int $seed = null,
+		?int $spread = null
 	): array {
 		if ( $seed !== null ) {
 			mt_srand( $seed ); // deterministic geo scatter
 		}
 		$locations = max( 1, $locations );
 		$item      = $this->item();
+
+		// Work out each booking's day offset and location so that every
+		// (day, location) pair is unique -> no overlaps -> valid by construction.
+		if ( $spread === null ) {
+			// Forward: one booking per day, marching from the start date.
+			$minDay = 0;
+			$maxDay = max( 0, $count - 1 );
+			$place  = fn( int $i ) => [ $i, $i % $locations ];
+		} else {
+			// Windowed: fill a +/- $spread day window across the locations.
+			$spread   = max( 0, $spread );
+			$window   = 2 * $spread + 1;
+			$capacity = $window * $locations;
+			if ( $count > $capacity ) {
+				trigger_error(
+					"BookingGenerator: $count bookings do not fit in +/-$spread days over $locations location(s) " .
+					"(capacity $capacity); some will share a day and be invalid. Raise spread or locations.",
+					E_USER_WARNING
+				);
+			}
+			$minDay = -$spread;
+			$maxDay = $spread;
+			$place  = fn( int $i ) => [ ( $i % $window ) - $spread, intdiv( $i, $window ) % $locations ];
+		}
 
 		$locationIds = [];
 		for ( $i = 0; $i < $locations; $i++ ) {
@@ -146,14 +176,14 @@ class BookingGenerator {
 				$pLat = $pLon = null;
 			}
 			$loc = $this->location( $i, $pLat, $pLon );
-			$this->timeframe( $loc, $item, $count, $hours );
+			$this->timeframe( $loc, $item, $minDay, $maxDay, $hours );
 			$locationIds[] = $loc;
 		}
 
 		$bookingIds = [];
 		for ( $i = 0; $i < $count; $i++ ) {
-			$loc          = $locationIds[ $i % $locations ]; // round-robin; day $i keeps them non-overlapping
-			$bookingIds[] = $this->booking( $loc, $item, $i, $hours );
+			[ $dayOffset, $locIndex ] = $place( $i );
+			$bookingIds[]             = $this->booking( $locationIds[ $locIndex ], $item, $dayOffset, $hours );
 		}
 
 		return $bookingIds;
@@ -181,19 +211,20 @@ class BookingGenerator {
 	}
 
 	/**
-	 * Bookable timeframe covering [today-1 .. today+days+1] for this location+item.
+	 * Bookable timeframe covering the booking window (with one day of slack on
+	 * each side) for this location+item, i.e. [base+minDay-1 .. base+maxDay+1].
 	 * $hours = 0 makes a full-day timeframe; $hours >= 1 makes an hourly one
 	 * (every hour of the day bookable), so hourly bookings fit inside it.
 	 */
-	public function timeframe( int $location, int $item, int $days, int $hours ): int {
-		$today   = $this->baseDay();
+	public function timeframe( int $location, int $item, int $minDay, int $maxDay, int $hours ): int {
+		$base    = $this->baseDay();
 		$fullDay = ( $hours === 0 ) ? 'on' : '';
 		$grid    = ( $hours === 0 ) ? 0 : 1; // 1 = hourly grid
 		$id      = $this->createTimeframe(
 			$location,
 			$item,
-			strtotime( '-1 day', $today ),
-			strtotime( '+' . ( $days + 1 ) . ' days', $today ),
+			strtotime( sprintf( '%+d days', $minDay - 1 ), $base ),
+			strtotime( sprintf( '%+d days', $maxDay + 1 ), $base ),
 			Timeframe::BOOKABLE_ID,
 			$fullDay,
 			'w',
@@ -215,7 +246,7 @@ class BookingGenerator {
 	 * day per booking (so a run spans many hours-of-day for UTC testing).
 	 */
 	public function booking( int $location, int $item, int $dayOffset, int $hours ): int {
-		$day = strtotime( "+$dayOffset days", $this->baseDay() );
+		$day = strtotime( sprintf( '%+d days', $dayOffset ), $this->baseDay() ); // %+d handles negative offsets
 
 		if ( $hours === 0 ) {
 			$start     = $day;
@@ -224,7 +255,8 @@ class BookingGenerator {
 			$endTime   = '23:59';
 			$gridSize  = '';
 		} else {
-			$startHour = $dayOffset % ( 24 - $hours + 1 ); // keeps start+hours within the day
+			$mod       = 24 - $hours + 1;
+			$startHour = ( ( $dayOffset % $mod ) + $mod ) % $mod; // non-negative; keeps start+hours within the day
 			$start     = $day + $startHour * HOUR_IN_SECONDS;
 			$end       = $start + $hours * HOUR_IN_SECONDS - 1; // last second of the slot
 			$startTime = sprintf( '%02d:00', $startHour );
