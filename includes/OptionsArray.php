@@ -72,9 +72,22 @@ return array(
 				'fields' => array(
 					array(
 						'name' => commonsbooking_sanitizeHTML( __( 'VfL Verein membership', 'commonsbooking' ) ),
-						'desc' => commonsbooking_sanitizeHTML( __( 'I am a member of VfL Verein. Enabling this shows member-only support resources on the CommonsBooking dashboard.', 'commonsbooking' ) ),
+						'desc' => commonsbooking_sanitizeHTML( __( 'I am a member of VfL Verein. Enabling this shows member-only support resources and announcements on the CommonsBooking dashboard.', 'commonsbooking' ) ),
 						'id'   => 'is_vfl_member',
 						'type' => 'checkbox',
+					),
+					array(
+						'name' => commonsbooking_sanitizeHTML( __( 'Announcements feed URL', 'commonsbooking' ) ),
+						'desc' => commonsbooking_sanitizeHTML( __( 'RSS/Atom or JSON URL of the member announcements. Fetched in the background and shown to members in the WordPress and CommonsBooking dashboards.', 'commonsbooking' ) ),
+						'id'   => 'vfl_announcements_url',
+						'type' => 'text_url',
+					),
+					array(
+						'name'    => commonsbooking_sanitizeHTML( __( 'Banner announcement category', 'commonsbooking' ) ),
+						'desc'    => commonsbooking_sanitizeHTML( __( 'Announcements tagged with this category (slug) are shown as a prominent banner across the admin area, e.g. "important".', 'commonsbooking' ) ),
+						'id'      => 'vfl_announcements_banner_category',
+						'type'    => 'text',
+						'default' => 'important',
 					),
 				),
 			),

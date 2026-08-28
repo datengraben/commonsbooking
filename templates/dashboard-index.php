@@ -66,6 +66,14 @@
 			</div><!-- .cb_welcome-panel-column-container -->
 		</div> <!-- .cb_welcome-panel-content -->
 	</div> <!-- .cb_welcome-panel -->
+	<?php if ( \CommonsBooking\Service\Membership::currentUserIsMember() ) { ?>
+	<div id="cb_welcome-panel" class="cb_welcome-panel">
+		<div class="cb_welcome-panel-content">
+			<h3><?php echo esc_html__( 'VfL announcements', 'commonsbooking' ); ?></h3>
+			<?php echo commonsbooking_sanitizeHTML( \CommonsBooking\View\Announcements::renderList() ); ?>
+		</div>
+	</div>
+	<?php } ?>
 	<div id="cb_welcome-panel" class="cb_welcome-panel">
 		<div class="cb_welcome-panel-content">
 			<div class="cb_welcome-panel-column-container">
