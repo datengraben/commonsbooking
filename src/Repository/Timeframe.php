@@ -360,6 +360,18 @@ class Timeframe extends PostRepository {
 			$locations = commonsbooking_sanitizeArrayorString( $locations, 'intval' );
 			$types     = commonsbooking_sanitizeArrayorString( $types, 'intval' );
 
+			// The multi-select item/location lists only ever exist on holiday-type
+			// timeframes (removeIrrelevantPostmeta() deletes them for any other type).
+			// So the multi-select join branch can be skipped entirely for queries that
+			// cannot match a holiday, which is the common case (e.g. getBookable()).
+			$includeMulti = (bool) array_intersect(
+				$types,
+				[
+					\CommonsBooking\Wordpress\CustomPostType\Timeframe::HOLIDAYS_ID,
+					\CommonsBooking\Wordpress\CustomPostType\Timeframe::OFF_HOLIDAYS_ID,
+				]
+			);
+
 			$itemQuery = '';
 			if ( count( $items ) > 0 ) {
 				$itemQuery = self::getEntityQuery(
@@ -367,7 +379,8 @@ class Timeframe extends PostRepository {
 					$table_postmeta,
 					$items,
 					\CommonsBooking\Model\Timeframe::META_ITEM_ID,
-					\CommonsBooking\Model\Timeframe::META_ITEM_ID_LIST
+					\CommonsBooking\Model\Timeframe::META_ITEM_ID_INDEX,
+					$includeMulti
 				);
 			}
 
@@ -378,7 +391,8 @@ class Timeframe extends PostRepository {
 					$table_postmeta,
 					$locations,
 					\CommonsBooking\Model\Timeframe::META_LOCATION_ID,
-					\CommonsBooking\Model\Timeframe::META_LOCATION_ID_LIST
+					\CommonsBooking\Model\Timeframe::META_LOCATION_ID_INDEX,
+					$includeMulti
 				);
 			}
 
@@ -424,33 +438,41 @@ class Timeframe extends PostRepository {
 	 * Returns entity query as join statement, which considers single and multi selection.
 	 *
 	 * @since 2.9.0 Supports now single and multi selection for items and locations
+	 * @since 2.11.0 Multi selection matches the indexable per-id rows (META_*_ID_INDEX)
+	 *               with an indexed IN(...) instead of an unindexable LIKE on the
+	 *               serialized list. $includeMulti drops the branch when it cannot match.
+	 *
+	 * @param string $joinAlias      alias for the joined postmeta table
+	 * @param string $table_postmeta postmeta table name
+	 * @param int[]  $entities       item or location ids to match
+	 * @param string $singleEntityKey meta key of the single-selection value
+	 * @param string $multiIndexKey  repeatable meta key holding one row per multi-selected id
+	 * @param bool   $includeMulti   whether the multi-selection branch can match at all
 	 *
 	 * @return string join statement
 	 */
-	private static function getEntityQuery( string $joinAlias, string $table_postmeta, array $entities, string $singleEntityKey, string $multiEntityKey ): string {
-		$locationQueryParts = [];
+	private static function getEntityQuery( string $joinAlias, string $table_postmeta, array $entities, string $singleEntityKey, string $multiIndexKey, bool $includeMulti ): string {
+		$entityList       = implode( ',', $entities );
+		$entityQueryParts = [];
 
-		// Single select
-		$singleLocationQuery  = "(
+		// Single select (indexed)
+		$entityQueryParts[] = "(
 		                        $joinAlias.meta_key = '" . $singleEntityKey . "' AND
-		                        $joinAlias.meta_value IN (" . implode( ',', $entities ) . ')
+		                        $joinAlias.meta_value IN (" . $entityList . ')
 	                        )';
-		$locationQueryParts[] = $singleLocationQuery;
 
-		// Multi select
-		$multiLocationQueries = [];
-		foreach ( $entities as $entityId ) {
-			$multiLocationQueries[] = "$joinAlias.meta_value LIKE '%:\"$entityId\";%'";
-		}
-		$multiLocationQuery   = "(
-					$joinAlias.meta_key = '" . $multiEntityKey . "' AND
-					(" . implode( ' OR ', $multiLocationQueries ) . ')
+		// Multi select: match the indexable per-id rows with an indexed IN(...).
+		// Skipped when the requested types cannot carry multi-select lists.
+		if ( $includeMulti ) {
+			$entityQueryParts[] = "(
+						$joinAlias.meta_key = '" . $multiIndexKey . "' AND
+						$joinAlias.meta_value IN (" . $entityList . ')
 				)';
-		$locationQueryParts[] = $multiLocationQuery;
+		}
 
 		return "INNER JOIN $table_postmeta $joinAlias ON
                     $joinAlias.post_id = pm1.post_id AND
-                    (" . implode( ' OR ', $locationQueryParts ) . ')';
+                    (" . implode( ' OR ', $entityQueryParts ) . ')';
 	}
 
 	/**

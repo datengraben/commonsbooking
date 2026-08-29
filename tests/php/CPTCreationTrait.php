@@ -105,6 +105,10 @@ trait CPTCreationTrait {
 		update_post_meta( $timeframeId, \CommonsBooking\Model\Timeframe::META_ITEM_SELECTION_TYPE, \CommonsBooking\Model\Timeframe::SELECTION_MANUAL_ID );
 		update_post_meta( $timeframeId, \CommonsBooking\Model\Timeframe::META_LOCATION_SELECTION_TYPE, \CommonsBooking\Model\Timeframe::SELECTION_MANUAL_ID );
 
+		// Mirror the multi-select lists into the indexable per-id rows, exactly as
+		// a real save would (this helper bypasses the save_post hook).
+		\CommonsBooking\Wordpress\CustomPostType\Timeframe::syncIndexedEntityMeta( $timeframeId );
+
 		$this->timeframeIds[] = $timeframeId;
 
 		return $timeframeId;

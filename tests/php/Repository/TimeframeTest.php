@@ -577,4 +577,44 @@ class TimeframeTest extends CustomPostTypeTest {
 		$this->assertEquals( 1, count( $holidayFromSecondItemAndLoc ) );
 		$this->assertEquals( $holidayId, $holidayFromSecondItemAndLoc[0] );
 	}
+
+	/**
+	 * The multi-select lists are mirrored into indexable per-id rows that the
+	 * query filters on, and those rows are cleared when the timeframe stops being
+	 * a holiday.
+	 */
+	public function testIndexedEntityMetaLifecycle() {
+		$item2     = $this->createItem( 'Second Item' );
+		$location2 = $this->createLocation( 'Second Location' );
+
+		$holidayId = $this->createTimeframe(
+			[ $this->locationId, $location2 ],
+			[ $this->itemId, $item2 ],
+			$this->repetition_start,
+			$this->repetition_end,
+			\CommonsBooking\Wordpress\CustomPostType\Timeframe::HOLIDAYS_ID
+		);
+
+		// Index rows mirror the multi-select lists (one row per id).
+		$itemIndex     = array_map( 'intval', get_post_meta( $holidayId, \CommonsBooking\Model\Timeframe::META_ITEM_ID_INDEX ) );
+		$locationIndex = array_map( 'intval', get_post_meta( $holidayId, \CommonsBooking\Model\Timeframe::META_LOCATION_ID_INDEX ) );
+		$this->assertEqualsCanonicalizing( [ $this->itemId, $item2 ], $itemIndex );
+		$this->assertEqualsCanonicalizing( [ $this->locationId, $location2 ], $locationIndex );
+
+		// The query resolves the holiday through the indexed rows.
+		$found = Timeframe::getPostIdsByType(
+			[ \CommonsBooking\Wordpress\CustomPostType\Timeframe::HOLIDAYS_ID ],
+			[ $item2 ],
+			[ $location2 ]
+		);
+		$this->assertEqualsCanonicalizing( [ $holidayId ], array_map( 'intval', $found ) );
+
+		// Turning the timeframe into a non-holiday clears the index rows.
+		update_post_meta( $holidayId, 'type', \CommonsBooking\Wordpress\CustomPostType\Timeframe::BOOKABLE_ID );
+		\CommonsBooking\Wordpress\CustomPostType\Timeframe::removeIrrelevantPostmeta(
+			new \CommonsBooking\Model\Timeframe( $holidayId )
+		);
+		$this->assertEmpty( get_post_meta( $holidayId, \CommonsBooking\Model\Timeframe::META_ITEM_ID_INDEX ) );
+		$this->assertEmpty( get_post_meta( $holidayId, \CommonsBooking\Model\Timeframe::META_LOCATION_ID_INDEX ) );
+	}
 }

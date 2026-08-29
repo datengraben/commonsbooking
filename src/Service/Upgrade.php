@@ -80,6 +80,9 @@ class Upgrade {
 		'2.9.0' => [
 			[ self::class, 'setMultiSelectTimeFrameDefault' ],
 		],
+		'2.11.0' => [
+			[ self::class, 'backfillIndexedEntityMeta' ],
+		],
 	];
 
 	/**
@@ -404,6 +407,35 @@ class Upgrade {
 		$timeframes = $response->posts;
 		foreach ( $timeframes as $timeframe ) {
 			\CommonsBooking\Wordpress\CustomPostType\Timeframe::removeIrrelevantPostmeta( $timeframe );
+		}
+
+		return $response->done ? true : $page + 1;
+	}
+
+	/**
+	 * Backfills the indexable per-id copies of the multi-select item/location lists
+	 * for all existing timeframes.
+	 *
+	 * The multi-select lists used to be queried with an unindexable LIKE on the
+	 * serialized array. They are now mirrored into repeatable, indexable postmeta
+	 * rows (META_ITEM_ID_INDEX / META_LOCATION_ID_INDEX) that new saves keep in
+	 * sync; this task populates those rows for timeframes created before the change.
+	 *
+	 * Idempotent (syncIndexedEntityMeta() rewrites the rows from the current lists)
+	 * and a no-op for timeframes without multi-select lists.
+	 *
+	 * This function is labour intensive and runs in AJAX.
+	 *
+	 * @param int $page
+	 *
+	 * @return int|bool
+	 * @since 2.11.0
+	 */
+	public static function backfillIndexedEntityMeta( int $page = 1 ) {
+		$response   = \CommonsBooking\Repository\Timeframe::getAllPaginated( $page, self::POSTS_PER_ITERATION );
+		$timeframes = $response->posts;
+		foreach ( $timeframes as $timeframe ) {
+			\CommonsBooking\Wordpress\CustomPostType\Timeframe::syncIndexedEntityMeta( $timeframe->ID );
 		}
 
 		return $response->done ? true : $page + 1;
