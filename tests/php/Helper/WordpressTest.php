@@ -116,6 +116,65 @@ class WordpressTest extends CustomPostTypeTest {
 		$this->assertEquals( 5, count( $related ) );
 	}
 
+	/**
+	 * Primed meta must be served from the object cache, so reading it issues no
+	 * further database queries. Also guards against a regression of the N+1
+	 * pattern by first showing that unprimed reads do hit the database.
+	 */
+	public function testPrimePostMetaCache() {
+		$metaKey = \CommonsBooking\Model\Timeframe::REPETITION_START;
+		$posts   = [ get_post( $this->timeframeId ), get_post( $this->bookingId ) ];
+
+		// Control: without priming, each post triggers its own meta query.
+		wp_cache_flush();
+		$before = get_num_queries();
+		get_post_meta( $this->timeframeId, $metaKey, true );
+		get_post_meta( $this->bookingId, $metaKey, true );
+		$this->assertEquals(
+			2,
+			get_num_queries() - $before,
+			'Without priming each post should trigger its own meta query.'
+		);
+
+		// With priming, the meta reads are served from cache (zero extra queries).
+		wp_cache_flush();
+		Wordpress::primePostMetaCache( $posts );
+		$before = get_num_queries();
+		get_post_meta( $this->timeframeId, $metaKey, true );
+		get_post_meta( $this->bookingId, $metaKey, true );
+		$this->assertEquals(
+			0,
+			get_num_queries() - $before,
+			'After priming, meta reads must not hit the database.'
+		);
+	}
+
+	/**
+	 * flattenWpdbResult() is the materialization point for the raw-SQL timeframe
+	 * queries; it must leave the meta cache primed so the downstream getMeta()
+	 * reads do not fall into an N+1 pattern.
+	 */
+	public function testFlattenWpdbResultPrimesMetaCache() {
+		$metaKey = \CommonsBooking\Model\Timeframe::REPETITION_START;
+		$rows    = [
+			(object) [ 'ID' => $this->timeframeId ],
+			(object) [ 'ID' => $this->bookingId ],
+		];
+
+		wp_cache_flush();
+		$posts = Wordpress::flattenWpdbResult( $rows );
+
+		$before = get_num_queries();
+		get_post_meta( $this->timeframeId, $metaKey, true );
+		get_post_meta( $this->bookingId, $metaKey, true );
+		$this->assertEquals(
+			0,
+			get_num_queries() - $before,
+			'flattenWpdbResult() should have primed the meta cache for the whole batch.'
+		);
+		$this->assertCount( 2, $posts );
+	}
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->timeframeId   = $this->createBookableTimeFrameIncludingCurrentDay();

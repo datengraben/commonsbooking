@@ -31,6 +31,20 @@ trait Cache {
 	private static string $clearCacheHook = COMMONSBOOKING_PLUGIN_SLUG . '_clear_cache';
 
 	/**
+	 * Request-scoped memo of already constructed cache adapters, keyed by the
+	 * settings that determine which adapter is built.
+	 *
+	 * Building a Symfony cache adapter (and reading the related options) is
+	 * repeated on every getCacheItem()/setCacheItem()/clearCache() call, which
+	 * adds up quickly on pages that perform many cache operations. The resulting
+	 * adapter is identical for identical settings, so we build it once per
+	 * request and reuse it.
+	 *
+	 * @var TagAwareAdapterInterface[]
+	 */
+	private static array $adapterCache = [];
+
+	/**
 	 * Returns cache item based on calling class, function and args.
 	 *
 	 * @param mixed|null $custom_id
@@ -67,7 +81,13 @@ trait Cache {
 	 * @since 2.9.4 added support for multisite caches
 	 */
 	public static function getCacheId( $custom_id = null ): string {
-		$backtrace     = debug_backtrace()[2];
+		// Only frame #2 (the caller of getCacheItem()/setCacheItem()) is used below,
+		// and only its 'class', 'function' and 'args' entries. Passing 0 drops the
+		// per-frame 'object' ($this) that the default DEBUG_BACKTRACE_PROVIDE_OBJECT
+		// would attach, and the limit of 3 stops PHP from capturing the entire (often
+		// deep) request call stack just to read a single frame. The resulting key is
+		// unchanged, so existing cache entries stay valid.
+		$backtrace     = debug_backtrace( 0, 3 )[2];
 		$backtrace     = self::sanitizeArgsArray( $backtrace );
 		$namespace     = COMMONSBOOKING_VERSION; // To account for changes in the installed plugin versions
 		$namespace    .= COMMONSBOOKING_PLUGIN_DIR; // To account for multiple instances on same server
@@ -125,6 +145,18 @@ trait Cache {
 			$location = commonsbooking_sanitizeArrayorString( Settings::getOption( COMMONSBOOKING_PLUGIN_SLUG . '_options_advanced-options', 'cache_location' ) );
 		}
 		$identifier = Settings::getOption( COMMONSBOOKING_PLUGIN_SLUG . '_options_advanced-options', 'cache_adapter' ) ?: 'filesystem';
+
+		// Reuse an already constructed adapter for identical settings within this request.
+		// The per-item lifetime is always set explicitly via CacheItem::expiresAfter(), so
+		// $defaultLifetime does not change adapter behaviour and is left out of the memo key
+		// on purpose (this lets getCacheItem() and setCacheItem() share the same instance).
+		// isDisabled() is included because it can be toggled at runtime via the
+		// commonsbooking_disableCache filter.
+		$memoKey = $namespace . '|' . $location . '|' . $identifier . '|' . ( self::isDisabled() ? 'd' : 'e' );
+		if ( isset( self::$adapterCache[ $memoKey ] ) ) {
+			return self::$adapterCache[ $memoKey ];
+		}
+
 		try {
 			$adapter = self::getAdapter(
 				$identifier,
@@ -142,6 +174,9 @@ trait Cache {
 				$adapter = self::getNullAdapter();
 			}
 		}
+
+		self::$adapterCache[ $memoKey ] = $adapter;
+
 		return $adapter;
 	}
 

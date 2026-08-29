@@ -36,12 +36,64 @@ class Wordpress {
 	 * @return array|array[]|null[]|\WP_Post[]
 	 */
 	public static function flattenWpdbResult( $posts ): array {
+		// Prime the post and meta caches for the whole batch in a single pass.
+		// Without this, the get_post() calls below (and every subsequent
+		// Model::getMeta() on the returned posts) would each trigger their own
+		// query, producing an N+1 pattern on the calendar/availability paths.
+		$ids = array_map(
+			function ( $post ) {
+				return (int) $post->ID;
+			},
+			$posts
+		);
+		if ( $ids ) {
+			_prime_post_caches( $ids, false, true );
+		}
+
 		return array_map(
 			function ( $post ) {
 				return get_post( $post->ID );
 			},
 			$posts
 		);
+	}
+
+	/**
+	 * Primes the post-meta cache for a batch of posts in a single query.
+	 *
+	 * Why? Timeframe/booking collections are frequently assembled via raw SQL or
+	 * restored from the plugin cache as serialized WP_Post objects. In both cases
+	 * WordPress' per-request meta cache is not populated, so the many
+	 * Model::getMeta() / get_post_meta() reads performed while rendering a
+	 * calendar each hit the database (N+1). Calling this once for the collection
+	 * lets all those reads be served from the object cache.
+	 *
+	 * Accepts WP_Post objects, CommonsBooking models (which expose ->ID) or bare
+	 * post ids. Already cached ids are skipped by WordPress, so it is safe to call
+	 * repeatedly.
+	 *
+	 * @param array $posts array of WP_Post, model objects or post ids
+	 *
+	 * @return void
+	 */
+	public static function primePostMetaCache( array $posts ): void {
+		$ids = array_values(
+			array_filter(
+				array_map(
+					function ( $post ) {
+						if ( is_object( $post ) && isset( $post->ID ) ) {
+							return (int) $post->ID;
+						}
+						return (int) $post;
+					},
+					$posts
+				)
+			)
+		);
+
+		if ( $ids ) {
+			update_meta_cache( 'post', $ids );
+		}
 	}
 
 	/**
