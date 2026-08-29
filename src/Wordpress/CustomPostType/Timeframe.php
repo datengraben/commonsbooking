@@ -887,6 +887,10 @@ class Timeframe extends CustomPostType {
 			// delete unused postmeta
 			self::removeIrrelevantPostmeta( $timeframe );
 
+			// Rebuild the indexable per-id copies of the multi-select lists. Runs
+			// after the two calls above so it reflects the final list values.
+			self::syncIndexedEntityMeta( $post_id );
+
 			if ( $timeframe->usesBookingCodes() && $timeframe->bookingCodesApplicable() ) {
 				try {
 					BookingCodes::generate( $timeframe );
@@ -1095,6 +1099,64 @@ class Timeframe extends CustomPostType {
 			);
 			update_post_meta( $post_id, \CommonsBooking\Model\Timeframe::META_LOCATION_ID_LIST, $locationIds );
 		}
+
+		// Keep the indexable per-id rows in sync with the lists written above.
+		// (The manual-selection path returns early and is handled in savePost().)
+		self::syncIndexedEntityMeta( $post_id );
+	}
+
+	/**
+	 * Rebuilds the indexable, per-id copies of the multi-select item/location lists.
+	 *
+	 * The multi-selected ids are stored as a single serialized array in
+	 * META_ITEM_ID_LIST / META_LOCATION_ID_LIST, which can only be queried with an
+	 * unindexable LIKE. This mirrors those lists into repeatable postmeta rows
+	 * (one row per id) under META_ITEM_ID_INDEX / META_LOCATION_ID_INDEX, so the
+	 * timeframe repository can filter with an indexed meta_value IN (...).
+	 *
+	 * Idempotent: existing index rows are removed and rewritten from the current
+	 * list values, so it can be called on every save and by the backfill migration.
+	 *
+	 * @param int $post_id
+	 *
+	 * @return void
+	 */
+	public static function syncIndexedEntityMeta( $post_id ): void {
+		self::syncIndexedListMeta(
+			$post_id,
+			\CommonsBooking\Model\Timeframe::META_ITEM_ID_LIST,
+			\CommonsBooking\Model\Timeframe::META_ITEM_ID_INDEX
+		);
+		self::syncIndexedListMeta(
+			$post_id,
+			\CommonsBooking\Model\Timeframe::META_LOCATION_ID_LIST,
+			\CommonsBooking\Model\Timeframe::META_LOCATION_ID_INDEX
+		);
+	}
+
+	/**
+	 * Mirrors a serialized-list meta value into repeatable, indexable rows.
+	 *
+	 * @param int    $post_id
+	 * @param string $listKey  meta key holding the serialized array of ids
+	 * @param string $indexKey repeatable meta key that receives one row per id
+	 *
+	 * @return void
+	 */
+	private static function syncIndexedListMeta( $post_id, string $listKey, string $indexKey ): void {
+		// Drop the previous index rows so removed ids do not linger.
+		delete_post_meta( $post_id, $indexKey );
+
+		$ids = get_post_meta( $post_id, $listKey, true );
+		if ( ! is_array( $ids ) ) {
+			return;
+		}
+
+		foreach ( array_unique( array_map( 'intval', $ids ) ) as $id ) {
+			if ( $id > 0 ) {
+				add_post_meta( $post_id, $indexKey, $id );
+			}
+		}
 	}
 
 	/**
@@ -1118,6 +1180,8 @@ class Timeframe extends CustomPostType {
 		$onlyRelevantForHolidays = [
 			\CommonsBooking\Model\Timeframe::META_ITEM_ID_LIST,
 			\CommonsBooking\Model\Timeframe::META_LOCATION_ID_LIST,
+			\CommonsBooking\Model\Timeframe::META_ITEM_ID_INDEX,
+			\CommonsBooking\Model\Timeframe::META_LOCATION_ID_INDEX,
 			\CommonsBooking\Model\Timeframe::META_ITEM_CATEGORY_IDS,
 			\CommonsBooking\Model\Timeframe::META_LOCATION_CATEGORY_IDS,
 			\CommonsBooking\Model\Timeframe::META_ITEM_SELECTION_TYPE,

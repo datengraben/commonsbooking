@@ -40,6 +40,16 @@ class Timeframe extends CustomPost {
 
 	public const META_ITEM_ID_LIST = 'item-id-list';
 
+	/**
+	 * Indexable, repeatable copy of META_ITEM_ID_LIST: one postmeta row per item id.
+	 *
+	 * META_ITEM_ID_LIST stores the multi-selected item ids as a single serialized
+	 * array, which can only be queried with an unindexable LIKE. These per-id rows
+	 * mirror that list so item filtering can use an indexed meta_value IN (...).
+	 * Kept in sync on save; see Timeframe CPT syncIndexedEntityMeta().
+	 */
+	public const META_ITEM_ID_INDEX = 'item-id-index';
+
 	public const META_ITEM_CATEGORY_IDS = 'item-category-ids';
 
 	public const META_LOCATION_SELECTION_TYPE = 'location-select';
@@ -47,6 +57,12 @@ class Timeframe extends CustomPost {
 	public const META_LOCATION_ID = 'location-id';
 
 	public const META_LOCATION_ID_LIST = 'location-id-list';
+
+	/**
+	 * Indexable, repeatable copy of META_LOCATION_ID_LIST: one postmeta row per
+	 * location id. See META_ITEM_ID_INDEX for the rationale.
+	 */
+	public const META_LOCATION_ID_INDEX = 'location-id-index';
 
 	public const META_LOCATION_CATEGORY_IDS = 'location-category-ids';
 
