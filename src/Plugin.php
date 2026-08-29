@@ -794,6 +794,19 @@ class Plugin {
 
 		add_action( 'plugins_loaded', array( $this, 'commonsbooking_load_textdomain' ), 20 );
 
+		// Signal that CommonsBooking has finished loading so add-ons can safely
+		// bootstrap. Fired on plugins_loaded (after all plugin files have been
+		// included) so extensions that register an
+		// add_action( 'commonsbooking_loaded', ... ) at load time reliably
+		// receive it. Mirrors WooCommerce's woocommerce_loaded action.
+		add_action(
+			'plugins_loaded',
+			function () {
+				do_action( 'commonsbooking_loaded' );
+			},
+			30
+		);
+
 		$map_admin = new LocationMapAdmin();
 		add_action( 'plugins_loaded', array( $map_admin, 'load_location_map_admin' ) );
 
