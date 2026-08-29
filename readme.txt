@@ -76,7 +76,11 @@ CommonsBooking was developed for the ["Commons Cargobike" movement](http://commo
 
 If you build your own plugin on top of CommonsBooking, declare the dependency instead of bundling (vendoring) CommonsBooking with your code. Since WordPress 6.5 add-ons should announce required plugins through the `Requires Plugins:` header in their main plugin file, listing the wordpress.org slug (`commonsbooking`). WordPress then keeps CommonsBooking installed and active before your extension can be activated, and shows the dependency to the site administrator. See the WordPress developer handbook for details: [Header Requirements](https://developer.wordpress.org/plugins/plugin-basics/header-requirements/) and [Plugin Dependencies](https://make.wordpress.org/core/2024/03/05/introducing-plugin-dependencies-in-wordpress-6-5/).
 
-The header is a load-order and installation guarantee, not a runtime one, so still guard your code: mirror the WooCommerce pattern of loading your extension on a hook (for WooCommerce this is the `woocommerce_loaded` action) and bailing out gracefully when the dependency is missing. Hook your bootstrap into `plugins_loaded` (or check for a CommonsBooking class such as `\CommonsBooking\Plugin` with `class_exists()`) and return early if CommonsBooking is not available, so your plugin never fatals on a site where it has been deactivated.
+The header is a load-order and installation guarantee, not a runtime one, so still guard your code: mirror the WooCommerce pattern of loading your extension on a hook (for WooCommerce this is the `woocommerce_loaded` action) and bailing out gracefully when the dependency is missing. CommonsBooking fires an equivalent `commonsbooking_loaded` action once it has bootstrapped (on `plugins_loaded`), so hook your extension there instead of loading it unconditionally:
+
+`add_action( 'commonsbooking_loaded', 'my_addon_bootstrap' );`
+
+As a belt-and-braces fallback you can also check for a CommonsBooking class such as `\CommonsBooking\Plugin` with `class_exists()` and return early if it is missing, so your plugin never fatals on a site where CommonsBooking has been deactivated.
 
 ## Screenshots
 
