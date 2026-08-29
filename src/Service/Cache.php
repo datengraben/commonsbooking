@@ -81,7 +81,13 @@ trait Cache {
 	 * @since 2.9.4 added support for multisite caches
 	 */
 	public static function getCacheId( $custom_id = null ): string {
-		$backtrace     = debug_backtrace()[2];
+		// Only frame #2 (the caller of getCacheItem()/setCacheItem()) is used below,
+		// and only its 'class', 'function' and 'args' entries. Passing 0 drops the
+		// per-frame 'object' ($this) that the default DEBUG_BACKTRACE_PROVIDE_OBJECT
+		// would attach, and the limit of 3 stops PHP from capturing the entire (often
+		// deep) request call stack just to read a single frame. The resulting key is
+		// unchanged, so existing cache entries stay valid.
+		$backtrace     = debug_backtrace( 0, 3 )[2];
 		$backtrace     = self::sanitizeArgsArray( $backtrace );
 		$namespace     = COMMONSBOOKING_VERSION; // To account for changes in the installed plugin versions
 		$namespace    .= COMMONSBOOKING_PLUGIN_DIR; // To account for multiple instances on same server
