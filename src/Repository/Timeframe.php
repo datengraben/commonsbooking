@@ -401,6 +401,16 @@ class Timeframe extends PostRepository {
 			foreach ( $postIds as &$post ) {
 				$post = $post[0];
 			}
+			unset( $post );
+
+			// These posts are only loaded to compute the cache-invalidation tags
+			// below (getTags() needs each post's type and its item/location meta).
+			// Prime the post and meta caches for the whole batch in one pass so the
+			// get_post() calls and the per-post getMeta() reads inside getTags() are
+			// served from the object cache instead of issuing a query each (N+1).
+			if ( $postIds ) {
+				_prime_post_caches( array_map( 'intval', $postIds ), false, true );
+			}
 
 			// Get Posts
 			$posts = array_map(
