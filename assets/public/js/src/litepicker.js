@@ -8,6 +8,16 @@ document.addEventListener('DOMContentLoaded', function (event) {
         let globalCalendarData = calendarData;
         let globalPickedStartDate = false;
 
+        // Announce calendar state changes to screen readers via the WordPress
+        // wp.a11y.speak() live region. No-op if wp-a11y is unavailable.
+        const speak = (msg) => {
+            if (window.wp && wp.a11y && wp.a11y.speak && msg) {
+                wp.a11y.speak(msg);
+            }
+        };
+        // Substitute the %s placeholder in a translated string with a value.
+        const fmt = (tpl, val) => (tpl || '').replace('%s', val);
+
         const fadeOutCalendar = () => {
             jQuery('#litepicker .litepicker .container__days').css('visibility', 'hidden');
         };
@@ -126,6 +136,8 @@ document.addEventListener('DOMContentLoaded', function (event) {
             } else {
                 jQuery('.time-selection.repetition-start').find('select').show();
             }
+
+            speak(fmt(globalCalendarData['i18n.a11y.startSelected'], startDate));
         };
 
         // // update start select slots to avoid invalid timeslot selections
@@ -197,6 +209,8 @@ document.addEventListener('DOMContentLoaded', function (event) {
             } else {
                 jQuery('.time-selection.repetition-end').find('select').show();
             }
+
+            speak(fmt(globalCalendarData['i18n.a11y.endSelected'], endDate));
         };
 
         /**
@@ -227,6 +241,10 @@ document.addEventListener('DOMContentLoaded', function (event) {
                 }
             }
             jQuery('input[name="days-overbooked"]').val(overbookedDays);
+
+            if (overbookedDays > 0) {
+                speak(fmt(globalCalendarData['i18n.a11y.overbookedDays'], overbookedDays));
+            }
         };
 
         // returns columns in relation to viewport
@@ -408,6 +426,8 @@ document.addEventListener('DOMContentLoaded', function (event) {
             jQuery('#resetPicker').hide();
             jQuery('#calendarNotice').hide();
             jQuery('#booking-form input[type=submit]').attr('disabled', 'disabled');
+
+            speak(globalCalendarData['i18n.a11y.selectionReset']);
         };
 
         // Click handler for reset button

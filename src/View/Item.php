@@ -76,7 +76,20 @@ class Item extends View {
 			);
 			$calendarData['i18n.buttonText.apply']  = __( 'Book', 'commonsbooking' );
 			$calendarData['i18n.buttonText.cancel'] = __( 'Cancel', 'commonsbooking' );
-			$args['calendar_data']                  = wp_json_encode( $calendarData );
+
+			// Screen-reader announcements for calendar state changes, read via wp.a11y.speak() in litepicker.js.
+			// translators: %s is the selected start date.
+			$calendarData['i18n.a11y.startSelected'] = __( 'Start date selected: %s. Now choose an end date.', 'commonsbooking' );
+
+			// translators: %s is the selected end date.
+			$calendarData['i18n.a11y.endSelected'] = __( 'End date selected: %s.', 'commonsbooking' );
+
+			$calendarData['i18n.a11y.selectionReset'] = __( 'Date selection reset. Please choose a start date.', 'commonsbooking' );
+
+			// translators: %s is the number of non-bookable days included in the selection.
+			$calendarData['i18n.a11y.overbookedDays'] = __( '%s non-bookable days (holidays or blocked periods) are included in your selection.', 'commonsbooking' );
+
+			$args['calendar_data'] = wp_json_encode( $calendarData );
 
 			Plugin::setCacheItem( $args, [ 'misc' ], $customId );
 
