@@ -59,7 +59,7 @@ function commonsbooking_public() {
 		wp_enqueue_script(
 			'cb-scripts-public',
 			COMMONSBOOKING_PLUGIN_ASSETS_URL . 'public/js/public.js',
-			array( 'jquery' ),
+			array( 'jquery', 'wp-a11y' ),
 			(string) time(),
 			true
 		);
@@ -67,7 +67,7 @@ function commonsbooking_public() {
 		wp_enqueue_script(
 			'cb-scripts-public',
 			COMMONSBOOKING_PLUGIN_ASSETS_URL . 'public/js/public.min.js',
-			array( 'jquery' ),
+			array( 'jquery', 'wp-a11y' ),
 			COMMONSBOOKING_VERSION,
 			true
 		);
